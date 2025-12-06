@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fixture__c</fullName>
+    <label>Fixture</label>
+    <type>Lookup</type>
+    <referenceTo>Fixture__c</referenceTo>
+    <relationshipLabel>Social Engagements</relationshipLabel>
+    <relationshipName>Social_Engagements</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

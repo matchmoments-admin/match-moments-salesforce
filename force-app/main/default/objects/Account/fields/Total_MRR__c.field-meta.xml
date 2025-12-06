@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_MRR__c</fullName>
+    <label>Total MRR</label>
+    <description>Sum of monthly recurring revenue for this account</description>
+    <inlineHelpText>Total Monthly Recurring Revenue</inlineHelpText>
+    <type>Currency</type>
+    <required>false</required>
+    <precision>18</precision>
+    <scale>2</scale>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+</CustomField>
+

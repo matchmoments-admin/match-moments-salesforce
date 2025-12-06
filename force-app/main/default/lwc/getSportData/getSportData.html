@@ -1,0 +1,24 @@
+<template>
+    <!-- Headless component - minimal UI, just loading state -->
+    <template if:true={isLoading}>
+        <div class="slds-p-around_medium">
+            <lightning-spinner 
+                alternative-text="Loading..." 
+                size="medium">
+            </lightning-spinner>
+            <p class="slds-text-align_center slds-m-top_small">Fetching data from ESPN...</p>
+        </div>
+    </template>
+    
+    <!-- Error state -->
+    <template if:false={isLoading}>
+        <template if:true={errorMessage}>
+            <div class="slds-p-around_medium">
+                <div class="slds-box slds-theme_error">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Error</h3>
+                    <p>{errorMessage}</p>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>

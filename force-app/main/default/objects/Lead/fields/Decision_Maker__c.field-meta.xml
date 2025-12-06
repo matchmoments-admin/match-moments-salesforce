@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Decision_Maker__c</fullName>
+    <label>Decision Maker</label>
+    <description>Indicates if this lead has budget authority</description>
+    <inlineHelpText>Check if this lead has budget authority to make purchasing decisions</inlineHelpText>
+    <type>Checkbox</type>
+    <required>false</required>
+    <defaultValue>false</defaultValue>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

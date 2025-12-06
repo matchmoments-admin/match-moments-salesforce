@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Logo_Usage_Rights__c</fullName>
+    <label>Logo Usage Rights</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <description>Sponsor has rights to use team/league logo</description>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

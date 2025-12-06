@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Content_Type__c</fullName>
+    <label>Content Type</label>
+    <type>MultiselectPicklist</type>
+    <required>false</required>
+    <visibleLines>5</visibleLines>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Highlights</fullName>
+                <default>false</default>
+                <label>Highlights</label>
+            </value>
+            <value>
+                <fullName>Full Match</fullName>
+                <default>false</default>
+                <label>Full Match</label>
+            </value>
+            <value>
+                <fullName>Live Streaming</fullName>
+                <default>false</default>
+                <label>Live Streaming</label>
+            </value>
+            <value>
+                <fullName>Archived Content</fullName>
+                <default>false</default>
+                <label>Archived Content</label>
+            </value>
+            <value>
+                <fullName>Photos</fullName>
+                <default>false</default>
+                <label>Photos</label>
+            </value>
+            <value>
+                <fullName>Statistics</fullName>
+                <default>false</default>
+                <label>Statistics</label>
+            </value>
+            <value>
+                <fullName>Commentary</fullName>
+                <default>false</default>
+                <label>Commentary</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <description>Types of content included in this license</description>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

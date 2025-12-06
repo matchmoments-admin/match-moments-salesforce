@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Gender_Category__c</fullName>
+    <label>Gender Category</label>
+    <description>Gender category for teams (Men&apos;s, Women&apos;s, Both)</description>
+    <inlineHelpText>Select if this is a Men&apos;s, Women&apos;s, or Mixed team</inlineHelpText>
+    <type>Picklist</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Men&apos;s Team</fullName>
+                <default>false</default>
+                <label>Men&apos;s Team</label>
+            </value>
+            <value>
+                <fullName>Women&apos;s Team</fullName>
+                <default>false</default>
+                <label>Women&apos;s Team</label>
+            </value>
+            <value>
+                <fullName>Mixed/Both</fullName>
+                <default>false</default>
+                <label>Mixed/Both</label>
+            </value>
+            <value>
+                <fullName>N/A (not a team)</fullName>
+                <default>true</default>
+                <label>N/A (not a team)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

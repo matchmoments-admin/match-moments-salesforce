@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Gender_Focus__c</fullName>
+    <label>Gender Focus</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Men&apos;s Sports</fullName>
+                <default>false</default>
+                <label>Men&apos;s Sports</label>
+            </value>
+            <value>
+                <fullName>Women&apos;s Sports</fullName>
+                <default>false</default>
+                <label>Women&apos;s Sports</label>
+            </value>
+            <value>
+                <fullName>Both</fullName>
+                <default>true</default>
+                <label>Both</label>
+            </value>
+            <value>
+                <fullName>N/A</fullName>
+                <default>false</default>
+                <label>N/A</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <description>Gender focus - tracks women's sports content licensing</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

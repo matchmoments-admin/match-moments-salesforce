@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Creator_Type__c</fullName>
+    <label>Creator Type</label>
+    <description>Type of content creator</description>
+    <inlineHelpText>Select the type of content creator</inlineHelpText>
+    <type>Picklist</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Podcaster</fullName>
+                <default>false</default>
+                <label>Podcaster</label>
+            </value>
+            <value>
+                <fullName>YouTuber</fullName>
+                <default>false</default>
+                <label>YouTuber</label>
+            </value>
+            <value>
+                <fullName>Blogger</fullName>
+                <default>false</default>
+                <label>Blogger</label>
+            </value>
+            <value>
+                <fullName>Social Media Influencer</fullName>
+                <default>false</default>
+                <label>Social Media Influencer</label>
+            </value>
+            <value>
+                <fullName>Journalist</fullName>
+                <default>false</default>
+                <label>Journalist</label>
+            </value>
+            <value>
+                <fullName>Analyst</fullName>
+                <default>false</default>
+                <label>Analyst</label>
+            </value>
+            <value>
+                <fullName>Multi-Platform</fullName>
+                <default>false</default>
+                <label>Multi-Platform</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

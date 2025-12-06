@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sponsorship_Type__c</fullName>
+    <label>Sponsorship Type</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Title Sponsor</fullName>
+                <default>false</default>
+                <label>Title Sponsor</label>
+            </value>
+            <value>
+                <fullName>Category Sponsor</fullName>
+                <default>false</default>
+                <label>Category Sponsor</label>
+            </value>
+            <value>
+                <fullName>Event Sponsor</fullName>
+                <default>false</default>
+                <label>Event Sponsor</label>
+            </value>
+            <value>
+                <fullName>Jersey Sponsor</fullName>
+                <default>false</default>
+                <label>Jersey Sponsor</label>
+            </value>
+            <value>
+                <fullName>Stadium/Venue Sponsor</fullName>
+                <default>false</default>
+                <label>Stadium/Venue Sponsor</label>
+            </value>
+            <value>
+                <fullName>Broadcast Sponsor</fullName>
+                <default>false</default>
+                <label>Broadcast Sponsor</label>
+            </value>
+            <value>
+                <fullName>Digital Sponsor</fullName>
+                <default>false</default>
+                <label>Digital Sponsor</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <description>Type of sponsorship (Title, Category, Event, Jersey, etc.)</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

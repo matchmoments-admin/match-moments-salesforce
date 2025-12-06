@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Team__c</fullName>
+    <label>Team</label>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Team Sponsorships</relationshipLabel>
+    <relationshipName>Team_Sponsorships</relationshipName>
+    <description>Sponsored team</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Account_Type__c</fullName>
+    <label>Account Type</label>
+    <description>Customer category for this account</description>
+    <inlineHelpText>Select the customer category (Individual User, Team, Brand, Media, etc.)</inlineHelpText>
+    <type>Picklist</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Individual User</fullName>
+                <default>false</default>
+                <label>Individual User</label>
+            </value>
+            <value>
+                <fullName>Content Creator</fullName>
+                <default>false</default>
+                <label>Content Creator</label>
+            </value>
+            <value>
+                <fullName>Sports Team - Professional</fullName>
+                <default>false</default>
+                <label>Sports Team - Professional</label>
+            </value>
+            <value>
+                <fullName>Sports Team - Semi-Pro</fullName>
+                <default>false</default>
+                <label>Sports Team - Semi-Pro</label>
+            </value>
+            <value>
+                <fullName>Sports Team - Amateur</fullName>
+                <default>false</default>
+                <label>Sports Team - Amateur</label>
+            </value>
+            <value>
+                <fullName>Brand/Sponsor</fullName>
+                <default>false</default>
+                <label>Brand/Sponsor</label>
+            </value>
+            <value>
+                <fullName>Media Company</fullName>
+                <default>false</default>
+                <label>Media Company</label>
+            </value>
+            <value>
+                <fullName>Sports League</fullName>
+                <default>false</default>
+                <label>Sports League</label>
+            </value>
+            <value>
+                <fullName>Technology Company</fullName>
+                <default>false</default>
+                <label>Technology Company</label>
+            </value>
+            <value>
+                <fullName>Betting Company</fullName>
+                <default>false</default>
+                <label>Betting Company</label>
+            </value>
+            <value>
+                <fullName>Strategic Partner</fullName>
+                <default>false</default>
+                <label>Strategic Partner</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

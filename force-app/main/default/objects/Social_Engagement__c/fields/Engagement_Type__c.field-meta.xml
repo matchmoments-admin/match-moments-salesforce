@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Engagement_Type__c</fullName>
+    <label>Engagement Type</label>
+    <type>Picklist</type>
+    <required>true</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Share</fullName>
+                <default>false</default>
+                <label>Share</label>
+            </value>
+            <value>
+                <fullName>View</fullName>
+                <default>false</default>
+                <label>View</label>
+            </value>
+            <value>
+                <fullName>Like</fullName>
+                <default>false</default>
+                <label>Like</label>
+            </value>
+            <value>
+                <fullName>Comment</fullName>
+                <default>false</default>
+                <label>Comment</label>
+            </value>
+            <value>
+                <fullName>Click</fullName>
+                <default>false</default>
+                <label>Click</label>
+            </value>
+            <value>
+                <fullName>Embed_View</fullName>
+                <default>false</default>
+                <label>Embed View</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <description>Type of engagement action</description>
+</CustomField>
+

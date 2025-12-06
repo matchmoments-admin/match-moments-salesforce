@@ -1,0 +1,181 @@
+<template>
+    <!-- Loading State -->
+    <template lwc:if={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading moment..." size="large"></lightning-spinner>
+            <p class="loading-text">Loading moment...</p>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template lwc:if={hasError}>
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h2>Oops! Something went wrong</h2>
+            <p>{errorMessage}</p>
+        </div>
+    </template>
+    
+    <!-- Main Content -->
+    <template lwc:if={event.id}>
+        <div class="moment-page">
+            
+            <!-- Match Header -->
+            <header class="match-header">
+                <div class="teams-container">
+                    <!-- Home Team -->
+                    <div class="team home-team">
+                        <template lwc:if={fixture.homeTeamLogo}>
+                            <img src={fixture.homeTeamLogo} alt={fixture.homeTeamName} class="team-logo" />
+                        </template>
+                        <span class="team-name">{fixture.homeTeamName}</span>
+                    </div>
+                    
+                    <!-- Score -->
+                    <div class="score-container">
+                        <div class="score-display">{scoreDisplay}</div>
+                        <div class="match-status">{fixture.status}</div>
+                    </div>
+                    
+                    <!-- Away Team -->
+                    <div class="team away-team">
+                        <template lwc:if={fixture.awayTeamLogo}>
+                            <img src={fixture.awayTeamLogo} alt={fixture.awayTeamName} class="team-logo" />
+                        </template>
+                        <span class="team-name">{fixture.awayTeamName}</span>
+                    </div>
+                </div>
+                
+                <div class="match-meta">
+                    <span class="competition">{fixture.competitionName}</span>
+                    <span class="separator">•</span>
+                    <span class="date">{fixture.formattedDate}</span>
+                    <template lwc:if={fixture.venue}>
+                        <span class="separator">•</span>
+                        <span class="venue">{fixture.venue}</span>
+                    </template>
+                </div>
+            </header>
+            
+            <!-- Moment Content -->
+            <section class="moment-content">
+                <!-- Video (if available) -->
+                <template lwc:if={hasVideo}>
+                    <div class="video-container">
+                        <video controls class="video-player" poster={event.socialMediaImageUrl}>
+                            <source src={event.videoUrl} type="video/mp4">
+                            Your browser does not support video playback.
+                        </video>
+                    </div>
+                </template>
+                
+                <!-- Event Details -->
+                <div class="event-details">
+                    <div class="event-header">
+                        <span class="event-icon">{eventIcon}</span>
+                        <h1 class="event-title">{event.eventType}</h1>
+                        <span class="event-time">{event.minute}'</span>
+                    </div>
+                    
+                    <!-- Player Info -->
+                    <template lwc:if={hasPlayer}>
+                        <div class="player-info">
+                            <template lwc:if={event.playerPhoto}>
+                                <img src={event.playerPhoto} alt={event.playerName} class="player-photo" />
+                            </template>
+                            <div class="player-details">
+                                <span class="player-name">{event.playerName}</span>
+                                <span class="player-position">{event.playerPosition} • {event.teamName}</span>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Description -->
+                    <p class="event-description">{event.description}</p>
+                    
+                    <!-- Period Context -->
+                    <template lwc:if={hasPeriod}>
+                        <div class="period-context">
+                            <h4>Period Summary</h4>
+                            <div class="period-info">
+                                <span class="period-label">{periodLabel}</span>
+                                <span class="period-score">{periodScoreDisplay}</span>
+                            </div>
+                            <span class="cumulative-score">{cumulativeScoreDisplay}</span>
+                        </div>
+                    </template>
+                </div>
+            </section>
+            
+            <!-- Share Section -->
+            <section class="share-section">
+                <c-social-share-widget
+                    record-id={recordId}
+                    variant="full"
+                    show-qr-code="true"
+                    onshare={handleShareEvent}>
+                </c-social-share-widget>
+            </section>
+            
+            <!-- Engagement Stats -->
+            <section class="engagement-stats">
+                <div class="stat">
+                    <span class="stat-icon">👁️</span>
+                    <span class="stat-value">{event.totalViews}</span>
+                    <span class="stat-label">Views</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">🔄</span>
+                    <span class="stat-value">{event.totalShares}</span>
+                    <span class="stat-label">Shares</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-value">{formattedViralScore}</span>
+                    <span class="stat-label">Viral Score</span>
+                </div>
+            </section>
+            
+            <!-- Related Moments -->
+            <template lwc:if={hasRelatedMoments}>
+                <section class="related-moments">
+                    <h3>Other Moments from This Match</h3>
+                    <div class="moments-grid">
+                        <template for:each={relatedMoments} for:item="moment">
+                            <div key={moment.id} class="moment-card" data-id={moment.id} onclick={handleMomentClick}>
+                                <div class="moment-thumbnail">
+                                    <template lwc:if={moment.thumbnailUrl}>
+                                        <img src={moment.thumbnailUrl} alt={moment.title} />
+                                    </template>
+                                    <span class="moment-time">
+                                        <span class="moment-icon">{moment.icon}</span>
+                                        {moment.minute}'
+                                    </span>
+                                </div>
+                                <div class="moment-info">
+                                    <span class="moment-title">{moment.playerName}</span>
+                                    <span class="moment-description">{moment.description}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </section>
+            </template>
+            
+            <!-- Embed Code Section -->
+            <section class="embed-section">
+                <button class="embed-toggle" onclick={toggleEmbedCode}>
+                    📋 Get Embed Code
+                </button>
+                <template lwc:if={showEmbedCode}>
+                    <div class="embed-code-container">
+                        <textarea readonly class="embed-textarea">{event.embedCode}</textarea>
+                        <button class="copy-embed-btn" onclick={copyEmbedCode}>Copy Code</button>
+                    </div>
+                </template>
+            </section>
+            
+        </div>
+    </template>
+</template>
+

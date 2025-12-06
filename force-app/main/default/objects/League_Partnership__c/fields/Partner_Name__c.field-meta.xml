@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Partner_Name__c</fullName>
+    <label>Partner Name</label>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>League Partnerships</relationshipLabel>
+    <relationshipName>League_Partnerships</relationshipName>
+    <description>Partner organization for this league partnership</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

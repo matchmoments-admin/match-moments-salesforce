@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Performance_Score__c</fullName>
+    <label>Performance Score</label>
+    <type>Percent</type>
+    <required>false</required>
+    <precision>5</precision>
+    <scale>2</scale>
+    <formula>IF(Impressions_Target__c &gt; 0, Impressions_Delivered__c / Impressions_Target__c, 0)</formula>
+    <description>Performance score: Delivered/Target impressions</description>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Event_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Event Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Goal</fullName>
+                <default>false</default>
+                <label>Goal</label>
+            </value>
+            <value>
+                <fullName>Penalty Goal</fullName>
+                <default>false</default>
+                <label>Penalty Goal</label>
+            </value>
+            <value>
+                <fullName>Own Goal</fullName>
+                <default>false</default>
+                <label>Own Goal</label>
+            </value>
+            <value>
+                <fullName>Yellow Card</fullName>
+                <default>false</default>
+                <label>Yellow Card</label>
+            </value>
+            <value>
+                <fullName>Red Card</fullName>
+                <default>false</default>
+                <label>Red Card</label>
+            </value>
+            <value>
+                <fullName>Substitution</fullName>
+                <default>false</default>
+                <label>Substitution</label>
+            </value>
+            <value>
+                <fullName>Try</fullName>
+                <default>false</default>
+                <label>Try</label>
+            </value>
+            <value>
+                <fullName>Conversion</fullName>
+                <default>false</default>
+                <label>Conversion</label>
+            </value>
+            <value>
+                <fullName>Penalty</fullName>
+                <default>false</default>
+                <label>Penalty</label>
+            </value>
+            <value>
+                <fullName>Wicket</fullName>
+                <default>false</default>
+                <label>Wicket</label>
+            </value>
+            <value>
+                <fullName>Century</fullName>
+                <default>false</default>
+                <label>Century</label>
+            </value>
+            <value>
+                <fullName>Injury</fullName>
+                <default>false</default>
+                <label>Injury</label>
+            </value>
+            <value>
+                <fullName>VAR Decision</fullName>
+                <default>false</default>
+                <label>VAR Decision</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

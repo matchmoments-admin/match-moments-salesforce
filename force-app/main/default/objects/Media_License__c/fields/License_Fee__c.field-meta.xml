@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>License_Fee__c</fullName>
+    <label>License Fee</label>
+    <type>Currency</type>
+    <required>false</required>
+    <precision>18</precision>
+    <scale>2</scale>
+    <description>Media licensing fee amount</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

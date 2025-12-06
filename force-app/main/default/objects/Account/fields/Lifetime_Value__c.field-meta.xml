@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lifetime_Value__c</fullName>
+    <label>Lifetime Value</label>
+    <description>Total revenue from this account all-time</description>
+    <inlineHelpText>Total revenue generated from this customer</inlineHelpText>
+    <type>Currency</type>
+    <required>false</required>
+    <precision>18</precision>
+    <scale>2</scale>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+</CustomField>
+

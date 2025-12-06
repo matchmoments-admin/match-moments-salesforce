@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stream_Type__c</fullName>
+    <label>Stream Type</label>
+    <type>Picklist</type>
+    <required>true</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Subscription - Premium</fullName>
+                <default>false</default>
+                <label>Subscription - Premium</label>
+            </value>
+            <value>
+                <fullName>Subscription - Creator</fullName>
+                <default>false</default>
+                <label>Subscription - Creator</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Bronze</fullName>
+                <default>false</default>
+                <label>Subscription - Team Bronze</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Silver</fullName>
+                <default>false</default>
+                <label>Subscription - Team Silver</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Gold</fullName>
+                <default>false</default>
+                <label>Subscription - Team Gold</label>
+            </value>
+            <value>
+                <fullName>Advertising - Display</fullName>
+                <default>false</default>
+                <label>Advertising - Display</label>
+            </value>
+            <value>
+                <fullName>Advertising - Video</fullName>
+                <default>false</default>
+                <label>Advertising - Video</label>
+            </value>
+            <value>
+                <fullName>Sponsorship</fullName>
+                <default>false</default>
+                <label>Sponsorship</label>
+            </value>
+            <value>
+                <fullName>Media Licensing - Content</fullName>
+                <default>false</default>
+                <label>Media Licensing - Content</label>
+            </value>
+            <value>
+                <fullName>Media Licensing - Data</fullName>
+                <default>false</default>
+                <label>Media Licensing - Data</label>
+            </value>
+            <value>
+                <fullName>League Partnership</fullName>
+                <default>false</default>
+                <label>League Partnership</label>
+            </value>
+            <value>
+                <fullName>Team Portal</fullName>
+                <default>false</default>
+                <label>Team Portal</label>
+            </value>
+            <value>
+                <fullName>API Access</fullName>
+                <default>false</default>
+                <label>API Access</label>
+            </value>
+            <value>
+                <fullName>Affiliate - Betting</fullName>
+                <default>false</default>
+                <label>Affiliate - Betting</label>
+            </value>
+            <value>
+                <fullName>Strategic Partnership</fullName>
+                <default>false</default>
+                <label>Strategic Partnership</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <description>Type of revenue stream (Subscription, Advertising, Sponsorship, etc.)</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

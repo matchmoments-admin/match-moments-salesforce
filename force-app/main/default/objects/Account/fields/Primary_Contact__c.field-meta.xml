@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Primary_Contact__c</fullName>
+    <label>Primary Contact</label>
+    <description>Main decision maker for this account</description>
+    <inlineHelpText>Select the primary contact for this account</inlineHelpText>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Contact</referenceTo>
+    <relationshipLabel>Accounts (Primary Contact)</relationshipLabel>
+    <relationshipName>Primary_Accounts</relationshipName>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

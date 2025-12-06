@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source_Campaign__c</fullName>
+    <label>Source Campaign</label>
+    <description>Marketing campaign that generated this lead</description>
+    <inlineHelpText>The marketing campaign that generated this lead</inlineHelpText>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Campaign</referenceTo>
+    <relationshipLabel>Leads</relationshipLabel>
+    <relationshipName>Source_Leads</relationshipName>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

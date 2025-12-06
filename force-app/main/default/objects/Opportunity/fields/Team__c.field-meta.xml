@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Team__c</fullName>
+    <label>Team</label>
+    <description>Associated team for this opportunity (for team portal sales)</description>
+    <inlineHelpText>Select the associated team (typically for team portal opportunities)</inlineHelpText>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Team Opportunities</relationshipLabel>
+    <relationshipName>Team_Opportunities</relationshipName>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

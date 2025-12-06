@@ -1,0 +1,90 @@
+<template>
+    <!-- Full Variant -->
+    <template lwc:if={isFullVariant}>
+        <div class={containerClass}>
+            <h3 class="slds-text-heading_small slds-m-bottom_medium">Share This Moment</h3>
+            
+            <div class="share-buttons-grid">
+                <!-- Twitter -->
+                <button class="share-button twitter" onclick={handleTwitterShare} title="Share on Twitter">
+                    <span class="button-icon">𝕏</span>
+                    <span class="button-label">Twitter</span>
+                </button>
+                
+                <!-- Facebook -->
+                <button class="share-button facebook" onclick={handleFacebookShare} title="Share on Facebook">
+                    <span class="button-icon">f</span>
+                    <span class="button-label">Facebook</span>
+                </button>
+                
+                <!-- WhatsApp -->
+                <button class="share-button whatsapp" onclick={handleWhatsAppShare} title="Share on WhatsApp">
+                    <span class="button-icon">📱</span>
+                    <span class="button-label">WhatsApp</span>
+                </button>
+                
+                <!-- LinkedIn -->
+                <button class="share-button linkedin" onclick={handleLinkedInShare} title="Share on LinkedIn">
+                    <span class="button-icon">in</span>
+                    <span class="button-label">LinkedIn</span>
+                </button>
+                
+                <!-- Email -->
+                <button class="share-button email" onclick={handleEmailShare} title="Share via Email">
+                    <span class="button-icon">✉️</span>
+                    <span class="button-label">Email</span>
+                </button>
+                
+                <!-- Copy Link -->
+                <button class="share-button link" onclick={handleCopyLink} title="Copy Link">
+                    <span class="button-icon">🔗</span>
+                    <span class="button-label">{linkButtonText}</span>
+                </button>
+            </div>
+            
+            <!-- QR Code Section -->
+            <template lwc:if={showQrCode}>
+                <div class="qr-code-section slds-m-top_medium">
+                    <p class="slds-text-body_small slds-m-bottom_x-small">Scan to Share</p>
+                    <img src={qrCodeUrl} alt="QR Code" class="qr-code-image" />
+                </div>
+            </template>
+        </div>
+    </template>
+    
+    <!-- Compact Variant -->
+    <template lwc:if={isCompactVariant}>
+        <div class={containerClass}>
+            <span class="share-label slds-m-right_small">Share:</span>
+            
+            <div class="share-buttons-inline">
+                <button class="share-button-compact twitter" onclick={handleTwitterShare} title="Twitter">
+                    <span>𝕏</span>
+                </button>
+                
+                <button class="share-button-compact facebook" onclick={handleFacebookShare} title="Facebook">
+                    <span>f</span>
+                </button>
+                
+                <button class="share-button-compact whatsapp" onclick={handleWhatsAppShare} title="WhatsApp">
+                    <span>📱</span>
+                </button>
+                
+                <button class="share-button-compact link" onclick={handleCopyLink} title="Copy Link">
+                    <lightning-icon icon-name={linkButtonIcon} size="x-small" alternative-text="Copy"></lightning-icon>
+                </button>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Icons Only Variant -->
+    <template lwc:if={isIconsOnlyVariant}>
+        <div class={containerClass}>
+            <button class="share-icon twitter" onclick={handleTwitterShare} title="Twitter">𝕏</button>
+            <button class="share-icon facebook" onclick={handleFacebookShare} title="Facebook">f</button>
+            <button class="share-icon whatsapp" onclick={handleWhatsAppShare} title="WhatsApp">📱</button>
+            <button class="share-icon link" onclick={handleCopyLink} title="Copy Link">🔗</button>
+        </div>
+    </template>
+</template>
+

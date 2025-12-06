@@ -1,0 +1,213 @@
+/* Social Share Widget Styles */
+
+.share-widget {
+    padding: 1rem;
+}
+
+.share-widget.full {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Full Variant - Grid Layout */
+.share-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.share-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    min-height: 70px;
+}
+
+.share-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.share-button:active {
+    transform: translateY(0);
+}
+
+.button-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.button-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Platform Colors */
+.share-button.twitter {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+}
+
+.share-button.facebook {
+    background: linear-gradient(135deg, #3b5998 0%, #4267B2 100%);
+    color: white;
+}
+
+.share-button.whatsapp {
+    background: linear-gradient(135deg, #075e54 0%, #25D366 100%);
+    color: white;
+}
+
+.share-button.linkedin {
+    background: linear-gradient(135deg, #0077b5 0%, #00a0dc 100%);
+    color: white;
+}
+
+.share-button.email {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+}
+
+.share-button.link {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    color: white;
+}
+
+/* QR Code Section */
+.qr-code-section {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.qr-code-image {
+    max-width: 150px;
+    height: auto;
+    border-radius: 8px;
+}
+
+/* Compact Variant */
+.share-widget.compact {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+.share-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.share-buttons-inline {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.share-button-compact {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.share-button-compact:hover {
+    transform: scale(1.1);
+}
+
+.share-button-compact.twitter {
+    background: #1a1a2e;
+    color: white;
+}
+
+.share-button-compact.facebook {
+    background: #4267B2;
+    color: white;
+}
+
+.share-button-compact.whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.share-button-compact.link {
+    background: #6c757d;
+    color: white;
+}
+
+/* Icons Only Variant */
+.share-widget.icons-only {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0;
+}
+
+.share-icon {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    transition: all 0.2s ease;
+}
+
+.share-icon:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.share-icon.twitter {
+    background: #1a1a2e;
+    color: white;
+}
+
+.share-icon.facebook {
+    background: #4267B2;
+    color: white;
+}
+
+.share-icon.whatsapp {
+    background: #25D366;
+    color: white;
+}
+
+.share-icon.link {
+    background: #6c757d;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .share-buttons-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .share-button {
+        min-height: 60px;
+        padding: 0.75rem;
+    }
+    
+    .button-icon {
+        font-size: 1.25rem;
+    }
+}
+

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Partner_Share__c</fullName>
+    <label>Partner Share</label>
+    <type>Percent</type>
+    <required>false</required>
+    <precision>5</precision>
+    <scale>2</scale>
+    <description>Partner/affiliate revenue share percentage (for revenue sharing deals)</description>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

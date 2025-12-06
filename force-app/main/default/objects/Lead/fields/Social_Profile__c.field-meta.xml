@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Social_Profile__c</fullName>
+    <label>Social Profile</label>
+    <description>LinkedIn or Twitter profile URL for research</description>
+    <inlineHelpText>LinkedIn or Twitter profile URL for this lead</inlineHelpText>
+    <type>Url</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

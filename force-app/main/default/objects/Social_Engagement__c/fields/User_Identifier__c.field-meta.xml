@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>User_Identifier__c</fullName>
+    <label>User Identifier</label>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <externalId>false</externalId>
+    <description>Anonymized user hash for privacy</description>
+</CustomField>
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Competitor_Using__c</fullName>
+    <label>Competitor Using</label>
+    <description>Current competitor solution they are using</description>
+    <inlineHelpText>Name of competitor solution currently being used (e.g. Opta, StatsBomb)</inlineHelpText>
+    <type>Text</type>
+    <required>false</required>
+    <length>255</length>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

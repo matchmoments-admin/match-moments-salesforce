@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opportunity_Type__c</fullName>
+    <label>Opportunity Type</label>
+    <description>Revenue stream type for this opportunity</description>
+    <inlineHelpText>Select the revenue stream type (Subscription, Sponsorship, Media Licensing, etc.)</inlineHelpText>
+    <type>Picklist</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Subscription - Premium ($9.99/mo)</fullName>
+                <default>false</default>
+                <label>Subscription - Premium ($9.99/mo)</label>
+            </value>
+            <value>
+                <fullName>Subscription - Creator ($29.99/mo)</fullName>
+                <default>false</default>
+                <label>Subscription - Creator ($29.99/mo)</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Bronze ($99/mo)</fullName>
+                <default>false</default>
+                <label>Subscription - Team Bronze ($99/mo)</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Silver ($199/mo)</fullName>
+                <default>false</default>
+                <label>Subscription - Team Silver ($199/mo)</label>
+            </value>
+            <value>
+                <fullName>Subscription - Team Gold ($499/mo)</fullName>
+                <default>false</default>
+                <label>Subscription - Team Gold ($499/mo)</label>
+            </value>
+            <value>
+                <fullName>Sponsorship - Title Sponsor</fullName>
+                <default>false</default>
+                <label>Sponsorship - Title Sponsor</label>
+            </value>
+            <value>
+                <fullName>Sponsorship - Category Sponsor</fullName>
+                <default>false</default>
+                <label>Sponsorship - Category Sponsor</label>
+            </value>
+            <value>
+                <fullName>Sponsorship - Event Sponsor</fullName>
+                <default>false</default>
+                <label>Sponsorship - Event Sponsor</label>
+            </value>
+            <value>
+                <fullName>Media Licensing - Content</fullName>
+                <default>false</default>
+                <label>Media Licensing - Content</label>
+            </value>
+            <value>
+                <fullName>Media Licensing - Data</fullName>
+                <default>false</default>
+                <label>Media Licensing - Data</label>
+            </value>
+            <value>
+                <fullName>League Partnership - Official Stats</fullName>
+                <default>false</default>
+                <label>League Partnership - Official Stats</label>
+            </value>
+            <value>
+                <fullName>League Partnership - Content Provider</fullName>
+                <default>false</default>
+                <label>League Partnership - Content Provider</label>
+            </value>
+            <value>
+                <fullName>API Access - Startup</fullName>
+                <default>false</default>
+                <label>API Access - Startup</label>
+            </value>
+            <value>
+                <fullName>API Access - Enterprise</fullName>
+                <default>false</default>
+                <label>API Access - Enterprise</label>
+            </value>
+            <value>
+                <fullName>Affiliate - Betting</fullName>
+                <default>false</default>
+                <label>Affiliate - Betting</label>
+            </value>
+            <value>
+                <fullName>Strategic Partnership</fullName>
+                <default>false</default>
+                <label>Strategic Partnership</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

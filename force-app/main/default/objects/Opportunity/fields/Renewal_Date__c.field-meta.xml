@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Renewal_Date__c</fullName>
+    <label>Renewal Date</label>
+    <description>Contract renewal date</description>
+    <inlineHelpText>Date when this contract is up for renewal</inlineHelpText>
+    <type>Date</type>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opportunity__c</fullName>
+    <label>Opportunity</label>
+    <type>Lookup</type>
+    <required>false</required>
+    <referenceTo>Opportunity</referenceTo>
+    <relationshipLabel>Sponsorships</relationshipLabel>
+    <relationshipName>Sponsorships</relationshipName>
+    <description>Related sales opportunity</description>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
+

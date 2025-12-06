@@ -1,0 +1,494 @@
+/* Moment Detail Page Styles */
+
+/* Base Layout */
+.moment-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+    min-height: 100vh;
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: 1rem;
+}
+
+.loading-text {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* Error State */
+.error-container {
+    text-align: center;
+    padding: 3rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* Match Header */
+.match-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.teams-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    gap: 0.75rem;
+}
+
+.team-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.team-name {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.score-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.score-display {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.match-status {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.match-meta {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    opacity: 0.85;
+}
+
+.separator {
+    opacity: 0.5;
+}
+
+/* Moment Content */
+.moment-content {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    background: #000;
+}
+
+.video-player {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+}
+
+.event-details {
+    padding: 2rem;
+}
+
+.event-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.event-icon {
+    font-size: 3rem;
+}
+
+.event-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    flex: 1;
+    margin: 0;
+    color: #1a1a2e;
+}
+
+.event-time {
+    font-size: 1.5rem;
+    color: #e63946;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e63946 0%, #d00000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Player Info */
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.player-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.player-position {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.event-description {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+/* Period Context */
+.period-context {
+    background: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 12px;
+    border-left: 4px solid #e63946;
+}
+
+.period-context h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6c757d;
+}
+
+.period-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.period-label {
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.period-score {
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.cumulative-score {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Share Section */
+.share-section {
+    margin-bottom: 1.5rem;
+}
+
+/* Engagement Stats */
+.engagement-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease;
+}
+
+.stat:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 1.75rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    display: block;
+    background: linear-gradient(135deg, #e63946 0%, #d00000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Related Moments */
+.related-moments {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.related-moments h3 {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.25rem;
+    color: #1a1a2e;
+}
+
+.moments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.moment-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.moment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.moment-thumbnail {
+    position: relative;
+    padding-bottom: 56.25%;
+    background: #e9ecef;
+}
+
+.moment-thumbnail img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.moment-time {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.moment-info {
+    padding: 1rem;
+}
+
+.moment-title {
+    display: block;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 0.25rem;
+}
+
+.moment-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Embed Section */
+.embed-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.embed-toggle {
+    background: none;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.embed-toggle:hover {
+    background: #f8f9fa;
+    border-color: #1a1a2e;
+}
+
+.embed-code-container {
+    margin-top: 1rem;
+}
+
+.embed-textarea {
+    width: 100%;
+    height: 100px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    resize: none;
+    background: #f8f9fa;
+}
+
+.copy-embed-btn {
+    margin-top: 0.75rem;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-embed-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .moment-page {
+        padding: 1rem;
+    }
+    
+    .match-header {
+        padding: 1.25rem;
+    }
+    
+    .teams-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .team {
+        flex-direction: row;
+    }
+    
+    .score-container {
+        order: -1;
+    }
+    
+    .score-display {
+        font-size: 2rem;
+    }
+    
+    .team-logo {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .engagement-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .moments-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .event-details {
+        padding: 1.25rem;
+    }
+    
+    .event-header {
+        flex-wrap: wrap;
+    }
+    
+    .event-title {
+        font-size: 1.25rem;
+    }
+}
+
