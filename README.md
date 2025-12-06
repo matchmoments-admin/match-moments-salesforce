@@ -377,6 +377,105 @@ match-moments-salesforce/
 └── docs/                     # Documentation
 ```
 
+### 🔗 Browse Source Code on GitHub
+
+#### Apex Classes
+
+**Application Layer:**
+- [`Application.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/application/Application.cls) - FFLib Application Factory
+
+**Controllers:**
+- [`ESPNActionController.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/ESPNActionController.cls) - ESPN API integration
+- [`ESPNActionControllerV2.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/controllers/ESPNActionControllerV2.cls) - FFLib-based controller
+- [`MomentPageController.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/MomentPageController.cls) - Moment detail page controller
+- [`EngagementTracker.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/EngagementTracker.cls) - Social engagement tracking
+
+**Domains:** [View all](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/classes/domains)
+- [`Teams.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/Teams.cls)
+- [`Players.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/Players.cls)
+- [`Fixtures.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/Fixtures.cls)
+- [`Competitions.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/Competitions.cls)
+- [`CommentaryEvents.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/CommentaryEvents.cls)
+- [`SocialEngagements.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/SocialEngagements.cls)
+
+**Selectors:** [View all](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/classes/selectors)
+- [`TeamsSelector.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/selectors/TeamsSelector.cls)
+- [`PlayersSelector.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/selectors/PlayersSelector.cls)
+- [`FixturesSelector.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/selectors/FixturesSelector.cls)
+- [`CompetitionsSelector.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/selectors/CompetitionsSelector.cls)
+- [`CommentaryEventsSelector.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/selectors/CommentaryEventsSelector.cls)
+
+**Services:** [View all](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/classes/services)
+- [`ESPNSyncServiceImpl.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/services/ESPNSyncServiceImpl.cls)
+- [`SocialSharingServiceImpl.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/services/SocialSharingServiceImpl.cls)
+- [`EngagementServiceImpl.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/services/EngagementServiceImpl.cls)
+- [`SportUtils.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/services/SportUtils.cls)
+
+**Sport Handlers:**
+- [`SoccerHandler.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/SoccerHandler.cls)
+- [`CricketHandler.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/CricketHandler.cls)
+- [`NBAHandler.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/NBAHandler.cls)
+- [`AFLHandler.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/AFLHandler.cls)
+
+#### Lightning Web Components
+
+- [`socialShareWidget`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/lwc/socialShareWidget) - Social share buttons with engagement tracking
+  - [`socialShareWidget.js`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/socialShareWidget/socialShareWidget.js)
+  - [`socialShareWidget.html`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/socialShareWidget/socialShareWidget.html)
+  - [`socialShareWidget.css`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/socialShareWidget/socialShareWidget.css)
+
+- [`momentDetailPage`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/lwc/momentDetailPage) - Public moment display page
+  - [`momentDetailPage.js`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/momentDetailPage/momentDetailPage.js)
+  - [`momentDetailPage.html`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/momentDetailPage/momentDetailPage.html)
+  - [`momentDetailPage.css`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/momentDetailPage/momentDetailPage.css)
+
+- [`getSportData`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/lwc/getSportData) - Quick action UI for ESPN sync
+  - [`getSportData.js`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/getSportData/getSportData.js)
+  - [`getSportData.html`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/getSportData/getSportData.html)
+
+#### Custom Objects
+
+[**View all objects**](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects)
+
+**Core Sports Objects:**
+- [`Team__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Team__c) - Sports teams (maps to Account)
+- [`Competition__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Competition__c) - Leagues and tournaments
+- [`Fixture__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Fixture__c) - Matches/games
+- [`Fixture_Period__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Fixture_Period__c) - Match periods
+- [`Commentary__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Commentary__c) - Match commentary
+- [`Commentary_Event__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Commentary_Event__c) - Key moments (goals, cards, etc.)
+
+**Statistics Objects:**
+- [`Team_Season_Stats__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Team_Season_Stats__c) - Team statistics (32+ fields)
+- [`Player_Season_Stats__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Player_Season_Stats__c) - Player statistics (40+ fields)
+
+**Social & Engagement:**
+- [`Social_Engagement__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Social_Engagement__c) - Share and view tracking
+
+**Revenue Objects:**
+- [`Revenue_Stream__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Revenue_Stream__c) - Revenue source tracking
+- [`Sponsorship__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Sponsorship__c) - Brand partnerships (20% women's premium)
+- [`Media_License__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Media_License__c) - Content licensing deals
+- [`League_Partnership__c`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/League_Partnership__c) - Official league relationships
+
+**Enhanced Standard Objects:**
+- [`Lead` (custom fields)](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Lead/fields) - +13 revenue qualification fields
+- [`Opportunity` (custom fields)](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Opportunity/fields) - +18 revenue tracking fields
+- [`Account` (custom fields)](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/objects/Account/fields) - +13 customer management fields
+
+#### Configuration
+
+- [**Permission Sets**](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/permissionsets)
+  - [`ESPN_Internal_Users`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/permissionsets/ESPN_Internal_Users.permissionset-meta.xml) - Full FLS access
+  - [`ESPN_API_External_Users`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/permissionsets/ESPN_API_External_Users.permissionset-meta.xml) - Limited access
+
+- [**Quick Actions**](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/quickActions)
+  - [`Fixture__c.SyncFromESPN`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/quickActions/Fixture__c.SyncFromESPN.quickAction-meta.xml)
+  - [`Competition__c.SyncFixturesFromESPN`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/quickActions/Competition__c.SyncFixturesFromESPN.quickAction-meta.xml)
+
+- [**Remote Site Settings**](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/remoteSiteSettings)
+  - [`ESPN_API`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/remoteSiteSettings/ESPN_API.remoteSite-meta.xml)
+
 ---
 
 ## 🔧 Development Workflow
