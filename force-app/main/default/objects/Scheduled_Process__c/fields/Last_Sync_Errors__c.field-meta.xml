@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Sync_Errors__c</fullName>
+    <description>Error messages from last sync execution</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Automatically populated with any errors encountered during sync</inlineHelpText>
+    <label>Last Sync Errors</label>
+    <length>131072</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>
+

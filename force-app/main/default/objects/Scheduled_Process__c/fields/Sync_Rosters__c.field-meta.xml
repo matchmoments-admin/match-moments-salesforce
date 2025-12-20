@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sync_Rosters__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Enable player roster synchronization</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Check to sync player/athlete rosters from ESPN</inlineHelpText>
+    <label>Sync Rosters</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>
+

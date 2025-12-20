@@ -45,5 +45,36 @@ public interface IESPNSyncService {
      * @return List of ESPNSyncResult for each team
      */
     List<ESPNSyncResult> syncTeams(Set<Id> teamIds, fflib_ISObjectUnitOfWork uow);
+    
+    /**
+     * @description Sync all teams for a competition
+     * @param competitionId Competition__c record ID
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    ESPNSyncResult syncCompetitionTeams(Id competitionId, fflib_ISObjectUnitOfWork uow);
+    
+    /**
+     * @description Sync all rosters for a competition
+     * @param competitionId Competition__c record ID
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    ESPNSyncResult syncCompetitionRosters(Id competitionId, fflib_ISObjectUnitOfWork uow);
+    
+    /**
+     * @description Sync fixtures with date range for a competition
+     * @param competitionId Competition__c record ID
+     * @param startDate Start date for fixtures
+     * @param endDate End date for fixtures
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    ESPNSyncResult syncCompetitionFixturesDateRange(
+        Id competitionId, 
+        Date startDate, 
+        Date endDate,
+        fflib_ISObjectUnitOfWork uow
+    );
 }
 

@@ -104,6 +104,38 @@ public with sharing class ESPNHttpService {
     }
     
     /**
+     * @description Get scoreboard for date range
+     * @param sport The sport type
+     * @param leagueCode The league code
+     * @param startDateYYYYMMDD Start date in YYYYMMDD format
+     * @param endDateYYYYMMDD End date in YYYYMMDD format
+     * @return ESPNScoreboardResponse Parsed fixture data
+     */
+    public static ESPNScoreboardResponse getFixturesForDateRange(String sport, String leagueCode, String startDateYYYYMMDD, String endDateYYYYMMDD) {
+        String sportPath = buildSportPath(sport, leagueCode);
+        String endpoint = ESPN_BASE_URL + sportPath + '/scoreboard?dates=' + startDateYYYYMMDD + '-' + endDateYYYYMMDD;
+        
+        HttpResponse response = makeCallout(endpoint);
+        
+        if (response.getStatusCode() == 200) {
+            return parseScoreboardResponse(response.getBody());
+        } else {
+            throw new ESPNException('Failed to fetch fixtures for date range ' + startDateYYYYMMDD + '-' + endDateYYYYMMDD + ': ' + response.getStatus());
+        }
+    }
+    
+    /**
+     * @description Format Salesforce Date to ESPN format (YYYYMMDD)
+     * @param dt Salesforce Date object
+     * @return String Date in YYYYMMDD format
+     */
+    public static String formatDateForESPN(Date dt) {
+        return dt.year() + 
+               String.valueOf(dt.month()).leftPad(2, '0') + 
+               String.valueOf(dt.day()).leftPad(2, '0');
+    }
+    
+    /**
      * @description Get team's full schedule (all fixtures for the season)
      * @param sport The sport type
      * @param leagueCode The league code

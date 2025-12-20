@@ -410,6 +410,129 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
     }
     
     // =========================================================================
+    // BULK COMPETITION SYNC METHODS (For Scheduled Jobs)
+    // =========================================================================
+    
+    /**
+     * @description Sync all teams for a competition
+     * Uses existing ESPNSyncService static methods
+     * @param competitionId Competition__c record ID
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    public ESPNSyncResult syncCompetitionTeams(Id competitionId, fflib_ISObjectUnitOfWork uow) {
+        try {
+            // Query competition
+            List<Competition__c> competitions = CompetitionsSelector.newInstance().selectById(new Set<Id>{ competitionId });
+            
+            if (competitions.isEmpty()) {
+                return ESPNSyncResult.failure('Competition not found', competitionId);
+            }
+            
+            Competition__c comp = competitions[0];
+            
+            // Determine sport and league
+            String sportType = String.isNotBlank(comp.Sport__c) ? comp.Sport__c : 'Soccer';
+            String espnSport = SportUtils.normalizeSportForESPN(sportType);
+            String leagueCode = String.isNotBlank(comp.ESPN_League_ID__c) 
+                ? comp.ESPN_League_ID__c : SportUtils.getDefaultLeagueCode(sportType);
+            
+            // Use existing static method (doesn't use UOW pattern)
+            Integer teamsCount = ESPNSyncService.syncLeagueTeams(espnSport, leagueCode);
+            
+            return ESPNSyncResult.success('Synced ' + teamsCount + ' teams for ' + comp.Name, competitionId)
+                .withCounts(teamsCount, 0, 0);
+            
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'ESPNSyncService.syncCompetitionTeams error: ' + e.getMessage());
+            return ESPNSyncResult.failure('Error syncing competition teams: ' + e.getMessage(), competitionId);
+        }
+    }
+    
+    /**
+     * @description Sync all rosters for a competition
+     * @param competitionId Competition__c record ID
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    public ESPNSyncResult syncCompetitionRosters(Id competitionId, fflib_ISObjectUnitOfWork uow) {
+        try {
+            // Query competition
+            List<Competition__c> competitions = CompetitionsSelector.newInstance().selectById(new Set<Id>{ competitionId });
+            
+            if (competitions.isEmpty()) {
+                return ESPNSyncResult.failure('Competition not found', competitionId);
+            }
+            
+            Competition__c comp = competitions[0];
+            
+            // Determine sport and league
+            String sportType = String.isNotBlank(comp.Sport__c) ? comp.Sport__c : 'Soccer';
+            String espnSport = SportUtils.normalizeSportForESPN(sportType);
+            String leagueCode = String.isNotBlank(comp.ESPN_League_ID__c) 
+                ? comp.ESPN_League_ID__c : SportUtils.getDefaultLeagueCode(sportType);
+            
+            // Use existing static method (doesn't use UOW pattern)
+            Integer playersCount = ESPNSyncService.syncAllRostersForLeague(espnSport, leagueCode);
+            
+            return ESPNSyncResult.success('Synced ' + playersCount + ' players for ' + comp.Name, competitionId)
+                .withCounts(playersCount, 0, 0);
+            
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'ESPNSyncService.syncCompetitionRosters error: ' + e.getMessage());
+            return ESPNSyncResult.failure('Error syncing competition rosters: ' + e.getMessage(), competitionId);
+        }
+    }
+    
+    /**
+     * @description Sync fixtures with date range for a competition
+     * @param competitionId Competition__c record ID
+     * @param startDate Start date for fixtures
+     * @param endDate End date for fixtures
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    public ESPNSyncResult syncCompetitionFixturesDateRange(
+        Id competitionId, 
+        Date startDate, 
+        Date endDate,
+        fflib_ISObjectUnitOfWork uow
+    ) {
+        try {
+            // Query competition
+            List<Competition__c> competitions = CompetitionsSelector.newInstance().selectById(new Set<Id>{ competitionId });
+            
+            if (competitions.isEmpty()) {
+                return ESPNSyncResult.failure('Competition not found', competitionId);
+            }
+            
+            Competition__c comp = competitions[0];
+            
+            // Determine sport and league
+            String sportType = String.isNotBlank(comp.Sport__c) ? comp.Sport__c : 'Soccer';
+            String espnSport = SportUtils.normalizeSportForESPN(sportType);
+            String leagueCode = String.isNotBlank(comp.ESPN_League_ID__c) 
+                ? comp.ESPN_League_ID__c : SportUtils.getDefaultLeagueCode(sportType);
+            
+            // Use existing static method (doesn't use UOW pattern)
+            Integer fixturesCount = ESPNSyncService.syncFixturesForDateRange(
+                espnSport, 
+                leagueCode, 
+                startDate, 
+                endDate, 
+                competitionId
+            );
+            
+            return ESPNSyncResult.success('Synced ' + fixturesCount + ' fixtures for ' + comp.Name, competitionId)
+                .withCounts(fixturesCount, 0, 0);
+            
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'ESPNSyncService.syncCompetitionFixturesDateRange error: ' + e.getMessage());
+            return ESPNSyncResult.failure('Error syncing competition fixtures: ' + e.getMessage(), competitionId);
+        }
+    }
+    
+    // =========================================================================
     // PRIVATE HELPER METHODS
     // =========================================================================
     

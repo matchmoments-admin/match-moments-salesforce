@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Max_API_Calls_Per_Run__c</fullName>
+    <defaultValue>50</defaultValue>
+    <description>Maximum ESPN API calls allowed per execution (rate limit protection)</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Limit API calls to prevent rate limiting (default 50)</inlineHelpText>
+    <label>Max API Calls Per Run</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
+
