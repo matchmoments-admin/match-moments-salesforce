@@ -1,0 +1,83 @@
+---
+globs: "**/*.field-meta.xml"
+description: Salesforce Field Level Security (FLS) requirements when adding custom fields
+---
+
+# Salesforce Field Level Security (FLS) Requirements
+
+## CRITICAL: When Adding New Custom Fields
+
+**Every new custom field MUST have FLS configured in Permission Sets or Profiles for the field to be accessible.**
+
+### Checklist for New Fields
+
+1. **Create the field definition** (`*.field-meta.xml`)
+2. **Update Permission Sets** to grant FLS access:
+   - Add `<fieldPermissions>` entry in relevant `.permissionset-meta.xml` files
+   - Set both `<readable>true</readable>` and `<editable>true</editable>` as needed
+
+### Permission Set Entry Template
+
+```xml
+<fieldPermissions>
+    <editable>true</editable>
+    <field>ObjectName__c.FieldName__c</field>
+    <readable>true</readable>
+</fieldPermissions>
+```
+
+### Common Permission Sets to Update
+
+For this project, update these permission sets when adding fields:
+- `force-app/main/default/permissionsets/ESPN_Internal_Users.permissionset-meta.xml`
+- `force-app/main/default/permissionsets/ESPN_API_External_Users.permissionset-meta.xml`
+
+### For New Custom Objects
+
+Also add object permissions:
+
+```xml
+<objectPermissions>
+    <allowCreate>true</allowCreate>
+    <allowDelete>true</allowDelete>
+    <allowEdit>true</allowEdit>
+    <allowRead>true</allowRead>
+    <modifyAllRecords>false</modifyAllRecords>
+    <object>ObjectName__c</object>
+    <viewAllRecords>true</viewAllRecords>
+</objectPermissions>
+```
+
+### Fields That Cannot Have FLS in Permission Sets
+
+**DO NOT** add FLS entries for:
+- **Required fields** (`<required>true</required>` in field definition)
+- **Master-Detail relationships** (automatically readable)
+- **Lookup fields that are required**
+
+These will cause deployment errors like:
+> "You cannot deploy to a required field: ObjectName__c.FieldName__c"
+
+Check field definitions before adding FLS:
+```bash
+grep -l "required>true" force-app/main/default/objects/*/fields/*.xml
+```
+
+### Why This Matters
+
+- Fields deployed without FLS are **invisible to users** even if deployed successfully
+- Schema describe calls won't show fields without read permission
+- Apex code running in user context will fail to access the fields
+- LWC/Aura components won't display fields without FLS
+
+### Verification
+
+After deployment, verify field access with:
+
+```apex
+// Check if field is accessible
+Map<String, Schema.SObjectField> fields = Schema.SObjectType.ObjectName__c.fields.getMap();
+System.debug('Field exists: ' + fields.containsKey('fieldname__c'));
+```
+
+If field exists in org but `containsKey` returns false, it's an FLS issue.

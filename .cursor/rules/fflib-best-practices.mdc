@@ -1,0 +1,374 @@
+# FFLib (Salesforce Enterprise Patterns) – Best Practices
+
+## Core Principles
+
+1. **One transaction → one UOW → one commit**
+2. **All DML through UOW** (no direct DML when a UOW exists)
+3. **Layering:**
+   - **Controllers / triggers / batch / queueables** = entry points (may create + commit UOW)
+   - **Services** = orchestration only, use existing UOW
+   - **Domains** = business logic on records, no UOW, no queries
+   - **Selectors** = data access only, no logic, no DML
+
+---
+
+## 1. Unit of Work (UOW) Pattern Rules
+
+### 1.1 ONE UOW Per Transaction
+
+**Never create and commit multiple UOWs in the same transaction.**
+
+❌ **Bad – multiple commits & multiple UOWs:**
+
+```apex
+public void processRecords() {
+    // First commit
+    fflib_ISObjectUnitOfWork uow1 = Application.UOWContext.createNewUOW();
+    uow1.registerDirty(someRecord);
+    Application.UOWContext.removeCurrentUOW().commitWork(); // ❌ commit 1
+    
+    // Second commit
+    fflib_ISObjectUnitOfWork uow2 = Application.UOWContext.createNewUOW();
+    uow2.registerDirty(anotherRecord);
+    Application.UOWContext.removeCurrentUOW().commitWork(); // ❌ commit 2
+}
+```
+
+✅ **Good – one UOW, one commit:**
+
+```apex
+public void processRecords() {
+    fflib_ISObjectUnitOfWork uow = Application.UOWContext.getCurrentUOW();
+    
+    uow.registerDirty(someRecord);
+    uow.registerDirty(anotherRecord);
+    
+    // Commit once at the end (by the caller / entry point)
+}
+```
+
+### 1.2 Where to Create UOW – Controllers / Triggers Only
+
+**Entry points** (Aura/LWC controllers, REST endpoints, batch/queueable, triggers) create the UOW and commit.
+
+**Services and domains must not create or commit.**
+
+✅ **Controller – creates and commits UOW:**
+
+```apex
+@AuraEnabled
+public static void saveData(String jsonData) {
+    Id recordId;
+    fflib_ISObjectUnitOfWork uow;
+    
+    try {
+        uow = Application.UOWContext.createNewUOW();
+        
+        Data data = (Data) JSON.deserialize(jsonData, Data.class);
+        recordId = data.recordId;
+        
+        OpportunityServiceImpl service = new OpportunityServiceImpl();
+        service.processSomething(recordId);  // uses current UOW
+        
+        uow.commitWork();
+        
+    } catch (DmlException ex) {
+        Log.exception('Error processing recordId: ' + recordId, ex);
+        throw new AuraHandledException(ex.getMessage());
+    } catch (Exception ex) {
+        Log.exception('General exception for recordId: ' + recordId, ex);
+        throw new AuraHandledException('Error saving: ' + ex.getMessage());
+    } finally {
+        // ✅ always clear context
+        Application.UOWContext.removeCurrentUOW();
+    }
+}
+```
+
+✅ **Service – uses existing UOW (no create/commit):**
+
+```apex
+public class OpportunityServiceImpl implements IOpportunityService {
+    public void processOpportunities(List<Opportunity> opps, Map<Id, SObject> existingRecords) {
+        fflib_ISObjectUnitOfWork uow = Application.UOWContext.getCurrentUOW();
+        
+        for (Opportunity opp : opps) {
+            // Business logic here
+        }
+        
+        uow.registerDirty(opps);
+        // ✅ no commit here
+    }
+}
+```
+
+### 1.3 Pass UOW Into Helpers (Don't Hide getCurrentUOW())
+
+Instead of every helper calling `getCurrentUOW()` itself, **pass the UOW in from the service**.
+
+❌ **Bad – helper silently calls getCurrentUOW():**
+
+```apex
+private static void createRecords(List<SObject> records) {
+    fflib_ISObjectUnitOfWork uow = Application.UOWContext.getCurrentUOW();
+    uow.registerNew(records);
+}
+```
+
+✅ **Good – helper receives UOW:**
+
+```apex
+private static void createRecords(List<SObject> records, fflib_ISObjectUnitOfWork uow) {
+    if (records.isEmpty() || uow == null) {
+        return;
+    }
+    uow.registerNew(records);
+}
+```
+
+### 1.4 Consolidate Updates for the Same Record
+
+When multiple pieces of logic want to update the same record, use a Map to combine changes and register once.
+
+```apex
+Map<Id, Opportunity> oppsToUpdate = new Map<Id, Opportunity>();
+
+for (Opportunity opp : opportunityList) {
+    Opportunity oppUpdate = oppsToUpdate.containsKey(opp.Id) 
+        ? oppsToUpdate.get(opp.Id) 
+        : new Opportunity(Id = opp.Id);
+    
+    oppUpdate.SomeField__c = 'value';
+    oppsToUpdate.put(opp.Id, oppUpdate);
+}
+
+uow.registerDirty(oppsToUpdate.values());
+```
+
+---
+
+## 2. Selector & Bulkification Rules
+
+### 2.1 No Selectors Inside Loops
+
+❌ **Bad – SOQL in loop:**
+
+```apex
+for (Opportunity opp : opportunityList) {
+    Goal__c goal = GoalsSelector.newInstance()
+        .selectByStage(opp.StageName); // ❌ SOQL in loop
+}
+```
+
+✅ **Good – bulkified with one selector call + map:**
+
+```apex
+// Collect unique values
+Set<String> stageNames = new Set<String>();
+for (Opportunity opp : opportunityList) {
+    stageNames.add(opp.StageName);
+}
+
+// Bulk selector call
+Map<String, Goal__c> goalsByStage = GoalsSelector.newInstance()
+    .selectByStagesAsMap(stageNames);
+
+// Use map in loop
+for (Opportunity opp : opportunityList) {
+    Goal__c goal = goalsByStage.get(opp.StageName);
+}
+```
+
+### 2.2 Query All Required Fields Upfront
+
+Extend selector methods to return all needed fields, don't add ad-hoc SOQL in services.
+
+```apex
+public List<Fixture__c> selectByIdWithTeams(Set<Id> fixtureIds) {
+    fflib_QueryFactory queryFactory = newQueryFactory()
+        .setCondition('Id IN :fixtureIds');
+    
+    // Include related records
+    new TeamsSelector().configureQueryFactoryFields(queryFactory, 'Home_Team__r');
+    new TeamsSelector().configureQueryFactoryFields(queryFactory, 'Away_Team__r');
+    
+    return (List<Fixture__c>) Database.query(queryFactory.toSOQL());
+}
+```
+
+---
+
+## 3. Domain Pattern Rules
+
+**Domains should:**
+- Operate on in-memory records (no DML, no UOW)
+- Be reusable across services / controllers / triggers
+- Encapsulate business logic
+
+```apex
+public class Fixtures extends fflib_SObjectDomain implements IFixtures {
+    
+    public void updateScores(Integer homeScore, Integer awayScore) {
+        for (Fixture__c fixture : (List<Fixture__c>) Records) {
+            fixture.Home_Score_Total__c = homeScore;
+            fixture.Away_Score_Total__c = awayScore;
+        }
+        // ❌ No DML here - caller registers with UOW
+    }
+}
+```
+
+---
+
+## 4. Error Handling
+
+✅ **Use structured logging, not System.debug:**
+
+```apex
+try {
+    // operation
+} catch (Exception ex) {
+    Log.addException('Failed to process: ' + recordId, ex);
+}
+
+Log.publish();
+```
+
+---
+
+## 5. Feature Flags & Record Type Guards
+
+Check at method start with early returns:
+
+```apex
+public static void setContractDate(List<Opportunity> opportunityList) {
+    if (!FeatureFlagCustomMetadata.getFeatureFlag('FEATURE_NAME') || opportunityList == null) {
+        return;
+    }
+    
+    Id recordTypeId = Utils.getRecordTypeId('Opportunity', 'RecordTypeName');
+    
+    for (Opportunity opp : opportunityList) {
+        if (opp.RecordTypeId == recordTypeId) {
+            // logic
+        }
+    }
+}
+```
+
+---
+
+## 6. Code Review Checklist
+
+- [ ] Only entry points (controllers, triggers, batch, queueables) call `createNewUOW()`
+- [ ] Only entry points call `commitWork()`, once per transaction
+- [ ] Service/helper methods never call `createNewUOW()` or `commitWork()`
+- [ ] UOW dependencies in helpers are explicitly passed
+- [ ] No selectors called inside loops
+- [ ] Selector methods return all needed fields
+- [ ] Domain classes encapsulate business logic, not data access or DML
+- [ ] Feature flags and record type checks live at top of methods
+- [ ] Logging uses structured logging instead of `System.debug`
+
+---
+
+## 7. Anti-Patterns to Avoid
+
+### ❌ Multiple Commits in Same Method
+Triggers fire twice, governor limits consumed twice, risk of partial success.
+
+### ❌ Service Method Committing
+Service is no longer composable, can't be called from other services safely.
+
+### ❌ Hidden UOW Dependency
+Not clear from signature that UOW must exist, hard to test, easy to break.
+
+### ❌ SOQL in Loop
+Governor limit violations, slow performance.
+
+### ❌ No Empty Check Before .get(0)
+`List index out of bounds` exception if no records returned.
+
+---
+
+## 8. Quick Reference
+
+| Scenario | Pattern |
+|----------|---------|
+| Controller entry point | Create UOW → call services → commit once |
+| Service method | Get current UOW → register work → DON'T commit |
+| Domain method | Modify in-memory records → DON'T commit |
+| Helper method | Receive UOW as parameter → register work |
+| Multiple updates to same record | Use Map to consolidate → register once |
+| Selector results | Check `isEmpty()` before `.get(0)` |
+| Feature flags | Check at method start with early return |
+| Error handling | Use structured logging, not `System.debug` |
+
+---
+
+## 9. Testing Best Practices
+
+### Unit Tests (With Mocks) - Fast & Isolated
+
+```apex
+@IsTest
+static void givenValidRecords_whenProcessing_thenRegistersCorrectly() {
+    // Given - Mock selectors
+    fflib_ApexMocks mocks = new fflib_ApexMocks();
+    IFixturesSelector mockSelector = (IFixturesSelector) mocks.mock(IFixturesSelector.class);
+    
+    mocks.startStubbing();
+    mocks.when(mockSelector.selectById(fflib_Match.anySet()))
+        .thenReturn(new List<Fixture__c>());
+    mocks.stopStubbing();
+    
+    Application.Selector.setMock(mockSelector);
+    
+    // When
+    Test.startTest();
+    Application.UOWContext.createNewUOW();
+    
+    MyService.processRecords(recordIds);
+    
+    Application.UOWContext.commitAndCleanup();
+    Test.stopTest();
+    
+    // Then - Verify
+    ((IFixturesSelector) mocks.verify(mockSelector, 1))
+        .selectById(fflib_Match.anySet());
+}
+```
+
+### Integration Tests (With Real Data) - Catches Trigger Chains
+
+```apex
+@IsTest
+static void givenRealData_whenProcessing_thenAllTriggersWork() {
+    // Given - Create REAL records
+    Account team = TestDataFactory.createTeam('Test Team');
+    Fixture__c fixture = TestDataFactory.createFixture(team.Id);
+    
+    // When - NO MOCKS, let real triggers fire
+    Test.startTest();
+    fixture.Status__c = 'Completed';
+    update fixture;
+    Test.stopTest();
+    
+    // Then - Query database and verify
+    Fixture__c updated = [SELECT Status__c FROM Fixture__c WHERE Id = :fixture.Id];
+    System.assertEquals('Completed', updated.Status__c);
+}
+```
+
+---
+
+## 10. Red Flags in Code Review
+
+1. **Multiple `createNewUOW()` calls** in same method → Violates one UOW per transaction
+2. **`commitWork()` in service class** → Should only be in controllers/triggers
+3. **Selector inside `for` loop** → SOQL in loop, governor limit risk
+4. **No `isEmpty()` before `.get(0)`** → Index out of bounds risk
+5. **`System.debug` in catch block** → Errors get lost in production
+6. **Helper calls `getCurrentUOW()` internally** → Hidden dependency
+7. **No recursion guard in trigger** → Risk of infinite loops
+8. **Direct DML (`insert`, `update`)** when UOW exists → Bypasses UOW pattern
