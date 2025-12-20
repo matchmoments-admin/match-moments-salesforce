@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dashboard_Role__c</fullName>
+    <label>Dashboard Role</label>
+    <description>Role for external dashboard access. Determines permissions in the Match Moments web portal.</description>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>super_admin</fullName>
+                <default>false</default>
+                <label>Super Admin</label>
+            </value>
+            <value>
+                <fullName>admin</fullName>
+                <default>false</default>
+                <label>Admin</label>
+            </value>
+            <value>
+                <fullName>team_portal</fullName>
+                <default>false</default>
+                <label>Team Portal</label>
+            </value>
+            <value>
+                <fullName>sponsor_portal</fullName>
+                <default>false</default>
+                <label>Sponsor Portal</label>
+            </value>
+            <value>
+                <fullName>media_partner</fullName>
+                <default>false</default>
+                <label>Media Partner</label>
+            </value>
+            <value>
+                <fullName>customer_success</fullName>
+                <default>false</default>
+                <label>Customer Success</label>
+            </value>
+            <value>
+                <fullName>view_only</fullName>
+                <default>false</default>
+                <label>View Only</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+
