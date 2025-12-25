@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Platform Event for real-time ESPN sync with retry logic</description>
+    <eventType>HighVolume</eventType>
+    <label>ESPN Sync Event</label>
+    <pluralLabel>ESPN Sync Events</pluralLabel>
+    <publishBehavior>PublishAfterCommit</publishBehavior>
+</CustomObject>
+

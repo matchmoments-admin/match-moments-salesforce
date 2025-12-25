@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Period_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Period Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Half</fullName>
+                <default>false</default>
+                <label>Half</label>
+            </value>
+            <value>
+                <fullName>Quarter</fullName>
+                <default>false</default>
+                <label>Quarter</label>
+            </value>
+            <value>
+                <fullName>Innings</fullName>
+                <default>false</default>
+                <label>Innings</label>
+            </value>
+            <value>
+                <fullName>Set</fullName>
+                <default>false</default>
+                <label>Set</label>
+            </value>
+            <value>
+                <fullName>Round</fullName>
+                <default>false</default>
+                <label>Round</label>
+            </value>
+            <value>
+                <fullName>Period</fullName>
+                <default>false</default>
+                <label>Period</label>
+            </value>
+            <value>
+                <fullName>Extra Time</fullName>
+                <default>false</default>
+                <label>Extra Time</label>
+            </value>
+            <value>
+                <fullName>Overtime</fullName>
+                <default>false</default>
+                <label>Overtime</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

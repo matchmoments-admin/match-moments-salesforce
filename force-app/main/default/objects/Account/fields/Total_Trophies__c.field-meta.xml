@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Trophies__c</fullName>
+    <description>Total team trophies</description>
+    <externalId>false</externalId>
+    <label>Total Trophies</label>
+    <summaryFilterItems>
+        <field>Award__c.Award_Category__c</field>
+        <operation>equals</operation>
+        <value>Team Trophy</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Award__c.Team__c</summaryForeignKey>
+    <summaryOperation>count</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <type>Summary</type>
+</CustomField>

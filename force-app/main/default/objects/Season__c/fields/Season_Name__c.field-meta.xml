@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Season_Name__c</fullName>
+    <description>Season display name (e.g., 2024-2025, 2024)</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Enter season name like "2024-2025" for split year or "2024" for calendar year</inlineHelpText>
+    <label>Season Name</label>
+    <length>50</length>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
+

@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Abbreviation__c</fullName>
-    <description>Team abbreviation (MCI, LAL, NYY)</description>
+    <fullName>Formation__c</fullName>
+    <description>Extracted formation (4-3-3, 4-4-2)</description>
     <externalId>false</externalId>
-    <inlineHelpText>Short code for display</inlineHelpText>
-    <label>Abbreviation</label>
+    <label>Formation</label>
     <length>10</length>
     <required>false</required>
-    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Text</type>
     <unique>false</unique>
 </CustomField>

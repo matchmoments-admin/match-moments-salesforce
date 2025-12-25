@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Awards__c</fullName>
+    <description>Total awards for this player</description>
+    <externalId>false</externalId>
+    <label>Total Awards</label>
+    <summaryForeignKey>Award__c.Player__c</summaryForeignKey>
+    <summaryOperation>count</summaryOperation>
+    <trackHistory>false</trackHistory>
+    <type>Summary</type>
+</CustomField>

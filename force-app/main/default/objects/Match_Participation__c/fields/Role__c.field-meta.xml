@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Role__c</fullName>
+    <externalId>false</externalId>
+    <label>Role</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Player</fullName>
+                <default>true</default>
+                <label>Player</label>
+            </value>
+            <value>
+                <fullName>Manager</fullName>
+                <default>false</default>
+                <label>Manager</label>
+            </value>
+            <value>
+                <fullName>Head Coach</fullName>
+                <default>false</default>
+                <label>Head Coach</label>
+            </value>
+            <value>
+                <fullName>Assistant Coach</fullName>
+                <default>false</default>
+                <label>Assistant Coach</label>
+            </value>
+            <value>
+                <fullName>Goalkeeper Coach</fullName>
+                <default>false</default>
+                <label>Goalkeeper Coach</label>
+            </value>
+            <value>
+                <fullName>Fitness Coach</fullName>
+                <default>false</default>
+                <label>Fitness Coach</label>
+            </value>
+            <value>
+                <fullName>Referee</fullName>
+                <default>false</default>
+                <label>Referee</label>
+            </value>
+            <value>
+                <fullName>Assistant Referee</fullName>
+                <default>false</default>
+                <label>Assistant Referee</label>
+            </value>
+            <value>
+                <fullName>Fourth Official</fullName>
+                <default>false</default>
+                <label>Fourth Official</label>
+            </value>
+            <value>
+                <fullName>VAR Official</fullName>
+                <default>false</default>
+                <label>VAR Official</label>
+            </value>
+            <value>
+                <fullName>Umpire</fullName>
+                <default>false</default>
+                <label>Umpire</label>
+            </value>
+            <value>
+                <fullName>Third Umpire</fullName>
+                <default>false</default>
+                <label>Third Umpire</label>
+            </value>
+            <value>
+                <fullName>Match Commissioner</fullName>
+                <default>false</default>
+                <label>Match Commissioner</label>
+            </value>
+            <value>
+                <fullName>Physiotherapist</fullName>
+                <default>false</default>
+                <label>Physiotherapist</label>
+            </value>
+            <value>
+                <fullName>Team Doctor</fullName>
+                <default>false</default>
+                <label>Team Doctor</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

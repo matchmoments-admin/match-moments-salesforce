@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Broadcast_URL__c</fullName>
+    <description>URL to watch the live broadcast or stream of the fixture</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Link to watch this match live or on-demand</inlineHelpText>
+    <label>Broadcast URL</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Url</type>
+</CustomField>
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sync_Teams__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Sync teams for this league</description>
+    <externalId>false</externalId>
+    <label>Sync Teams</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>
+
