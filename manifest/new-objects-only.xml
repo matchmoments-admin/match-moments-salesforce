@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Season__c</members>
+        <members>Team_Membership__c</members>
+        <members>Award__c</members>
+        <members>League_Config__c</members>
+        <members>ESPN_Sync_Error__c</members>
+        <members>API_Usage__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Account.Current_Season__c</members>
+        <members>Account.Foundation_Year__c</members>
+        <members>Competition__c.Season__c</members>
+        <members>Match__c.Season__c</members>
+        <members>Contact.Current_Team__c</members>
+        <members>Contact.Date_of_Birth__c</members>
+        <name>CustomField</name>
+    </types>
+    <version>59.0</version>
+</Package>
+

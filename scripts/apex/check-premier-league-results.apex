@@ -82,3 +82,4 @@ System.debug('✅ Job Status: ' + job.Last_Sync_Status__c);
 System.debug('✅ Duration: ' + job.Last_Sync_Duration_Seconds__c + ' seconds');
 System.debug('');
 
+

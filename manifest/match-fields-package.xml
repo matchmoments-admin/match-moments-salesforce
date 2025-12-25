@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Match__c.ESPN_Event_ID__c</members>
+        <members>Match__c.Home_Score_Final__c</members>
+        <members>Match__c.Away_Score_Final__c</members>
+        <members>Match__c.Venue__c</members>
+        <members>Match__c.Attendance__c</members>
+        <members>Match__c.Broadcast_URL__c</members>
+        <members>Match__c.Current_Period__c</members>
+        <members>Match__c.Match_Stats_JSON__c</members>
+        <members>Match__c.Referee__c</members>
+        <members>Match__c.Home_Sub_Score__c</members>
+        <members>Match__c.Away_Sub_Score__c</members>
+        <members>Match__c.Neutral_Venue__c</members>
+        <members>Match__c.Season__c</members>
+        <members>Match__c.Winner__c</members>
+        <members>Match__c.Display_Score__c</members>
+        <name>CustomField</name>
+    </types>
+    <version>65.0</version>
+</Package>
+
