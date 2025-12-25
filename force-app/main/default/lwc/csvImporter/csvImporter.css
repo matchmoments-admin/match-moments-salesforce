@@ -1,0 +1,46 @@
+.slds-card__body_inner {
+    padding: 1rem;
+}
+
+.slds-list_horizontal dt {
+    float: left;
+    clear: left;
+    width: 120px;
+    font-weight: bold;
+}
+
+.slds-list_horizontal dd {
+    margin-left: 130px;
+    margin-bottom: 0.5rem;
+}
+
+.result-box {
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 0.25rem;
+}
+
+.slds-theme_success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.slds-theme_warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+.slds-theme_error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.slds-list_dotted {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+}
+
+.slds-list_dotted li {
+    margin-bottom: 0.25rem;
+}
+

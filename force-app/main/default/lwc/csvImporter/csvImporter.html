@@ -1,0 +1,202 @@
+<template>
+    <lightning-card title="CSV Data Importer" icon-name="custom:custom63">
+        <div class="slds-card__body slds-card__body_inner">
+            
+            <!-- Import Mode Selection -->
+            <div class="slds-m-bottom_medium">
+                <lightning-radio-group
+                    name="importMode"
+                    label="Import Mode"
+                    options={importModeOptions}
+                    value={importMode}
+                    onchange={handleImportModeChange}
+                    type="button">
+                </lightning-radio-group>
+            </div>
+
+            <!-- File Upload -->
+            <div class="slds-m-bottom_medium">
+                <lightning-input
+                    type="file"
+                    label="Select CSV File"
+                    accept=".csv"
+                    onchange={handleFileUpload}>
+                </lightning-input>
+            </div>
+
+            <!-- CSV Preview -->
+            <template if:true={csvHeaders}>
+                <div class="slds-m-bottom_medium">
+                    <div class="slds-text-heading_small slds-m-bottom_small">
+                        CSV Columns Detected ({csvHeaders.length})
+                    </div>
+                    <div class="slds-box slds-box_x-small slds-theme_shade">
+                        <lightning-pill-container>
+                            <template for:each={csvHeaders} for:item="header">
+                                <lightning-pill
+                                    key={header}
+                                    label={header}
+                                    variant="plain">
+                                </lightning-pill>
+                            </template>
+                        </lightning-pill-container>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Generic Import Configuration -->
+            <template if:true={isGenericMode}>
+                <template if:true={csvContent}>
+                    <!-- Object Selection -->
+                    <div class="slds-m-bottom_medium">
+                        <lightning-combobox
+                            name="targetObject"
+                            label="Target Salesforce Object"
+                            value={selectedObject}
+                            placeholder="Select an object"
+                            options={objectOptions}
+                            onchange={handleObjectChange}>
+                        </lightning-combobox>
+                    </div>
+
+                    <!-- Field Mappings -->
+                    <template if:true={selectedObject}>
+                        <div class="slds-m-bottom_medium">
+                            <div class="slds-text-heading_small slds-m-bottom_small">
+                                Field Mappings
+                            </div>
+                            <div class="slds-box">
+                                <template for:each={csvHeaders} for:item="csvColumn">
+                                    <div key={csvColumn} class="slds-grid slds-gutters slds-m-bottom_x-small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <lightning-input
+                                                label="CSV Column"
+                                                value={csvColumn}
+                                                read-only>
+                                            </lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <lightning-combobox
+                                                name={csvColumn}
+                                                label="Salesforce Field"
+                                                placeholder="Select field"
+                                                options={fieldOptions}
+                                                data-csv-column={csvColumn}
+                                                onchange={handleFieldMappingChange}>
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- External ID Field -->
+                        <div class="slds-m-bottom_medium">
+                            <lightning-combobox
+                                name="externalIdField"
+                                label="External ID Field (Optional - for Upsert)"
+                                placeholder="Select field for upsert"
+                                options={fieldOptions}
+                                value={externalIdField}
+                                onchange={handleExternalIdChange}>
+                            </lightning-combobox>
+                        </div>
+                    </template>
+                </template>
+            </template>
+
+            <!-- Import Button -->
+            <template if:true={csvContent}>
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label={importButtonLabel}
+                        title="Import CSV Data"
+                        onclick={handleImport}
+                        disabled={isImporting}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="Clear"
+                        title="Clear and start over"
+                        onclick={handleClear}
+                        disabled={isImporting}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Loading Spinner -->
+            <template if:true={isImporting}>
+                <div class="slds-m-top_medium">
+                    <lightning-spinner
+                        alternative-text="Importing..."
+                        size="medium">
+                    </lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Import Results -->
+            <template if:true={importResult}>
+                <div class="slds-m-top_medium">
+                    <div class={resultCardClass}>
+                        <div class="slds-text-heading_small slds-m-bottom_small">
+                            Import Results
+                        </div>
+                        
+                        <!-- Generic Import Results -->
+                        <template if:true={isGenericMode}>
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label slds-text-color_weak">Processed:</dt>
+                                <dd class="slds-item_detail">{importResult.recordsProcessed}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Created:</dt>
+                                <dd class="slds-item_detail">{importResult.recordsCreated}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Updated:</dt>
+                                <dd class="slds-item_detail">{importResult.recordsUpdated}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Failed:</dt>
+                                <dd class="slds-item_detail">{importResult.recordsFailed}</dd>
+                            </dl>
+                        </template>
+
+                        <!-- NRL Import Results -->
+                        <template if:true={isNRLMode}>
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label slds-text-color_weak">Total Created:</dt>
+                                <dd class="slds-item_detail">{importResult.totalRecordsCreated}</dd>
+                                <dt class="slds-item_label slds-text-color_weak">Total Failed:</dt>
+                                <dd class="slds-item_detail">{importResult.totalRecordsFailed}</dd>
+                            </dl>
+                            
+                            <!-- Breakdown by Object Type -->
+                            <template if:true={nrlResultBreakdown}>
+                                <div class="slds-m-top_small">
+                                    <div class="slds-text-body_small slds-text-color_weak">Breakdown by Type:</div>
+                                    <ul class="slds-list_dotted slds-m-top_x-small">
+                                        <template for:each={nrlResultBreakdown} for:item="item">
+                                            <li key={item.type}>{item.type}: {item.created} created</li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- Errors -->
+                        <template if:true={hasErrors}>
+                            <div class="slds-m-top_small">
+                                <div class="slds-text-body_small slds-text-color_weak">Errors:</div>
+                                <div class="slds-box slds-box_x-small slds-theme_error slds-m-top_x-small">
+                                    <ul class="slds-list_dotted">
+                                        <template for:each={importResult.errors} for:item="error">
+                                            <li key={error} class="slds-text-body_small">{error}</li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
+
