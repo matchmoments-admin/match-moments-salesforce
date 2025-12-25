@@ -63,7 +63,7 @@ public class ESPNSyncBatchable implements
         
         if (config.Competition__c != null) {
             // Filter by teams in this competition (via fixtures)
-            query += 'AND Id IN (SELECT Home_Team__c FROM Fixture__c WHERE Competition__c = :config.Competition__c) ';
+            query += 'AND Id IN (SELECT Home_Team__c FROM Match__c WHERE Competition__c = :config.Competition__c) ';
         }
         
         query += 'ORDER BY Name';

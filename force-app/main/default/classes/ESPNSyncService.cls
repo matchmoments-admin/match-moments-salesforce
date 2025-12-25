@@ -26,7 +26,7 @@ public with sharing class ESPNSyncService {
             }
             
             // Parse to Account records
-            List<Account> accounts = ESPNDataParser.parseTeamsToAccounts(response);
+            List<Account> accounts = ESPNDataParser.parseTeamsToAccounts(response, leagueCode);
             
             if (accounts.isEmpty()) {
                 System.debug('No accounts to sync');
@@ -155,8 +155,8 @@ public with sharing class ESPNSyncService {
                 return 0;
             }
             
-            // Parse to Fixture__c records
-            List<Fixture__c> fixtures = ESPNDataParser.parseScoreboardToFixtures(response, competitionId);
+            // Parse to Match__c records
+            List<Match__c> fixtures = ESPNDataParser.parseScoreboardToFixtures(response, competitionId);
             
             if (fixtures.isEmpty()) {
                 System.debug('No fixtures to sync');
@@ -166,7 +166,7 @@ public with sharing class ESPNSyncService {
             // Upsert by ESPN_Event_ID__c
             Database.UpsertResult[] results = Database.upsert(
                 fixtures, 
-                Fixture__c.ESPN_Event_ID__c, 
+                Match__c.ESPN_Event_ID__c, 
                 false
             );
             
@@ -218,8 +218,8 @@ public with sharing class ESPNSyncService {
                 return 0;
             }
             
-            // Parse to Fixture__c records
-            List<Fixture__c> fixtures = ESPNDataParser.parseScoreboardToFixtures(response, competitionId);
+            // Parse to Match__c records
+            List<Match__c> fixtures = ESPNDataParser.parseScoreboardToFixtures(response, competitionId);
             
             if (fixtures.isEmpty()) {
                 System.debug('No fixtures to sync');
@@ -229,7 +229,7 @@ public with sharing class ESPNSyncService {
             // Upsert by ESPN_Event_ID__c
             Database.UpsertResult[] results = Database.upsert(
                 fixtures, 
-                Fixture__c.ESPN_Event_ID__c, 
+                Match__c.ESPN_Event_ID__c, 
                 false
             );
             
@@ -260,6 +260,7 @@ public with sharing class ESPNSyncService {
     
     /**
      * @description Sync all rosters for all teams in a league
+     * Fetches the team list from ESPN API first to ensure we only sync teams that belong to this league
      * @param sport Sport type
      * @param leagueCode ESPN league code
      * @return Integer Total number of players synced
@@ -269,27 +270,51 @@ public with sharing class ESPNSyncService {
         
         Integer totalPlayers = 0;
         
-        // Get all teams with ESPN IDs
-        List<Account> teams = [SELECT Id, Name, ESPN_Team_ID__c 
-                               FROM Account 
-                               WHERE ESPN_Team_ID__c != null 
-                               ORDER BY Name];
-        
-        System.debug('Found ' + teams.size() + ' teams to sync rosters for');
-        
-        for (Account team : teams) {
-            try {
-                Integer playersForTeam = syncTeamRoster(sport, leagueCode, team.ESPN_Team_ID__c);
-                totalPlayers += playersForTeam;
-                System.debug('Synced ' + playersForTeam + ' players for ' + team.Name);
-            } catch (Exception e) {
-                System.debug('ERROR syncing roster for ' + team.Name + ': ' + e.getMessage());
-                // Continue with next team
+        try {
+            // Step 1: Fetch teams from ESPN API to get the correct team list for this league
+            ESPNHttpService.ESPNTeamsResponse response = ESPNHttpService.getTeams(sport, leagueCode);
+            
+            if (!response.success || response.teams == null || response.teams.isEmpty()) {
+                System.debug('Failed to fetch teams from ESPN API: ' + response.errorMessage);
+                return 0;
             }
+            
+            // Step 2: Build set of ESPN team IDs that belong to this league
+            Set<String> espnTeamIds = new Set<String>();
+            for (ESPNHttpService.ESPNTeam team : response.teams) {
+                espnTeamIds.add(team.id);
+            }
+            
+            System.debug('Found ' + espnTeamIds.size() + ' teams in league ' + leagueCode + ' from ESPN API');
+            
+            // Step 3: Query only Accounts that match these ESPN team IDs
+            List<Account> teams = [SELECT Id, Name, ESPN_Team_ID__c 
+                                   FROM Account 
+                                   WHERE ESPN_Team_ID__c IN :espnTeamIds 
+                                   ORDER BY Name];
+            
+            System.debug('Found ' + teams.size() + ' matching teams in Salesforce to sync rosters for');
+            
+            // Step 4: Sync roster for each team
+            for (Account team : teams) {
+                try {
+                    Integer playersForTeam = syncTeamRoster(sport, leagueCode, team.ESPN_Team_ID__c);
+                    totalPlayers += playersForTeam;
+                    System.debug('✓ Synced ' + playersForTeam + ' players for ' + team.Name);
+                } catch (Exception e) {
+                    System.debug('✗ ERROR syncing roster for ' + team.Name + ': ' + e.getMessage());
+                    // Continue with next team
+                }
+            }
+            
+            System.debug('=== All rosters sync complete: ' + totalPlayers + ' total players ===');
+            return totalPlayers;
+            
+        } catch (Exception e) {
+            System.debug('EXCEPTION in syncAllRostersForLeague: ' + e.getMessage());
+            System.debug('Stack trace: ' + e.getStackTraceString());
+            throw e;
         }
-        
-        System.debug('=== All rosters sync complete: ' + totalPlayers + ' total players ===');
-        return totalPlayers;
     }
     
     /**

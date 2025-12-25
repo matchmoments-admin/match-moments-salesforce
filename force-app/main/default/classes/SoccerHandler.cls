@@ -68,9 +68,9 @@ public class SoccerHandler extends SportHandlerBase implements ISportDataHandler
         c.FirstName = safeString(playerData, 'firstName');
         c.LastName = safeString(playerData, 'lastName');
         c.Position__c = safeString(playerData, 'position'); // e.g., "Striker", "Midfielder"
-        c.ESPN_ID__c = safeString(playerData, 'id');
+        c.ESPN_Player_ID__c = safeString(playerData, 'id');
         c.Jersey_Number__c = safeDecimal(playerData, 'jersey');
-        c.Profile_Image_Url__c = safeString(playerData, 'headshotUrl');
+        c.Profile_Image_URL__c = safeString(playerData, 'headshotUrl');
         c.Roster_Status__c = 'Active'; // Default
         
         return c;

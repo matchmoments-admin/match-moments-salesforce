@@ -8,7 +8,7 @@ public with sharing class EngagementTracker {
     
     /**
      * @description Track an engagement event
-     * @param recordId The Commentary_Event__c record Id
+     * @param recordId The Match_Moment__c record Id
      * @param engagementType Type of engagement
      * @param platform Social platform
      * @param additionalData Optional additional data map
@@ -121,7 +121,7 @@ public with sharing class EngagementTracker {
     
     /**
      * @description Get engagement breakdown by platform
-     * @param eventId The Commentary_Event__c record Id
+     * @param eventId The Match_Moment__c record Id
      * @return Map of platform to engagement count
      */
     public static Map<String, Integer> getEngagementByPlatform(Id eventId) {
@@ -143,7 +143,7 @@ public with sharing class EngagementTracker {
     
     /**
      * @description Get engagement breakdown by type
-     * @param eventId The Commentary_Event__c record Id
+     * @param eventId The Match_Moment__c record Id
      * @return Map of engagement type to count
      */
     public static Map<String, Integer> getEngagementByType(Id eventId) {
@@ -167,7 +167,7 @@ public with sharing class EngagementTracker {
      * @description Detect viral moments based on recent engagement spike
      * @param minutesWindow Time window in minutes to check
      * @param threshold Minimum engagements to be considered viral
-     * @return List of Commentary_Event__c Ids that are trending
+     * @return List of Match_Moment__c Ids that are trending
      */
     public static List<Id> detectViralMoments(Integer minutesWindow, Integer threshold) {
         DateTime cutoffTime = System.now().addMinutes(-minutesWindow);
@@ -191,7 +191,7 @@ public with sharing class EngagementTracker {
     
     /**
      * @description Get engagement trends over time
-     * @param eventId The Commentary_Event__c record Id
+     * @param eventId The Match_Moment__c record Id
      * @param hoursBack Number of hours to look back
      * @return List of hourly engagement counts
      */

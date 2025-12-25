@@ -1,10 +1,10 @@
 /**
- * @description Interface for Fixtures Domain
- * Defines business operations on Fixture__c records
+ * @description Interface for Matches Domain
+ * Defines business operations on Match__c records
  * @author Brendan Milton
  * @date 2025-12-05
  */
-public interface IFixtures extends fflib_ISObjectDomain {
+public interface IMatches extends fflib_ISObjectDomain {
     
     /**
      * @description Update scores from ESPN data
@@ -21,13 +21,13 @@ public interface IFixtures extends fflib_ISObjectDomain {
     void updateSubScores(Integer homeSubScore, Integer awaySubScore);
     
     /**
-     * @description Set fixture status
+     * @description Set match status
      * @param status New status value
      */
     void setStatus(String status);
     
     /**
-     * @description Mark fixtures as completed and determine winner
+     * @description Mark matches as completed and determine winner
      */
     void markAsCompleted();
     
@@ -39,8 +39,8 @@ public interface IFixtures extends fflib_ISObjectDomain {
     /**
      * @description Get records that have changed status
      * @param existingRecords Map of old record values
-     * @return List of fixtures with status changes
+     * @return List of matches with status changes
      */
-    List<Fixture__c> getStatusChangedRecords(Map<Id, Fixture__c> existingRecords);
+    List<Match__c> getStatusChangedRecords(Map<Id, Match__c> existingRecords);
 }
 

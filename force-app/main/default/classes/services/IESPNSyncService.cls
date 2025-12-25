@@ -24,7 +24,7 @@ public interface IESPNSyncService {
     
     /**
      * @description Sync fixture data from ESPN
-     * @param fixtureId Fixture__c record ID
+     * @param fixtureId Match__c record ID
      * @param uow Unit of Work instance
      * @return ESPNSyncResult with operation outcome
      */

@@ -51,7 +51,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             }
             
             // 4. Resolve ESPN Team ID if missing
-            String espnTeamId = String.isNotBlank(team.ESPN_Team_ID__c) ? team.ESPN_Team_ID__c : team.ESPN_ID__c;
+            String espnTeamId = team.ESPN_Team_ID__c;
             
             if (String.isBlank(espnTeamId)) {
                 espnTeamId = searchTeamByName(team.Name, team.Sport__c);
@@ -90,12 +90,10 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             // 7. Update team record
             Account updatedTeam = new Account(
                 Id = teamId,
-                ESPN_ID__c = teamData.id,
                 ESPN_Team_ID__c = teamData.id,
                 Abbreviation__c = teamData.shortName,
                 Logo_Url__c = teamData.logoUrl,
-                Venue_Name__c = teamData.venueName,
-                Team_Short_Name__c = teamData.shortName
+                Venue_Name__c = teamData.venueName
             );
             
             // 8. Register with UOW (NO COMMIT!)
@@ -204,20 +202,20 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
     
     /**
      * @description Sync fixture data from ESPN
-     * @param fixtureId Fixture__c record ID
+     * @param fixtureId Match__c record ID
      * @param uow Unit of Work instance
      * @return ESPNSyncResult with operation outcome
      */
     public ESPNSyncResult syncFixture(Id fixtureId, fflib_ISObjectUnitOfWork uow) {
         try {
             // 1. Query fixture with details
-            List<Fixture__c> fixtureList = FixturesSelector.newInstance().selectByIdWithDetails(new Set<Id>{ fixtureId });
+            List<Match__c> fixtureList = MatchesSelector.newInstance().selectByIdWithDetails(new Set<Id>{ fixtureId });
             
             if (fixtureList.isEmpty()) {
                 return ESPNSyncResult.failure('Fixture not found', fixtureId);
             }
             
-            Fixture__c fixture = fixtureList[0];
+            Match__c fixture = fixtureList[0];
             
             // 2. Determine sport and league
             String sportType = (fixture.Competition__c != null && fixture.Competition__r.Sport__c != null)
@@ -246,7 +244,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             }
             
             // 5. Update fixture record
-            Fixture__c updatedFixture = new Fixture__c(
+            Match__c updatedFixture = new Match__c(
                 Id = fixtureId,
                 ESPN_Event_ID__c = eventId,
                 Home_Score_Final__c = response.homeScore != null ? Decimal.valueOf(response.homeScore) : null,
@@ -329,15 +327,15 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 eventIds.add(event.id);
             }
             
-            List<Fixture__c> existingFixtures = FixturesSelector.newInstance().selectByESPNEventIds(eventIds);
-            Map<String, Fixture__c> existingByEspnId = new Map<String, Fixture__c>();
-            for (Fixture__c f : existingFixtures) {
+            List<Match__c> existingFixtures = MatchesSelector.newInstance().selectByESPNEventIds(eventIds);
+            Map<String, Match__c> existingByEspnId = new Map<String, Match__c>();
+            for (Match__c f : existingFixtures) {
                 existingByEspnId.put(f.ESPN_Event_ID__c, f);
             }
             
             // 7. Build fixtures
             for (ESPNHttpService.ESPNEvent event : response.events) {
-                Fixture__c fixture;
+                Match__c fixture;
                 
                 if (existingByEspnId.containsKey(event.id)) {
                     // Update existing
@@ -345,13 +343,13 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                     updated++;
                 } else {
                     // Create new
-                    fixture = new Fixture__c();
+                    fixture = new Match__c();
                     fixture.Competition__c = competitionId;
                     created++;
                 }
                 
                 fixture.ESPN_Event_ID__c = event.id;
-                fixture.Fixture_Date_Time__c = Fixtures.parseESPNDate(event.eventDate);
+                fixture.Match_Date_Time__c = Fixtures.parseESPNDate(event.eventDate);
                 fixture.Status__c = Fixtures.mapESPNStatus(event.status);
                 fixture.Venue__c = event.venueName;
                 
@@ -569,9 +567,9 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
      * @param leagueCode ESPN league code
      * @return ESPN Event ID if found
      */
-    private String searchFixtureByDate(Fixture__c fixture, String espnSport, String leagueCode) {
-        Date fixtureDate = fixture.Fixture_Date_Time__c != null 
-            ? fixture.Fixture_Date_Time__c.date() : Date.today();
+    private String searchFixtureByDate(Match__c fixture, String espnSport, String leagueCode) {
+        Date fixtureDate = fixture.Match_Date_Time__c != null 
+            ? fixture.Match_Date_Time__c.date() : Date.today();
         String dateStr = fixtureDate.year() + 
             String.valueOf(fixtureDate.month()).leftPad(2, '0') + 
             String.valueOf(fixtureDate.day()).leftPad(2, '0');

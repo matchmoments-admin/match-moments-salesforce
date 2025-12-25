@@ -65,11 +65,11 @@ public inherited sharing class CompetitionsSelector extends fflib_SObjectSelecto
             .selectField('Id')
             .selectField('Name')
             .selectField('ESPN_Event_ID__c')
-            .selectField('Fixture_Date_Time__c')
+            .selectField('Match_Date_Time__c')
             .selectField('Status__c')
             .selectField('Home_Team__c')
             .selectField('Away_Team__c')
-            .setOrdering('Fixture_Date_Time__c', fflib_QueryFactory.SortOrder.ASCENDING);
+            .setOrdering('Match_Date_Time__c', fflib_QueryFactory.SortOrder.ASCENDING);
         
         return (List<Competition__c>) Database.query(query.toSOQL());
     }

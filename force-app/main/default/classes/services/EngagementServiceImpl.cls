@@ -12,7 +12,7 @@ public inherited sharing class EngagementServiceImpl implements IEngagementServi
     }
     
     public Map<String, Integer> getEngagementCounts(Id commentaryEventId) {
-        List<Commentary_Event__c> events = CommentaryEventsSelector.newInstance().selectById(new Set<Id>{ commentaryEventId });
+        List<Match_Moment__c> events = MatchMomentsSelector.newInstance().selectById(new Set<Id>{ commentaryEventId });
         
         Map<String, Integer> counts = new Map<String, Integer>{
             'shares' => 0,
@@ -21,7 +21,7 @@ public inherited sharing class EngagementServiceImpl implements IEngagementServi
         };
         
         if (!events.isEmpty()) {
-            Commentary_Event__c event = events[0];
+            Match_Moment__c event = events[0];
             counts.put('shares', event.Share_Count__c != null ? Integer.valueOf(event.Share_Count__c) : 0);
             counts.put('views', event.View_Count__c != null ? Integer.valueOf(event.View_Count__c) : 0);
             counts.put('total', counts.get('shares') + counts.get('views'));
@@ -31,10 +31,10 @@ public inherited sharing class EngagementServiceImpl implements IEngagementServi
     }
     
     public Boolean isViral(Id commentaryEventId) {
-        List<Commentary_Event__c> events = CommentaryEventsSelector.newInstance().selectById(new Set<Id>{ commentaryEventId });
+        List<Match_Moment__c> events = MatchMomentsSelector.newInstance().selectById(new Set<Id>{ commentaryEventId });
         
         if (!events.isEmpty()) {
-            Commentary_Event__c event = events[0];
+            Match_Moment__c event = events[0];
             return event.Viral_Score__c != null && event.Viral_Score__c >= VIRAL_THRESHOLD;
         }
         
@@ -42,9 +42,9 @@ public inherited sharing class EngagementServiceImpl implements IEngagementServi
     }
     
     public void calculateViralScores(Set<Id> commentaryEventIds, fflib_ISObjectUnitOfWork uow) {
-        List<Commentary_Event__c> events = CommentaryEventsSelector.newInstance().selectById(commentaryEventIds);
+        List<Match_Moment__c> events = MatchMomentsSelector.newInstance().selectById(commentaryEventIds);
         
-        for (Commentary_Event__c event : events) {
+        for (Match_Moment__c event : events) {
             Decimal shares = event.Share_Count__c != null ? event.Share_Count__c : 0;
             Decimal views = event.View_Count__c != null ? event.View_Count__c : 0;
             

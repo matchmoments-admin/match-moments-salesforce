@@ -8,46 +8,46 @@ public without sharing class MomentPageController {
     
     /**
      * @description Get detailed information about a commentary event for display
-     * @param eventId The Commentary_Event__c record Id
+     * @param eventId The Match_Moment__c record Id
      * @return Map containing event, fixture, period, and related moments data
      */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getEventDetails(Id eventId) {
         try {
-            Commentary_Event__c event = [
+            Match_Moment__c event = [
                 SELECT Id, Name, Event_Type__c, Event_Minute__c, Event_Second__c,
                        Description__c, Event_Importance__c, Video_URL__c,
                        Primary_Player__c, Primary_Player__r.Name, 
                        Primary_Player__r.Position__c, Primary_Player__r.Profile_Image_URL__c,
                        Team__c, Team__r.Name, Team__r.Logo_Url__c,
-                       Fixture__c, Fixture__r.Name,
-                       Fixture__r.Home_Team__r.Name, Fixture__r.Home_Team__r.Logo_Url__c,
-                       Fixture__r.Away_Team__r.Name, Fixture__r.Away_Team__r.Logo_Url__c,
-                       Fixture__r.Home_Score_Final__c, Fixture__r.Away_Score_Final__c,
-                       Fixture__r.Status__c, Fixture__r.Venue__c,
-                       Fixture__r.Fixture_Date_Time__c,
-                       Fixture__r.Competition__r.Name, Fixture__r.Competition__r.Sport__c,
-                       Fixture_Period__c, Fixture_Period__r.Period_Number__c,
-                       Fixture_Period__r.Period_Type__c,
-                       Fixture_Period__r.Home_Score_Period__c,
-                       Fixture_Period__r.Away_Score_Period__c,
-                       Fixture_Period__r.Home_Score_Cumulative__c,
-                       Fixture_Period__r.Away_Score_Cumulative__c,
+                       Match__c, Match__r.Name,
+                       Match__r.Home_Team__r.Name, Match__r.Home_Team__r.Logo_Url__c,
+                       Match__r.Away_Team__r.Name, Match__r.Away_Team__r.Logo_Url__c,
+                       Match__r.Home_Score_Final__c, Match__r.Away_Score_Final__c,
+                       Match__r.Status__c, Match__r.Venue__c,
+                       Match__r.Match_Date_Time__c,
+                       Match__r.Competition__r.Name, Match__r.Competition__r.Sport__c,
+                       Match_Period__c, Match_Period__r.Period_Number__c,
+                       Match_Period__r.Period_Type__c,
+                       Match_Period__r.Home_Score_Period__c,
+                       Match_Period__r.Away_Score_Period__c,
+                       Match_Period__r.Home_Score_Cumulative__c,
+                       Match_Period__r.Away_Score_Cumulative__c,
                        Public_URL__c, Social_Share_Title__c, 
                        Social_Share_Description__c, Social_Media_Image_URL__c,
                        QR_Code_URL__c, Embed_Code__c,
                        Total_Shares__c, Total_Views__c, Viral_Score__c
-                FROM Commentary_Event__c
+                FROM Match_Moment__c
                 WHERE Id = :eventId
                 LIMIT 1
             ];
             
             // Get related moments from same fixture
-            List<Commentary_Event__c> relatedMoments = [
+            List<Match_Moment__c> relatedMoments = [
                 SELECT Id, Event_Type__c, Event_Minute__c, Description__c,
                        Video_URL__c, Social_Share_Title__c, Primary_Player__r.Name
-                FROM Commentary_Event__c
-                WHERE Fixture__c = :event.Fixture__c
+                FROM Match_Moment__c
+                WHERE Match__c = :event.Match__c
                 AND Id != :eventId
                 AND Event_Importance__c IN ('Critical', 'Major')
                 ORDER BY Event_Minute__c ASC
@@ -55,17 +55,17 @@ public without sharing class MomentPageController {
             ];
             
             // Get all events for timeline
-            List<Commentary_Event__c> allEvents = [
+            List<Match_Moment__c> allEvents = [
                 SELECT Id, Event_Type__c, Event_Minute__c, Description__c
-                FROM Commentary_Event__c
-                WHERE Fixture__c = :event.Fixture__c
+                FROM Match_Moment__c
+                WHERE Match__c = :event.Match__c
                 ORDER BY Event_Minute__c ASC
             ];
             
             Map<String, Object> result = new Map<String, Object>{
                 'event' => formatEvent(event),
                 'fixture' => formatFixture(event),
-                'period' => formatPeriod(event.Fixture_Period__r),
+                'period' => formatPeriod(event.Match_Period__r),
                 'relatedMoments' => formatMoments(relatedMoments),
                 'allEvents' => formatTimelineEvents(allEvents, eventId)
             };
@@ -79,7 +79,7 @@ public without sharing class MomentPageController {
     
     /**
      * @description Track user engagement (view, share, click, etc.)
-     * @param eventId The Commentary_Event__c record Id
+     * @param eventId The Match_Moment__c record Id
      * @param engagementType Type of engagement (View, Share, Like, Click, Embed_View)
      * @param platform Platform where engagement occurred
      * @param referrerUrl Where the user came from
@@ -104,7 +104,7 @@ public without sharing class MomentPageController {
             
             insert engagement;
             
-            // Update counts on Commentary_Event__c
+            // Update counts on Match_Moment__c
             updateEngagementCounts(eventId, engagementType, platform);
             
         } catch (Exception e) {
@@ -120,12 +120,12 @@ public without sharing class MomentPageController {
      */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getViralMoments(Integer threshold) {
-        List<Commentary_Event__c> moments = [
+        List<Match_Moment__c> moments = [
             SELECT Id, Social_Share_Title__c, Total_Shares__c, 
                    Total_Views__c, Viral_Score__c, Twitter_Shares__c,
                    Facebook_Shares__c, Event_Type__c,
-                   Fixture__r.Name, CreatedDate
-            FROM Commentary_Event__c
+                   Match__r.Name, CreatedDate
+            FROM Match_Moment__c
             WHERE Viral_Score__c >= :threshold
             ORDER BY Viral_Score__c DESC
             LIMIT 50
@@ -133,7 +133,7 @@ public without sharing class MomentPageController {
         
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         
-        for (Commentary_Event__c moment : moments) {
+        for (Match_Moment__c moment : moments) {
             result.add(new Map<String, Object>{
                 'id' => moment.Id,
                 'title' => moment.Social_Share_Title__c,
@@ -143,7 +143,7 @@ public without sharing class MomentPageController {
                 'twitterShares' => moment.Twitter_Shares__c,
                 'facebookShares' => moment.Facebook_Shares__c,
                 'icon' => getEventIcon(moment.Event_Type__c),
-                'matchName' => moment.Fixture__r.Name,
+                'matchName' => moment.Match__r.Name,
                 'timeAgo' => getTimeAgo(moment.CreatedDate)
             });
         }
@@ -155,7 +155,7 @@ public without sharing class MomentPageController {
     // Private Helper Methods
     // =========================================
     
-    private static Map<String, Object> formatEvent(Commentary_Event__c event) {
+    private static Map<String, Object> formatEvent(Match_Moment__c event) {
         String publicUrl = 'https://yoursportscrm.force.com/fans/moment/' + event.Id;
         String qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + EncodingUtil.urlEncode(publicUrl, 'UTF-8');
         String embedCode = '<iframe src="https://yoursportscrm.force.com/fans/embed/moment/' + event.Id + '" width="600" height="400" frameborder="0"></iframe>';
@@ -192,25 +192,25 @@ public without sharing class MomentPageController {
         };
     }
     
-    private static Map<String, Object> formatFixture(Commentary_Event__c event) {
+    private static Map<String, Object> formatFixture(Match_Moment__c event) {
         return new Map<String, Object>{
-            'id' => event.Fixture__c,
-            'name' => event.Fixture__r.Name,
-            'homeTeamName' => event.Fixture__r.Home_Team__r?.Name,
-            'homeTeamLogo' => event.Fixture__r.Home_Team__r?.Logo_Url__c,
-            'awayTeamName' => event.Fixture__r.Away_Team__r?.Name,
-            'awayTeamLogo' => event.Fixture__r.Away_Team__r?.Logo_Url__c,
-            'homeScore' => event.Fixture__r.Home_Score_Final__c,
-            'awayScore' => event.Fixture__r.Away_Score_Final__c,
-            'status' => event.Fixture__r.Status__c,
-            'venue' => event.Fixture__r.Venue__c,
-            'formattedDate' => event.Fixture__r.Fixture_Date_Time__c?.format('MMM d, yyyy'),
-            'competitionName' => event.Fixture__r.Competition__r?.Name,
-            'sportType' => event.Fixture__r.Competition__r?.Sport__c
+            'id' => event.Match__c,
+            'name' => event.Match__r.Name,
+            'homeTeamName' => event.Match__r.Home_Team__r?.Name,
+            'homeTeamLogo' => event.Match__r.Home_Team__r?.Logo_Url__c,
+            'awayTeamName' => event.Match__r.Away_Team__r?.Name,
+            'awayTeamLogo' => event.Match__r.Away_Team__r?.Logo_Url__c,
+            'homeScore' => event.Match__r.Home_Score_Final__c,
+            'awayScore' => event.Match__r.Away_Score_Final__c,
+            'status' => event.Match__r.Status__c,
+            'venue' => event.Match__r.Venue__c,
+            'formattedDate' => event.Match__r.Match_Date_Time__c?.format('MMM d, yyyy'),
+            'competitionName' => event.Match__r.Competition__r?.Name,
+            'sportType' => event.Match__r.Competition__r?.Sport__c
         };
     }
     
-    private static Map<String, Object> formatPeriod(Fixture_Period__c period) {
+    private static Map<String, Object> formatPeriod(Match_Period__c period) {
         if (period == null) return new Map<String, Object>();
         
         return new Map<String, Object>{
@@ -223,10 +223,10 @@ public without sharing class MomentPageController {
         };
     }
     
-    private static List<Map<String, Object>> formatMoments(List<Commentary_Event__c> moments) {
+    private static List<Map<String, Object>> formatMoments(List<Match_Moment__c> moments) {
         List<Map<String, Object>> formatted = new List<Map<String, Object>>();
         
-        for (Commentary_Event__c moment : moments) {
+        for (Match_Moment__c moment : moments) {
             formatted.add(new Map<String, Object>{
                 'id' => moment.Id,
                 'title' => moment.Social_Share_Title__c,
@@ -243,12 +243,12 @@ public without sharing class MomentPageController {
     }
     
     private static List<Map<String, Object>> formatTimelineEvents(
-        List<Commentary_Event__c> events, 
+        List<Match_Moment__c> events, 
         Id currentEventId
     ) {
         List<Map<String, Object>> formatted = new List<Map<String, Object>>();
         
-        for (Commentary_Event__c event : events) {
+        for (Match_Moment__c event : events) {
             formatted.add(new Map<String, Object>{
                 'id' => event.Id,
                 'minute' => event.Event_Minute__c,
@@ -261,15 +261,15 @@ public without sharing class MomentPageController {
         return formatted;
     }
     
-    private static String buildSocialTitle(Commentary_Event__c event) {
+    private static String buildSocialTitle(Match_Moment__c event) {
         String emoji = getEventEmoji(event.Event_Type__c);
         String playerPart = event.Primary_Player__r?.Name != null ? event.Primary_Player__r.Name + ' - ' : '';
-        String matchPart = event.Fixture__r.Home_Team__r?.Name + ' vs ' + event.Fixture__r.Away_Team__r?.Name;
+        String matchPart = event.Match__r.Home_Team__r?.Name + ' vs ' + event.Match__r.Away_Team__r?.Name;
         
         return emoji + ' ' + event.Event_Type__c.toUpperCase() + '! ' + playerPart + matchPart;
     }
     
-    private static String getSocialImage(Commentary_Event__c event) {
+    private static String getSocialImage(Match_Moment__c event) {
         if (String.isNotBlank(event.Video_URL__c)) {
             return event.Video_URL__c;
         }
@@ -279,7 +279,7 @@ public without sharing class MomentPageController {
         if (event.Team__r?.Logo_Url__c != null) {
             return event.Team__r.Logo_Url__c;
         }
-        return event.Fixture__r.Home_Team__r?.Logo_Url__c;
+        return event.Match__r.Home_Team__r?.Logo_Url__c;
     }
     
     private static String getEventIcon(String eventType) {
@@ -321,10 +321,10 @@ public without sharing class MomentPageController {
     }
     
     private static void updateEngagementCounts(Id eventId, String engagementType, String platform) {
-        Commentary_Event__c event = [
+        Match_Moment__c event = [
             SELECT Id, Total_Shares__c, Total_Views__c, Twitter_Shares__c, 
                    Facebook_Shares__c, Viral_Score__c
-            FROM Commentary_Event__c
+            FROM Match_Moment__c
             WHERE Id = :eventId
             LIMIT 1
         ];

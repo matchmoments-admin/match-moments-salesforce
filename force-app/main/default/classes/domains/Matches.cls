@@ -1,10 +1,10 @@
 /**
- * @description Domain class for Fixture__c business logic
+ * @description Domain class for Match__c business logic
  * NO SOQL, NO DML, NO UOW - operates on in-memory records only
  * @author Brendan Milton
  * @date 2025-12-05
  */
-public inherited sharing class Fixtures extends fflib_SObjectDomain implements IFixtures {
+public inherited sharing class Matches extends fflib_SObjectDomain implements IMatches {
     
     // Status constants
     public static final String STATUS_SCHEDULED = 'Scheduled';
@@ -15,9 +15,9 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
     
     /**
      * @description Constructor
-     * @param records List of Fixture__c records
+     * @param records List of Match__c records
      */
-    public Fixtures(List<Fixture__c> records) {
+    public Matches(List<Match__c> records) {
         super(records);
     }
     
@@ -26,34 +26,34 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      */
     public class Constructor implements fflib_SObjectDomain.IConstructable {
         public fflib_SObjectDomain construct(List<SObject> records) {
-            return new Fixtures((List<Fixture__c>) records);
+            return new Matches((List<Match__c>) records);
         }
     }
     
     /**
      * @description Factory method to create new instance
-     * @param records List of Fixture__c records
-     * @return IFixtures domain instance
+     * @param records List of Match__c records
+     * @return IMatches domain instance
      */
-    public static IFixtures newInstance(List<Fixture__c> records) {
-        return (IFixtures) Application.Domain.newInstance(records);
+    public static IMatches newInstance(List<Match__c> records) {
+        return (IMatches) Application.Domain.newInstance(records);
     }
     
     /**
      * @description Factory method to create instance from record IDs
-     * @param fixtureIds Set of Fixture__c record IDs
-     * @return IFixtures domain instance
+     * @param matchIds Set of Match__c record IDs
+     * @return IMatches domain instance
      */
-    public static IFixtures newInstance(Set<Id> fixtureIds) {
-        return (IFixtures) Application.Domain.newInstance(fixtureIds);
+    public static IMatches newInstance(Set<Id> matchIds) {
+        return (IMatches) Application.Domain.newInstance(matchIds);
     }
     
     /**
-     * @description Get records as List<Fixture__c>
-     * @return List of Fixture__c records
+     * @description Get records as List<Match__c>
+     * @return List of Match__c records
      */
-    public List<Fixture__c> getFixtures() {
-        return (List<Fixture__c>) getRecords();
+    public List<Match__c> getMatches() {
+        return (List<Match__c>) getRecords();
     }
     
     // =========================================================================
@@ -64,17 +64,17 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      * @description Validate records on insert
      */
     public override void onValidate() {
-        for (Fixture__c fixture : getFixtures()) {
+        for (Match__c match : getMatches()) {
             // Home and Away teams are required
-            if (fixture.Home_Team__c == null) {
-                fixture.addError('Home Team is required');
+            if (match.Home_Team__c == null) {
+                match.addError('Home Team is required');
             }
-            if (fixture.Away_Team__c == null) {
-                fixture.addError('Away Team is required');
+            if (match.Away_Team__c == null) {
+                match.addError('Away Team is required');
             }
             // Teams must be different
-            if (fixture.Home_Team__c != null && fixture.Home_Team__c == fixture.Away_Team__c) {
-                fixture.addError('Home Team and Away Team cannot be the same');
+            if (match.Home_Team__c != null && match.Home_Team__c == match.Away_Team__c) {
+                match.addError('Home Team and Away Team cannot be the same');
             }
         }
     }
@@ -84,16 +84,16 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      * @param existingRecords Map of existing record values
      */
     public override void onValidate(Map<Id, SObject> existingRecords) {
-        for (Fixture__c fixture : getFixtures()) {
-            Fixture__c oldFixture = (Fixture__c) existingRecords.get(fixture.Id);
+        for (Match__c match : getMatches()) {
+            Match__c oldFixture = (Match__c) existingRecords.get(match.Id);
             
-            // Cannot change teams after fixture has started
+            // Cannot change teams after match has started
             if (oldFixture.Status__c != STATUS_SCHEDULED) {
-                if (fixture.Home_Team__c != oldFixture.Home_Team__c) {
-                    fixture.addError('Cannot change Home Team after fixture has started');
+                if (match.Home_Team__c != oldFixture.Home_Team__c) {
+                    match.addError('Cannot change Home Team after match has started');
                 }
-                if (fixture.Away_Team__c != oldFixture.Away_Team__c) {
-                    fixture.addError('Cannot change Away Team after fixture has started');
+                if (match.Away_Team__c != oldFixture.Away_Team__c) {
+                    match.addError('Cannot change Away Team after match has started');
                 }
             }
         }
@@ -109,9 +109,9 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      * @param awayScore Away team score
      */
     public void updateScores(Integer homeScore, Integer awayScore) {
-        for (Fixture__c fixture : getFixtures()) {
-            fixture.Home_Score_Final__c = homeScore;
-            fixture.Away_Score_Final__c = awayScore;
+        for (Match__c match : getMatches()) {
+            match.Home_Score_Final__c = homeScore;
+            match.Away_Score_Final__c = awayScore;
         }
     }
     
@@ -121,28 +121,28 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      * @param awaySubScore Away team sub-score
      */
     public void updateSubScores(Integer homeSubScore, Integer awaySubScore) {
-        for (Fixture__c fixture : getFixtures()) {
-            fixture.Home_Sub_Score__c = homeSubScore;
-            fixture.Away_Sub_Score__c = awaySubScore;
+        for (Match__c match : getMatches()) {
+            match.Home_Sub_Score__c = homeSubScore;
+            match.Away_Sub_Score__c = awaySubScore;
         }
     }
     
     /**
-     * @description Set fixture status
+     * @description Set match status
      * @param status New status value
      */
     public void setStatus(String status) {
-        for (Fixture__c fixture : getFixtures()) {
-            fixture.Status__c = status;
+        for (Match__c match : getMatches()) {
+            match.Status__c = status;
         }
     }
     
     /**
-     * @description Mark fixtures as completed and determine winner
+     * @description Mark matches as completed and determine winner
      */
     public void markAsCompleted() {
-        for (Fixture__c fixture : getFixtures()) {
-            fixture.Status__c = STATUS_COMPLETED;
+        for (Match__c match : getMatches()) {
+            match.Status__c = STATUS_COMPLETED;
             // Winner is calculated by formula field, no need to set here
         }
     }
@@ -151,12 +151,12 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
      * @description Validate that required fields are present
      */
     public void validateRequiredFields() {
-        for (Fixture__c fixture : getFixtures()) {
-            if (fixture.Competition__c == null) {
-                fixture.addError('Competition is required');
+        for (Match__c match : getMatches()) {
+            if (match.Competition__c == null) {
+                match.addError('Competition is required');
             }
-            if (fixture.Fixture_Date_Time__c == null) {
-                fixture.addError('Fixture Date/Time is required');
+            if (match.Match_Date_Time__c == null) {
+                match.addError('Fixture Date/Time is required');
             }
         }
     }
@@ -164,15 +164,15 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
     /**
      * @description Get records that have changed status
      * @param existingRecords Map of old record values
-     * @return List of fixtures with status changes
+     * @return List of matches with status changes
      */
-    public List<Fixture__c> getStatusChangedRecords(Map<Id, Fixture__c> existingRecords) {
-        List<Fixture__c> changedRecords = new List<Fixture__c>();
+    public List<Match__c> getStatusChangedRecords(Map<Id, Match__c> existingRecords) {
+        List<Match__c> changedRecords = new List<Match__c>();
         
-        for (Fixture__c fixture : getFixtures()) {
-            Fixture__c oldFixture = existingRecords.get(fixture.Id);
-            if (oldFixture != null && fixture.Status__c != oldFixture.Status__c) {
-                changedRecords.add(fixture);
+        for (Match__c match : getMatches()) {
+            Match__c oldFixture = existingRecords.get(match.Id);
+            if (oldFixture != null && match.Status__c != oldFixture.Status__c) {
+                changedRecords.add(match);
             }
         }
         
@@ -184,9 +184,9 @@ public inherited sharing class Fixtures extends fflib_SObjectDomain implements I
     // =========================================================================
     
     /**
-     * @description Map ESPN status string to Fixture__c Status picklist
+     * @description Map ESPN status string to Match__c Status picklist
      * @param espnStatus ESPN status string
-     * @return Fixture__c Status value
+     * @return Match__c Status value
      */
     public static String mapESPNStatus(String espnStatus) {
         if (String.isBlank(espnStatus)) {

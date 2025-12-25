@@ -20,14 +20,12 @@ public inherited sharing class TeamsSelector extends fflib_SObjectSelector imple
             Account.Name,
             Account.Type,
             Account.Sport__c,
-            Account.ESPN_ID__c,
             Account.ESPN_Team_ID__c,
             Account.Abbreviation__c,
             Account.Logo_Url__c,
             Account.Venue_Name__c,
-            Account.Team_Short_Name__c,
+            Account.League__c,
             Account.Team_Primary_Color__c,
-            Account.Stadium_Name__c,
             Account.Founded_Year__c,
             Account.Current_League_Rank__c
         };

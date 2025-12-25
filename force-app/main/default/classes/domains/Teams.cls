@@ -34,13 +34,9 @@ public inherited sharing class Teams extends fflib_SObjectDomain implements ITea
         for (Account team : getTeams()) {
             if (espnTeamData.containsKey('id')) {
                 team.ESPN_Team_ID__c = String.valueOf(espnTeamData.get('id'));
-                team.ESPN_ID__c = String.valueOf(espnTeamData.get('id'));
             }
             if (espnTeamData.containsKey('abbreviation')) {
                 team.Abbreviation__c = String.valueOf(espnTeamData.get('abbreviation'));
-            }
-            if (espnTeamData.containsKey('shortDisplayName')) {
-                team.Team_Short_Name__c = String.valueOf(espnTeamData.get('shortDisplayName'));
             }
             if (espnTeamData.containsKey('logoUrl')) {
                 team.Logo_Url__c = String.valueOf(espnTeamData.get('logoUrl'));

@@ -27,11 +27,11 @@ public inherited sharing class SocialSharingServiceImpl implements ISocialSharin
     }
     
     public void updateShareCounts(Set<Id> commentaryEventIds, fflib_ISObjectUnitOfWork uow) {
-        List<Commentary_Event__c> events = CommentaryEventsSelector.newInstance().selectById(commentaryEventIds);
-        ICommentaryEvents domain = CommentaryEvents.newInstance(events);
+        List<Match_Moment__c> events = MatchMomentsSelector.newInstance().selectById(commentaryEventIds);
+        IMatchMoments domain = MatchMoments.newInstance(events);
         domain.incrementShareCount();
         
-        for (Commentary_Event__c event : events) {
+        for (Match_Moment__c event : events) {
             uow.registerDirty(event);
         }
     }

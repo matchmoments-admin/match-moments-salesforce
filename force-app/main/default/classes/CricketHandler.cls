@@ -84,9 +84,9 @@ public class CricketHandler extends SportHandlerBase implements ISportDataHandle
         c.FirstName = safeString(playerData, 'firstName');
         c.LastName = safeString(playerData, 'lastName');
         c.Position__c = safeString(playerData, 'position'); // e.g., "Batsman", "Bowler"
-        c.ESPN_ID__c = safeString(playerData, 'id');
+        c.ESPN_Player_ID__c = safeString(playerData, 'id');
         c.Jersey_Number__c = safeDecimal(playerData, 'jersey');
-        c.Profile_Image_Url__c = safeString(playerData, 'headshotUrl');
+        c.Profile_Image_URL__c = safeString(playerData, 'headshotUrl');
         c.Roster_Status__c = 'Active';
         
         return c;

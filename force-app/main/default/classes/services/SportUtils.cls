@@ -83,7 +83,7 @@ public class SportUtils {
     /**
      * @description Get record type developer name for a sport
      * @param sportType Sport type
-     * @param objectType Object type (Fixture__c, Competition__c, etc.)
+     * @param objectType Object type (Match__c, Competition__c, etc.)
      * @return String Record type developer name
      */
     public static String getRecordTypeDeveloperName(String sportType, String objectType) {
@@ -93,29 +93,29 @@ public class SportUtils {
         
         Map<String, Map<String, String>> recordTypeMap = new Map<String, Map<String, String>>{
             SPORT_SOCCER => new Map<String, String>{
-                'Fixture__c' => 'Soccer_Match',
+                'Match__c' => 'Soccer_Match',
                 'Competition__c' => 'Soccer_League',
-                'Fixture_Period__c' => 'Soccer'
+                'Match_Period__c' => 'Soccer'
             },
             SPORT_CRICKET => new Map<String, String>{
-                'Fixture__c' => 'Cricket_Match',
+                'Match__c' => 'Cricket_Match',
                 'Competition__c' => 'Cricket_Tournament',
-                'Fixture_Period__c' => 'Cricket'
+                'Match_Period__c' => 'Cricket'
             },
             SPORT_AFL => new Map<String, String>{
-                'Fixture__c' => 'AFL_Match',
+                'Match__c' => 'AFL_Match',
                 'Competition__c' => 'AFL_Season',
-                'Fixture_Period__c' => 'AFL'
+                'Match_Period__c' => 'AFL'
             },
             SPORT_RUGBY => new Map<String, String>{
-                'Fixture__c' => 'Rugby_Match',
+                'Match__c' => 'Rugby_Match',
                 'Competition__c' => 'Rugby_Competition',
-                'Fixture_Period__c' => 'Rugby'
+                'Match_Period__c' => 'Rugby'
             },
             SPORT_BASKETBALL => new Map<String, String>{
-                'Fixture__c' => 'Basketball_Game',
+                'Match__c' => 'Basketball_Game',
                 'Competition__c' => 'Soccer_League', // Reuse
-                'Fixture_Period__c' => 'Basketball'
+                'Match_Period__c' => 'Basketball'
             }
         };
         

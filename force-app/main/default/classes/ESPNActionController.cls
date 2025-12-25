@@ -22,7 +22,7 @@ public with sharing class ESPNActionController {
             
             if (objectType == 'Account') {
                 System.debug('Processing Account record...');
-                Account team = [SELECT Id, Name, Type, Sport__c, ESPN_ID__c, ESPN_Team_ID__c 
+                Account team = [SELECT Id, Name, Type, Sport__c, ESPN_Team_ID__c 
                                FROM Account WHERE Id = :recordId LIMIT 1];
                 System.debug('Account found - Name: ' + team.Name + ', Type: ' + team.Type + ', Sport__c: ' + team.Sport__c);
                 return getTeamInformation(recordId);
@@ -53,12 +53,12 @@ public with sharing class ESPNActionController {
                 System.debug('Calling getLeagueFixtures with ESPN_League_ID__c: ' + oppGroup.ESPN_League_ID__c);
                 return getLeagueFixtures(recordId, oppGroup.ESPN_League_ID__c);
                 
-            } else if (objectType == 'Fixture__c') {
-                System.debug('Processing Fixture__c record...');
-                Fixture__c fixture = [SELECT Id, Name, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
+            } else if (objectType == 'Match__c') {
+                System.debug('Processing Match__c record...');
+                Match__c fixture = [SELECT Id, Name, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
                                       Competition__r.ESPN_League_ID__c
-                                      FROM Fixture__c WHERE Id = :recordId LIMIT 1];
-                System.debug('Fixture__c found - Name: ' + fixture.Name + ', ESPN_Event_ID__c: ' + fixture.ESPN_Event_ID__c);
+                                      FROM Match__c WHERE Id = :recordId LIMIT 1];
+                System.debug('Match__c found - Name: ' + fixture.Name + ', ESPN_Event_ID__c: ' + fixture.ESPN_Event_ID__c);
                 sportType = (fixture.Competition__c != null && fixture.Competition__r.Sport__c != null)
                     ? fixture.Competition__r.Sport__c : 'Soccer';
                 System.debug('Calling getFixtureData with ESPN_Event_ID__c: ' + fixture.ESPN_Event_ID__c);
@@ -133,12 +133,12 @@ public with sharing class ESPNActionController {
         
         try {
             // Step 1: Query Account with all relevant fields
-            Account acc = [SELECT Id, Name, Type, Sport__c, ESPN_ID__c, ESPN_Team_ID__c,
-                          Abbreviation__c, Logo_Url__c, Venue_Name__c, Team_Short_Name__c
+            Account acc = [SELECT Id, Name, Type, Sport__c, ESPN_Team_ID__c,
+                          Abbreviation__c, Logo_Url__c, Venue_Name__c
                           FROM Account WHERE Id = :recordId LIMIT 1];
             
             System.debug('Account - Name: ' + acc.Name + ', Type: ' + acc.Type + ', Sport__c: ' + acc.Sport__c);
-            System.debug('Account - ESPN_ID__c: ' + acc.ESPN_ID__c + ', ESPN_Team_ID__c: ' + acc.ESPN_Team_ID__c);
+            System.debug('Account - ESPN_Team_ID__c: ' + acc.ESPN_Team_ID__c);
             
             // Step 2: Validate required fields
             if (String.isBlank(acc.Name)) {
@@ -166,7 +166,7 @@ public with sharing class ESPNActionController {
             System.debug('Validation passed - Sport Type: ' + sportType);
             
             // Step 3: Resolve ESPN Team ID if missing
-            String espnTeamId = String.isNotBlank(acc.ESPN_Team_ID__c) ? acc.ESPN_Team_ID__c : acc.ESPN_ID__c;
+            String espnTeamId = acc.ESPN_Team_ID__c;
             
             if (String.isBlank(espnTeamId)) {
                 System.debug('ESPN Team ID is missing - searching ESPN by team name...');
@@ -183,8 +183,7 @@ public with sharing class ESPNActionController {
                 System.debug('Found ESPN Team ID: ' + espnTeamId + ' - updating Account...');
                 Account updateAcc = new Account(
                     Id = recordId,
-                    ESPN_Team_ID__c = espnTeamId,
-                    ESPN_ID__c = espnTeamId
+                    ESPN_Team_ID__c = espnTeamId
                 );
                 update updateAcc;
                 System.debug('Account updated with ESPN Team ID');
@@ -295,13 +294,11 @@ public with sharing class ESPNActionController {
                     // Update Account with team details
                     Account updatedAcc = new Account(
                         Id = recordId,
-                        ESPN_ID__c = teamData.id,
                         ESPN_Team_ID__c = teamData.id,
                         Sport__c = sportType, // Ensure it's set
                         Abbreviation__c = teamData.shortName,
                         Logo_Url__c = teamData.logoUrl,
-                        Venue_Name__c = teamData.venueName,
-                        Team_Short_Name__c = teamData.shortName // Backward compatibility
+                        Venue_Name__c = teamData.venueName
                     );
                     update updatedAcc;
                     
@@ -345,11 +342,11 @@ public with sharing class ESPNActionController {
             System.debug('ESPNActionController: Getting player info for ' + playerName);
             
             // Get Contact to find associated team
-            Contact player = [SELECT Id, Name, Current_Team__c, Current_Team__r.ESPN_ID__c, Current_Team__r.Sport__c 
+            Contact player = [SELECT Id, Name, Current_Team__c, Current_Team__r.ESPN_Team_ID__c, Current_Team__r.Sport__c 
                              FROM Contact 
                              WHERE Id = :recordId LIMIT 1];
             
-            if (player.Current_Team__c == null || player.Current_Team__r.ESPN_ID__c == null) {
+            if (player.Current_Team__c == null || player.Current_Team__r.ESPN_Team_ID__c == null) {
                 result.success = false;
                 result.errorMessage = 'Please link this Contact to a Team with ESPN ID first.';
                 return result;
@@ -362,7 +359,7 @@ public with sharing class ESPNActionController {
             String leagueCode = getDefaultLeagueCode(sportType);
             
             // Get team roster from ESPN
-            String teamId = player.Current_Team__r.ESPN_ID__c;
+            String teamId = player.Current_Team__r.ESPN_Team_ID__c;
             ESPNHttpService.ESPNRosterResponse response = ESPNHttpService.getTeamRoster(espnSport, leagueCode, teamId);
             
             if (response.success && response.athletes != null) {
@@ -563,28 +560,28 @@ public with sharing class ESPNActionController {
                 
                 update updatedOpp;
                 
-                // Create Live_Feed__c records for match events
-                List<Live_Feed__c> feedEvents = new List<Live_Feed__c>();
-                if (response.matchEvents != null) {
-                    for (ESPNHttpService.ESPNMatchEvent event : response.matchEvents) {
-                        Live_Feed__c feedEvent = new Live_Feed__c(
-                            Fixture__c = recordId,
-                            Event_Type__c = event.eventType,
-                            Event_Minute__c = event.minute != null ? Integer.valueOf(event.minute.replaceAll('[^0-9]', '')) : null,
-                            Event_Description__c = event.description,
-                            Timestamp__c = System.now(),
-                            ESPN_Event_ID__c = eventId + '-' + event.minute // Unique ID
-                        );
-                        feedEvents.add(feedEvent);
-                    }
-                }
-                
-                if (!feedEvents.isEmpty()) {
-                    upsert feedEvents ESPN_Event_ID__c;
-                }
+                // TODO: Create Live_Feed__c records for match events (object not yet created)
+                // List<Live_Feed__c> feedEvents = new List<Live_Feed__c>();
+                // if (response.matchEvents != null) {
+                //     for (ESPNHttpService.ESPNMatchEvent event : response.matchEvents) {
+                //         Live_Feed__c feedEvent = new Live_Feed__c(
+                //             Match__c = recordId,
+                //             Event_Type__c = event.eventType,
+                //             Event_Minute__c = event.minute != null ? Integer.valueOf(event.minute.replaceAll('[^0-9]', '')) : null,
+                //             Event_Description__c = event.description,
+                //             Timestamp__c = System.now(),
+                //             ESPN_Event_ID__c = eventId + '-' + event.minute // Unique ID
+                //         );
+                //         feedEvents.add(feedEvent);
+                //     }
+                // }
+                // 
+                // if (!feedEvents.isEmpty()) {
+                //     upsert feedEvents ESPN_Event_ID__c;
+                // }
                 
                 result.success = true;
-                result.message = 'Fixture updated with ' + feedEvents.size() + ' match events';
+                result.message = 'Fixture updated successfully';
                 result.data = JSON.serialize(response);
             } else {
                 result.success = false;
@@ -602,8 +599,8 @@ public with sharing class ESPNActionController {
     }
     
     /**
-     * @description Get fixture data from ESPN for Fixture__c records
-     * @param recordId Fixture__c record ID
+     * @description Get fixture data from ESPN for Match__c records
+     * @param recordId Match__c record ID
      * @param espnEventId ESPN Event ID
      * @return ESPNActionResult with live match data
      */
@@ -614,11 +611,11 @@ public with sharing class ESPNActionController {
         try {
             System.debug('ESPNActionController: Getting fixture data for event ' + espnEventId);
             
-            // Get Fixture__c to determine sport type
-            Fixture__c fixture = [SELECT Id, Name, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
+            // Get Match__c to determine sport type
+            Match__c fixture = [SELECT Id, Name, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
                                   Competition__r.ESPN_League_ID__c, Home_Team__c, Away_Team__c,
-                                  Fixture_Date_Time__c
-                                  FROM Fixture__c WHERE Id = :recordId LIMIT 1];
+                                  Match_Date_Time__c
+                                  FROM Match__c WHERE Id = :recordId LIMIT 1];
             
             String sportType = (fixture.Competition__c != null && fixture.Competition__r.Sport__c != null)
                 ? fixture.Competition__r.Sport__c : 'Soccer';
@@ -631,7 +628,7 @@ public with sharing class ESPNActionController {
             
             if (String.isBlank(eventId)) {
                 // Try to search by date and teams
-                Date fixtureDate = fixture.Fixture_Date_Time__c != null ? fixture.Fixture_Date_Time__c.date() : Date.today();
+                Date fixtureDate = fixture.Match_Date_Time__c != null ? fixture.Match_Date_Time__c.date() : Date.today();
                 String dateStr = fixtureDate.year() + String.valueOf(fixtureDate.month()).leftPad(2, '0') + String.valueOf(fixtureDate.day()).leftPad(2, '0');
                 
                 ESPNHttpService.ESPNScoreboardResponse scoreboardResponse = ESPNHttpService.getFixtures(espnSport, leagueCode, dateStr);
@@ -657,8 +654,8 @@ public with sharing class ESPNActionController {
             ESPNHttpService.ESPNLiveFeedResponse response = ESPNHttpService.getLiveFeed(espnSport, leagueCode, eventId);
             
             if (response.success) {
-                // Update Fixture__c with scores
-                Fixture__c updatedFixture = new Fixture__c(
+                // Update Match__c with scores
+                Match__c updatedFixture = new Match__c(
                     Id = recordId,
                     ESPN_Event_ID__c = eventId,
                     Home_Score_Final__c = response.homeScore != null ? Decimal.valueOf(response.homeScore) : null,
@@ -722,8 +719,8 @@ public with sharing class ESPNActionController {
                 // Get sport handler
                 ISportDataHandler handler = getSportHandler(sportType);
                 
-                // Create/update Fixture__c records for each event
-                List<Fixture__c> fixtures = new List<Fixture__c>();
+                // Create/update Match__c records for each event
+                List<Match__c> fixtures = new List<Match__c>();
                 Set<String> teamEspnIds = new Set<String>();
                 
                 // First pass: collect all team ESPN IDs
@@ -765,8 +762,7 @@ public with sharing class ESPNActionController {
                             Name = teamName,
                             Type = 'Team',
                             Sport__c = sportType,
-                            ESPN_Team_ID__c = espnTeamId,
-                            ESPN_ID__c = espnTeamId
+                            ESPN_Team_ID__c = espnTeamId
                         ));
                     }
                     insert newTeams;
@@ -791,10 +787,10 @@ public with sharing class ESPNActionController {
                         continue;
                     }
                     
-                    Fixture__c fixture = new Fixture__c(
+                    Match__c fixture = new Match__c(
                         ESPN_Event_ID__c = event.id,
                         Competition__c = recordId,
-                        Fixture_Date_Time__c = parseESPNDate(event.eventDate),
+                        Match_Date_Time__c = parseESPNDate(event.eventDate),
                         Status__c = mapMatchStatusToFixtureStatus(event.status),
                         Venue__c = event.venueName,
                         Home_Team__c = teamEspnIdToAccountId.get(event.homeTeamId),
@@ -837,9 +833,9 @@ public with sharing class ESPNActionController {
     }
     
     /**
-     * @description Map ESPN match status to Fixture__c Status picklist value
+     * @description Map ESPN match status to Match__c Status picklist value
      * @param espnStatus ESPN match status string
-     * @return String Fixture__c Status value
+     * @return String Match__c Status value
      */
     private static String mapMatchStatusToFixtureStatus(String espnStatus) {
         if (String.isBlank(espnStatus)) {

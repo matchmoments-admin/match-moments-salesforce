@@ -14,7 +14,7 @@ public with sharing class ESPNActionControllerV2 {
      * Creates UOW, calls appropriate service method, commits once
      * 
      * @param recordId The record ID of the triggering record
-     * @param objectType The object type (Account, Contact, Fixture__c, Competition__c)
+     * @param objectType The object type (Account, Contact, Match__c, Competition__c)
      * @return ESPNSyncResult Result of the operation
      */
     @AuraEnabled
@@ -36,7 +36,7 @@ public with sharing class ESPNActionControllerV2 {
             } else if (objectType == 'Contact') {
                 result = syncService.syncPlayer(recordId, uow);
                 
-            } else if (objectType == 'Fixture__c') {
+            } else if (objectType == 'Match__c') {
                 result = syncService.syncFixture(recordId, uow);
                 
             } else if (objectType == 'Competition__c') {
@@ -99,14 +99,14 @@ public with sharing class ESPNActionControllerV2 {
     }
     
     /**
-     * @description Sync fixture data for a Fixture__c
+     * @description Sync fixture data for a Match__c
      * Convenience method with implicit UOW management
-     * @param fixtureId Fixture__c record ID
+     * @param fixtureId Match__c record ID
      * @return ESPNSyncResult
      */
     @AuraEnabled
     public static ESPNSyncResult syncFixture(Id fixtureId) {
-        return getSportData(fixtureId, 'Fixture__c');
+        return getSportData(fixtureId, 'Match__c');
     }
     
     /**

@@ -9,9 +9,10 @@ public with sharing class ESPNDataParser {
     /**
      * @description Parse teams response into Account records
      * @param response ESPNTeamsResponse from ESPNHttpService
+     * @param leagueCode ESPN league code (e.g., 'eng.1', 'usa.nwsl') to populate League__c field
      * @return List<Account> Team accounts ready for upsert
      */
-    public static List<Account> parseTeamsToAccounts(ESPNHttpService.ESPNTeamsResponse response) {
+    public static List<Account> parseTeamsToAccounts(ESPNHttpService.ESPNTeamsResponse response, String leagueCode) {
         List<Account> accounts = new List<Account>();
         
         if (response == null || response.teams == null || !response.success) {
@@ -23,10 +24,10 @@ public with sharing class ESPNDataParser {
             Account acc = new Account();
             acc.Name = team.name;
             acc.ESPN_Team_ID__c = team.id;
-            acc.Team_Short_Name__c = team.abbreviation;
-            acc.Team_Logo_URL__c = team.logoUrl;
-            acc.Stadium_Name__c = team.venueName;
             acc.Abbreviation__c = team.abbreviation;
+            acc.Logo_Url__c = team.logoUrl;
+            acc.Venue_Name__c = team.venueName;
+            acc.League__c = leagueCode;
             
             accounts.add(acc);
         }
@@ -88,13 +89,13 @@ public with sharing class ESPNDataParser {
     }
     
     /**
-     * @description Parse scoreboard response into Fixture__c records
+     * @description Parse scoreboard response into Match__c records
      * @param response ESPNScoreboardResponse from ESPNHttpService
      * @param competitionId Salesforce Competition__c ID
-     * @return List<Fixture__c> Fixture records ready for upsert
+     * @return List<Match__c> Fixture records ready for upsert
      */
-    public static List<Fixture__c> parseScoreboardToFixtures(ESPNHttpService.ESPNScoreboardResponse response, Id competitionId) {
-        List<Fixture__c> fixtures = new List<Fixture__c>();
+    public static List<Match__c> parseScoreboardToFixtures(ESPNHttpService.ESPNScoreboardResponse response, Id competitionId) {
+        List<Match__c> fixtures = new List<Match__c>();
         
         if (response == null || response.events == null || !response.success) {
             System.debug('Invalid scoreboard response');
@@ -105,7 +106,7 @@ public with sharing class ESPNDataParser {
         Map<String, Id> teamIdMap = buildTeamIdMap();
         
         for (ESPNHttpService.ESPNEvent event : response.events) {
-            Fixture__c fixture = new Fixture__c();
+            Match__c fixture = new Match__c();
             
             fixture.ESPN_Event_ID__c = event.id;
             // Name field is auto-generated, don't set it
@@ -115,7 +116,7 @@ public with sharing class ESPNDataParser {
             
             // Parse date
             if (String.isNotBlank(event.eventDate)) {
-                fixture.Fixture_Date_Time__c = parseESPNDateTime(event.eventDate);
+                fixture.Match_Date_Time__c = parseESPNDateTime(event.eventDate);
             }
             
             // Map teams
@@ -145,18 +146,18 @@ public with sharing class ESPNDataParser {
             fixtures.add(fixture);
         }
         
-        System.debug('Parsed ' + fixtures.size() + ' fixtures into Fixture__c records');
+        System.debug('Parsed ' + fixtures.size() + ' fixtures into Match__c records');
         return fixtures;
     }
     
     /**
      * @description Parse live feed response to extract periods
      * @param response ESPNLiveFeedResponse from ESPNHttpService
-     * @param fixtureId Salesforce Fixture__c ID
-     * @return List<Fixture_Period__c> Period records ready for insert
+     * @param fixtureId Salesforce Match__c ID
+     * @return List<Match_Period__c> Period records ready for insert
      */
-    public static List<Fixture_Period__c> parseLiveFeedToPeriods(ESPNHttpService.ESPNLiveFeedResponse response, Id fixtureId) {
-        List<Fixture_Period__c> periods = new List<Fixture_Period__c>();
+    public static List<Match_Period__c> parseLiveFeedToPeriods(ESPNHttpService.ESPNLiveFeedResponse response, Id fixtureId) {
+        List<Match_Period__c> periods = new List<Match_Period__c>();
         
         if (response == null || !response.success) {
             System.debug('Invalid live feed response');

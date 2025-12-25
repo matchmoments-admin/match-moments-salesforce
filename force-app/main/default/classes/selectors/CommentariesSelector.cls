@@ -1,5 +1,8 @@
 /**
  * @description Selector for Commentary__c
+ * @deprecated This selector references the legacy Commentary__c object which has been superseded by Match_Moment__c.
+ *             The Commentary__c.Fixture__c field should be updated to reference Match__c instead of the old Fixture__c object.
+ *             Consider using MatchMomentsSelector for new development.
  * @author Brendan Milton
  * @date 2025-12-05
  */

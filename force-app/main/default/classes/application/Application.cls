@@ -21,28 +21,33 @@ public class Application {
                 Account.SObjectType,
                 Contact.SObjectType,
                 
-                // Custom Objects - Level 1 (No dependencies)
+                // Custom Objects - Level 0 (Foundation)
+                Season__c.SObjectType,
+                
+                // Custom Objects - Level 1 (No dependencies beyond foundation)
                 Competition__c.SObjectType,
+                Award__c.SObjectType,
+                Team_Membership__c.SObjectType,
                 
                 // Custom Objects - Level 2 (Depend on Level 1)
-                Fixture__c.SObjectType,
+                Match__c.SObjectType,
                 Team_Season_Stats__c.SObjectType,
                 Player_Season_Stats__c.SObjectType,
                 
                 // Custom Objects - Level 3 (Depend on Level 2)
-                Fixture_Period__c.SObjectType,
-                Fixture_Participation__c.SObjectType,
+                Match_Period__c.SObjectType,
+                Match_Participation__c.SObjectType,
                 Commentary__c.SObjectType,
                 Lineup__c.SObjectType,
                 
                 // Custom Objects - Level 4 (Depend on Level 3)
-                Commentary_Event__c.SObjectType,
+                Match_Moment__c.SObjectType,
                 
                 // Custom Objects - Level 5 (Depend on Level 4)
                 Social_Engagement__c.SObjectType,
                 
                 // News (Can reference any)
-                News_Article__c.SObjectType
+                Article__c.SObjectType
             }
         );
     
@@ -57,13 +62,18 @@ public class Application {
                 Account.SObjectType => TeamsSelector.class,
                 Contact.SObjectType => PlayersSelector.class,
                 
+                // Foundation Objects
+                Season__c.SObjectType => SeasonsSelector.class,
+                Award__c.SObjectType => AwardsSelector.class,
+                Team_Membership__c.SObjectType => TeamMembershipsSelector.class,
+                
                 // Custom Objects
                 Competition__c.SObjectType => CompetitionsSelector.class,
-                Fixture__c.SObjectType => FixturesSelector.class,
-                Fixture_Period__c.SObjectType => FixturePeriodsSelector.class,
-                Fixture_Participation__c.SObjectType => FixtureParticipationsSelector.class,
+                Match__c.SObjectType => MatchesSelector.class,
+                Match_Period__c.SObjectType => MatchPeriodsSelector.class,
+                Match_Participation__c.SObjectType => MatchParticipationsSelector.class,
                 Commentary__c.SObjectType => CommentariesSelector.class,
-                Commentary_Event__c.SObjectType => CommentaryEventsSelector.class,
+                Match_Moment__c.SObjectType => MatchMomentsSelector.class,
                 Social_Engagement__c.SObjectType => SocialEngagementsSelector.class,
                 Team_Season_Stats__c.SObjectType => TeamSeasonStatsSelector.class,
                 Player_Season_Stats__c.SObjectType => PlayerSeasonStatsSelector.class
@@ -84,8 +94,8 @@ public class Application {
                 
                 // Custom Objects
                 Competition__c.SObjectType => Competitions.Constructor.class,
-                Fixture__c.SObjectType => Fixtures.Constructor.class,
-                Commentary_Event__c.SObjectType => CommentaryEvents.Constructor.class,
+                Match__c.SObjectType => Matches.Constructor.class,
+                Match_Moment__c.SObjectType => MatchMoments.Constructor.class,
                 Social_Engagement__c.SObjectType => SocialEngagements.Constructor.class
             }
         );
