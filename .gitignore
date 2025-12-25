@@ -58,8 +58,11 @@ force-app/main/default/connectedApps/
 
 # Setup scripts and documentation (not part of deployable metadata)
 *.sh
-SALESFORCE_SETUP.md
 **/create-sample-data.apex
+
+# Documentation - keep only README.md
+*.md
+!README.md
 
 # Salesforce package directories
 .forceignore
