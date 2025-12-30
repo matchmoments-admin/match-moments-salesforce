@@ -40,7 +40,7 @@ public virtual class SportHandlerBase {
      */
     public Account upsertTeam(String espnId, String name, String sport) {
         Account acc = new Account(
-            ESPN_ID__c = espnId,
+            ESPN_Team_ID__c = espnId,
             Name = name,
             Sport_Type__c = sport
         );

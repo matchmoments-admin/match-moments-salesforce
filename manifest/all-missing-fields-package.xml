@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Account.League__c</members>
+        <members>Account.Team_Primary_Color__c</members>
+        <members>Account.Founded_Year__c</members>
+        <members>Account.Current_League_Rank__c</members>
+        <members>Contact.Date_of_Birth__c</members>
+        <members>Contact.Nationality__c</members>
+        <members>Contact.Height__c</members>
+        <members>Contact.Weight__c</members>
+        <name>CustomField</name>
+    </types>
+    <version>59.0</version>
+</Package>
+

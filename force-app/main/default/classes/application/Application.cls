@@ -58,24 +58,26 @@ public class Application {
     public static final fflib_Application.SelectorFactory Selector = 
         new fflib_Application.SelectorFactory(
             new Map<SObjectType, Type>{
-                // AI-related selectors (deployed)
-                Article__c.SObjectType => ArticlesSelector.class
+                // AI-related selectors
+                Article__c.SObjectType => ArticlesSelector.class,
                 
-                // Other selectors commented out until deployed
-                // Account.SObjectType => TeamsSelector.class,
-                // Contact.SObjectType => PlayersSelector.class,
-                // Season__c.SObjectType => SeasonsSelector.class,
-                // Award__c.SObjectType => AwardsSelector.class,
-                // Team_Membership__c.SObjectType => TeamMembershipsSelector.class,
-                // Competition__c.SObjectType => CompetitionsSelector.class,
-                // Match__c.SObjectType => MatchesSelector.class,
-                // Match_Period__c.SObjectType => MatchPeriodsSelector.class,
-                // Match_Participation__c.SObjectType => MatchParticipationsSelector.class,
-                // Commentary__c.SObjectType => CommentariesSelector.class,
-                // Match_Moment__c.SObjectType => MatchMomentsSelector.class,
-                // Social_Engagement__c.SObjectType => SocialEngagementsSelector.class,
-                // Team_Season_Stats__c.SObjectType => TeamSeasonStatsSelector.class,
-                // Player_Season_Stats__c.SObjectType => PlayerSeasonStatsSelector.class
+                // Standard object selectors
+                Account.SObjectType => TeamsSelector.class,
+                Contact.SObjectType => PlayersSelector.class,
+                
+                // Custom object selectors
+                Season__c.SObjectType => SeasonsSelector.class,
+                Award__c.SObjectType => AwardsSelector.class,
+                Team_Membership__c.SObjectType => TeamMembershipsSelector.class,
+                Competition__c.SObjectType => CompetitionsSelector.class,
+                Match__c.SObjectType => MatchesSelector.class,
+                Match_Period__c.SObjectType => MatchPeriodsSelector.class,
+                Match_Participation__c.SObjectType => MatchParticipationsSelector.class,
+                Commentary__c.SObjectType => CommentariesSelector.class,
+                Match_Moment__c.SObjectType => MatchMomentsSelector.class,
+                Social_Engagement__c.SObjectType => SocialEngagementsSelector.class,
+                Team_Season_Stats__c.SObjectType => TeamSeasonStatsSelector.class,
+                Player_Season_Stats__c.SObjectType => PlayerSeasonStatsSelector.class
             }
         );
     
@@ -87,13 +89,12 @@ public class Application {
         new fflib_Application.DomainFactory(
             Application.Selector,
             new Map<SObjectType, Type>{
-                // Domains commented out until deployed
-                // Account.SObjectType => Teams.Constructor.class,
-                // Contact.SObjectType => Players.Constructor.class,
-                // Competition__c.SObjectType => Competitions.Constructor.class,
-                // Match__c.SObjectType => Matches.Constructor.class,
-                // Match_Moment__c.SObjectType => MatchMoments.Constructor.class,
-                // Social_Engagement__c.SObjectType => SocialEngagements.Constructor.class
+                Account.SObjectType => Teams.Constructor.class,
+                Contact.SObjectType => Players.Constructor.class,
+                Competition__c.SObjectType => Competitions.Constructor.class,
+                Match__c.SObjectType => Matches.Constructor.class,
+                Match_Moment__c.SObjectType => MatchMoments.Constructor.class,
+                Social_Engagement__c.SObjectType => SocialEngagements.Constructor.class
             }
         );
     
@@ -104,10 +105,9 @@ public class Application {
     public static final fflib_Application.ServiceFactory Service = 
         new fflib_Application.ServiceFactory(
             new Map<Type, Type>{
-                // ESPN services commented out until fields are deployed
-                // IESPNSyncService.class => ESPNSyncServiceImpl.class,
-                // ISocialSharingService.class => SocialSharingServiceImpl.class,
-                // IEngagementService.class => EngagementServiceImpl.class,
+                IESPNSyncService.class => ESPNSyncServiceImpl.class,
+                ISocialSharingService.class => SocialSharingServiceImpl.class,
+                IEngagementService.class => EngagementServiceImpl.class,
                 IArticleGeneratorService.class => ArticleGeneratorServiceImpl.class
             }
         );

@@ -249,7 +249,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 ESPN_Event_ID__c = eventId,
                 Home_Score_Final__c = response.homeScore != null ? Decimal.valueOf(response.homeScore) : null,
                 Away_Score_Final__c = response.awayScore != null ? Decimal.valueOf(response.awayScore) : null,
-                Status__c = Fixtures.mapESPNStatus(response.matchStatus)
+                Status__c = Matches.mapESPNStatus(response.matchStatus)
             );
             
             // 6. Register with UOW
@@ -349,8 +349,8 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 }
                 
                 fixture.ESPN_Event_ID__c = event.id;
-                fixture.Match_Date_Time__c = Fixtures.parseESPNDate(event.eventDate);
-                fixture.Status__c = Fixtures.mapESPNStatus(event.status);
+                fixture.Match_Date_Time__c = Matches.parseESPNDate(event.eventDate);
+                fixture.Status__c = Matches.mapESPNStatus(event.status);
                 fixture.Venue__c = event.venueName;
                 
                 // Link teams if they exist
