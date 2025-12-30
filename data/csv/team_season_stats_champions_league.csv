@@ -1,0 +1,22 @@
+Team_Name__c,Competition_Name__c,Matches_Played__c,Wins__c,Draws__c,Losses__c,Goals_For__c,Goals_Against__c,Goal_Difference__c,Points__c,League_Position__c,Form_Last_5__c
+Liverpool,UEFA Champions League 2024-25,8,8,0,0,15,2,13,24,1,WWWWW
+Barcelona,UEFA Champions League 2024-25,8,7,0,1,26,11,15,21,2,WWWWL
+Arsenal,UEFA Champions League 2024-25,8,6,1,1,17,4,13,19,3,WWWDW
+Inter Milan,UEFA Champions League 2024-25,8,6,1,1,8,1,7,19,4,WDWWW
+Atlético Madrid,UEFA Champions League 2024-25,8,6,1,1,17,11,6,19,5,WWWDW
+Bayer Leverkusen,UEFA Champions League 2024-25,8,6,0,2,14,9,5,18,6,WWLLW
+Aston Villa,UEFA Champions League 2024-25,8,5,1,2,12,5,7,16,7,WDLWL
+Monaco,UEFA Champions League 2024-25,8,5,1,2,13,10,3,16,8,WLLWW
+Real Madrid,UEFA Champions League 2024-25,8,5,1,2,18,12,6,16,9,LWWWW
+Bayern München,UEFA Champions League 2024-25,8,5,1,2,17,8,9,16,10,WWLWW
+Paris Saint-Germain,UEFA Champions League 2024-25,8,5,0,3,13,8,5,15,11,WWWLW
+Manchester City,UEFA Champions League 2024-25,8,4,2,2,14,11,3,14,12,LWDDL
+Juventus,UEFA Champions League 2024-25,8,4,2,2,11,7,4,14,13,DDWWL
+Celtic,UEFA Champions League 2024-25,8,4,2,2,13,12,1,14,14,LDWDW
+Sporting CP,UEFA Champions League 2024-25,8,4,1,3,13,10,3,13,15,WWLLW
+Club Brugge,UEFA Champions League 2024-25,8,4,1,3,7,10,-3,13,16,WLWLL
+Borussia Dortmund,UEFA Champions League 2024-25,8,4,0,4,19,12,7,12,17,LWWLW
+AC Milan,UEFA Champions League 2024-25,8,4,0,4,13,11,2,12,18,WLWWL
+Atalanta,UEFA Champions League 2024-25,8,3,2,3,13,9,4,11,19,DDLWW
+GNK Dinamo Zagreb,UEFA Champions League 2024-25,8,3,1,4,12,18,-6,10,20,WDLLW
+

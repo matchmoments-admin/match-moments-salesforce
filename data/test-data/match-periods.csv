@@ -1,0 +1,24 @@
+Match_Name,Period_Number__c,Period_Type__c,Home_Score_Period__c,Away_Score_Period__c,Home_Score_Cumulative__c,Away_Score_Cumulative__c,Status__c
+Liverpool 2-0 Manchester City,1,Half,1,0,1,0,Completed
+Liverpool 2-0 Manchester City,2,Half,1,0,2,0,Completed
+Arsenal 2-0 Manchester United,1,Half,1,0,1,0,Completed
+Arsenal 2-0 Manchester United,2,Half,1,0,2,0,Completed
+Tottenham 3-6 Liverpool,1,Half,1,3,1,3,Completed
+Tottenham 3-6 Liverpool,2,Half,2,3,3,6,Completed
+Crystal Palace 1-5 Arsenal,1,Half,1,3,1,3,Completed
+Crystal Palace 1-5 Arsenal,2,Half,0,2,1,5,Completed
+Manchester City 1-2 Manchester United,1,Half,0,1,0,1,Completed
+Manchester City 1-2 Manchester United,2,Half,1,1,1,2,Completed
+Chelsea 5-1 Southampton,1,Half,3,0,3,0,Completed
+Chelsea 5-1 Southampton,2,Half,2,1,5,1,Completed
+Arsenal 3-0 Monaco,1,Half,1,0,1,0,Completed
+Arsenal 3-0 Monaco,2,Half,2,0,3,0,Completed
+Inter Milan 6-0 Bayer Leverkusen,1,Half,2,0,2,0,Completed
+Inter Milan 6-0 Bayer Leverkusen,2,Half,4,0,6,0,Completed
+Aston Villa 3-2 RB Leipzig,1,Half,1,1,1,1,Completed
+Aston Villa 3-2 RB Leipzig,2,Half,2,1,3,2,Completed
+Barcelona 3-2 Borussia Dortmund,1,Half,1,0,1,0,Completed
+Barcelona 3-2 Borussia Dortmund,2,Half,2,2,3,2,Completed
+Bayern München 5-1 Shakhtar Donetsk,1,Half,3,1,3,1,Completed
+Bayern München 5-1 Shakhtar Donetsk,2,Half,2,0,5,1,Completed
+

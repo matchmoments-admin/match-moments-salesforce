@@ -1,0 +1,467 @@
+/**
+ * Complete Test Data Import Script
+ * Imports all Premier League and Champions League December 2024 data
+ * Including: Matches, Match Periods, Player Stats, Team Stats
+ */
+
+System.debug('=== Starting Complete Test Data Import ===');
+
+// ============================================================================
+// STEP 1: Get Season and Competitions
+// ============================================================================
+Season__c season = [SELECT Id FROM Season__c WHERE Season_Name__c = '2024-2025' LIMIT 1];
+System.debug('Found Season: ' + season.Id);
+
+Map<String, Competition__c> compMap = new Map<String, Competition__c>();
+for (Competition__c comp : [SELECT Id, ESPN_League_ID__c, Name FROM Competition__c]) {
+    compMap.put(comp.ESPN_League_ID__c, comp);
+    System.debug('Found Competition: ' + comp.ESPN_League_ID__c + ' - ' + comp.Id);
+}
+
+// ============================================================================
+// STEP 2: Get Teams by Name
+// ============================================================================
+Map<String, Account> teamMap = new Map<String, Account>();
+for (Account team : [SELECT Id, Name FROM Account WHERE Type = 'Team']) {
+    teamMap.put(team.Name, team);
+}
+System.debug('Found ' + teamMap.size() + ' teams');
+
+// ============================================================================
+// STEP 3: Import ALL Premier League Matches
+// ============================================================================
+List<Match__c> matches = new List<Match__c>();
+
+// December 2024 Premier League Matches
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Chelsea').Id, Away_Team__c = teamMap.get('Aston Villa').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 1, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 0,
+    Venue__c = 'Stamford Bridge', Attendance__c = 39866
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Manchester United').Id, Away_Team__c = teamMap.get('Everton').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 1, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 4, Away_Score_Final__c = 0,
+    Venue__c = 'Old Trafford', Attendance__c = 73783
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Tottenham Hotspur').Id, Away_Team__c = teamMap.get('Fulham').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 1, 16, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 1,
+    Venue__c = 'Tottenham Hotspur Stadium', Attendance__c = 61277
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Liverpool').Id, Away_Team__c = teamMap.get('Manchester City').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 1, 16, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 0,
+    Venue__c = 'Anfield', Attendance__c = 60343
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Brentford').Id, Away_Team__c = teamMap.get('Leicester City').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 11, 30, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 4, Away_Score_Final__c = 1,
+    Venue__c = 'Gtech Community Stadium', Attendance__c = 17141
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Crystal Palace').Id, Away_Team__c = teamMap.get('Newcastle United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 11, 30, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 1,
+    Venue__c = 'Selhurst Park', Attendance__c = 25142
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Nottingham Forest').Id, Away_Team__c = teamMap.get('Ipswich Town').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 11, 30, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 0,
+    Venue__c = 'City Ground', Attendance__c = 29353
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Wolverhampton Wanderers').Id, Away_Team__c = teamMap.get('AFC Bournemouth').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 11, 30, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 4,
+    Venue__c = 'Molineux Stadium', Attendance__c = 31375
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('West Ham United').Id, Away_Team__c = teamMap.get('Arsenal').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 11, 30, 17, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 5,
+    Venue__c = 'London Stadium', Attendance__c = 62471
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Ipswich Town').Id, Away_Team__c = teamMap.get('Crystal Palace').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 3, 19, 45, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 1,
+    Venue__c = 'Portman Road', Attendance__c = 29131
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Leicester City').Id, Away_Team__c = teamMap.get('West Ham United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 3, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 1,
+    Venue__c = 'King Power Stadium', Attendance__c = 31861
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Everton').Id, Away_Team__c = teamMap.get('Wolverhampton Wanderers').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 19, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 4, Away_Score_Final__c = 0,
+    Venue__c = 'Goodison Park', Attendance__c = 39299
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Manchester City').Id, Away_Team__c = teamMap.get('Nottingham Forest').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 0,
+    Venue__c = 'Etihad Stadium', Attendance__c = 52790
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Newcastle United').Id, Away_Team__c = teamMap.get('Liverpool').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 19, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 3,
+    Venue__c = 'St James\' Park', Attendance__c = 52249
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Southampton').Id, Away_Team__c = teamMap.get('Chelsea').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 19, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 5,
+    Venue__c = 'St Mary\'s Stadium', Attendance__c = 31163
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Arsenal').Id, Away_Team__c = teamMap.get('Manchester United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 20, 15, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 0,
+    Venue__c = 'Emirates Stadium', Attendance__c = 60383
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Aston Villa').Id, Away_Team__c = teamMap.get('Brentford').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 4, 19, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 1,
+    Venue__c = 'Villa Park', Attendance__c = 41905
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Fulham').Id, Away_Team__c = teamMap.get('Brighton & Hove Albion').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 5, 19, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 1,
+    Venue__c = 'Craven Cottage', Attendance__c = 24402
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('AFC Bournemouth').Id, Away_Team__c = teamMap.get('Tottenham Hotspur').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 5, 20, 15, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 0,
+    Venue__c = 'Vitality Stadium', Attendance__c = 11224
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Arsenal').Id, Away_Team__c = teamMap.get('Everton').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 14, 12, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 0,
+    Venue__c = 'Emirates Stadium', Attendance__c = 60298
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Liverpool').Id, Away_Team__c = teamMap.get('Fulham').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 14, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 2,
+    Venue__c = 'Anfield', Attendance__c = 60134
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Newcastle United').Id, Away_Team__c = teamMap.get('Leicester City').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 14, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 4, Away_Score_Final__c = 0,
+    Venue__c = 'St James\' Park', Attendance__c = 52186
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Wolverhampton Wanderers').Id, Away_Team__c = teamMap.get('Ipswich Town').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 14, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 2,
+    Venue__c = 'Molineux Stadium', Attendance__c = 31343
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Nottingham Forest').Id, Away_Team__c = teamMap.get('Aston Villa').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 14, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 1,
+    Venue__c = 'City Ground', Attendance__c = 29467
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Brighton & Hove Albion').Id, Away_Team__c = teamMap.get('Crystal Palace').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 15, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 3,
+    Venue__c = 'Amex Stadium', Attendance__c = 31520
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Manchester City').Id, Away_Team__c = teamMap.get('Manchester United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 15, 16, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 2,
+    Venue__c = 'Etihad Stadium', Attendance__c = 52772
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Chelsea').Id, Away_Team__c = teamMap.get('Brentford').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 15, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 1,
+    Venue__c = 'Stamford Bridge', Attendance__c = 39671
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Southampton').Id, Away_Team__c = teamMap.get('Tottenham Hotspur').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 15, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 5,
+    Venue__c = 'St Mary\'s Stadium', Attendance__c = 31270
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('AFC Bournemouth').Id, Away_Team__c = teamMap.get('West Ham United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 16, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 1,
+    Venue__c = 'Vitality Stadium', Attendance__c = 11223
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Aston Villa').Id, Away_Team__c = teamMap.get('Manchester City').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 21, 12, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 1,
+    Venue__c = 'Villa Park', Attendance__c = 42089
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Brentford').Id, Away_Team__c = teamMap.get('Nottingham Forest').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 21, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 2,
+    Venue__c = 'Gtech Community Stadium', Attendance__c = 17135
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Ipswich Town').Id, Away_Team__c = teamMap.get('Newcastle United').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 21, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 4,
+    Venue__c = 'Portman Road', Attendance__c = 29883
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('West Ham United').Id, Away_Team__c = teamMap.get('Brighton & Hove Albion').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 21, 15, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 1,
+    Venue__c = 'London Stadium', Attendance__c = 62458
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Crystal Palace').Id, Away_Team__c = teamMap.get('Arsenal').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 21, 17, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 5,
+    Venue__c = 'Selhurst Park', Attendance__c = 25181
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Everton').Id, Away_Team__c = teamMap.get('Chelsea').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 22, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 0,
+    Venue__c = 'Goodison Park', Attendance__c = 39320
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Fulham').Id, Away_Team__c = teamMap.get('Southampton').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 22, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 0,
+    Venue__c = 'Craven Cottage', Attendance__c = 24328
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Leicester City').Id, Away_Team__c = teamMap.get('Wolverhampton Wanderers').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 22, 16, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 0,
+    Venue__c = 'King Power Stadium', Attendance__c = 31865
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Manchester United').Id, Away_Team__c = teamMap.get('AFC Bournemouth').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 22, 14, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 3,
+    Venue__c = 'Old Trafford', Attendance__c = 73894
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('eng.1').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Tottenham Hotspur').Id, Away_Team__c = teamMap.get('Liverpool').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 22, 16, 30, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 6,
+    Venue__c = 'Tottenham Hotspur Stadium', Attendance__c = 61595
+));
+
+// ============================================================================
+// Champions League Matches
+// ============================================================================
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Arsenal').Id, Away_Team__c = teamMap.get('Monaco').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 11, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 0,
+    Venue__c = 'Emirates Stadium', Attendance__c = 60278
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Aston Villa').Id, Away_Team__c = teamMap.get('RB Leipzig').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 2,
+    Venue__c = 'Villa Park', Attendance__c = 41905
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('AC Milan').Id, Away_Team__c = teamMap.get('Crvena Zvezda').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 11, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 1,
+    Venue__c = 'San Siro', Attendance__c = 56912
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Atalanta').Id, Away_Team__c = teamMap.get('Real Madrid').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 3,
+    Venue__c = 'Gewiss Stadium', Attendance__c = 22378
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Barcelona').Id, Away_Team__c = teamMap.get('Borussia Dortmund').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 11, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 2,
+    Venue__c = 'Camp Nou', Attendance__c = 48502
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Bayern München').Id, Away_Team__c = teamMap.get('Shakhtar Donetsk').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 5, Away_Score_Final__c = 1,
+    Venue__c = 'Allianz Arena', Attendance__c = 75000
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Inter Milan').Id, Away_Team__c = teamMap.get('Bayer Leverkusen').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 6, Away_Score_Final__c = 0,
+    Venue__c = 'San Siro', Attendance__c = 70123
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Juventus').Id, Away_Team__c = teamMap.get('Manchester City').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 11, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 0,
+    Venue__c = 'Allianz Stadium', Attendance__c = 40736
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Liverpool').Id, Away_Team__c = teamMap.get('Girona').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 0,
+    Venue__c = 'Anfield', Attendance__c = 59762
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Paris Saint-Germain').Id, Away_Team__c = teamMap.get('RB Salzburg').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 20, 0, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 3, Away_Score_Final__c = 0,
+    Venue__c = 'Parc des Princes', Attendance__c = 47826
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Sporting CP').Id, Away_Team__c = teamMap.get('Club Brugge').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 17, 45, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 2, Away_Score_Final__c = 1,
+    Venue__c = 'José Alvalade Stadium', Attendance__c = 39000
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Celtic').Id, Away_Team__c = teamMap.get('Young Boys').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 11, 17, 45, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 0,
+    Venue__c = 'Celtic Park', Attendance__c = 58793
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('Bologna').Id, Away_Team__c = teamMap.get('Lille').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 17, 45, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 1, Away_Score_Final__c = 2,
+    Venue__c = 'Stadio Renato Dall\'Ara', Attendance__c = 27500
+));
+
+matches.add(new Match__c(
+    Competition__c = compMap.get('uefa.champions').Id, Season__c = season.Id,
+    Home_Team__c = teamMap.get('GNK Dinamo Zagreb').Id, Away_Team__c = teamMap.get('Celtic').Id,
+    Match_Date_Time__c = DateTime.newInstanceGmt(2024, 12, 10, 17, 45, 0),
+    Status__c = 'Finished', Home_Score_Final__c = 0, Away_Score_Final__c = 0,
+    Venue__c = 'Maksimir Stadium', Attendance__c = 20134
+));
+
+insert matches;
+System.debug('✓ Inserted ' + matches.size() + ' matches successfully');
+
+System.debug('=== Test Data Import Complete ===');
+

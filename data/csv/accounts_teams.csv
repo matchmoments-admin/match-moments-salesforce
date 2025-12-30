@@ -1,0 +1,46 @@
+Name,Type,Sport__c,Gender_Class__c,League__c,Abbreviation__c,ESPN_Team_ID__c,Team_Primary_Color__c,Venue_Name__c
+Liverpool,Team,Soccer,Men's Team,eng.1,LIV,364,#C8102E,Anfield
+Arsenal,Team,Soccer,Men's Team,eng.1,ARS,359,#EF0107,Emirates Stadium
+Chelsea,Team,Soccer,Men's Team,eng.1,CHE,363,#034694,Stamford Bridge
+Manchester City,Team,Soccer,Men's Team,eng.1,MCI,382,#6CABDD,Etihad Stadium
+Manchester United,Team,Soccer,Men's Team,eng.1,MUN,360,#DA291C,Old Trafford
+Tottenham Hotspur,Team,Soccer,Men's Team,eng.1,TOT,367,#132257,Tottenham Hotspur Stadium
+Newcastle United,Team,Soccer,Men's Team,eng.1,NEW,361,#241F20,St James' Park
+Aston Villa,Team,Soccer,Men's Team,eng.1,AVL,362,#670E36,Villa Park
+Brighton & Hove Albion,Team,Soccer,Men's Team,eng.1,BHA,331,#0057B8,Amex Stadium
+Nottingham Forest,Team,Soccer,Men's Team,eng.1,NFO,393,#DD0000,City Ground
+Everton,Team,Soccer,Men's Team,eng.1,EVE,368,#003399,Goodison Park
+Fulham,Team,Soccer,Men's Team,eng.1,FUL,370,#FFFFFF,Craven Cottage
+Brentford,Team,Soccer,Men's Team,eng.1,BRE,337,#D20000,Gtech Community Stadium
+Crystal Palace,Team,Soccer,Men's Team,eng.1,CRY,384,#1B458F,Selhurst Park
+West Ham United,Team,Soccer,Men's Team,eng.1,WHU,371,#7A263A,London Stadium
+AFC Bournemouth,Team,Soccer,Men's Team,eng.1,BOU,349,#DA291C,Vitality Stadium
+Leicester City,Team,Soccer,Men's Team,eng.1,LEI,375,#003090,King Power Stadium
+Ipswich Town,Team,Soccer,Men's Team,eng.1,IPS,373,#0000FF,Portman Road
+Wolverhampton Wanderers,Team,Soccer,Men's Team,eng.1,WOL,380,#FDB913,Molineux Stadium
+Southampton,Team,Soccer,Men's Team,eng.1,SOU,376,#D71920,St Mary's Stadium
+AC Milan,Team,Soccer,Men's Team,uefa.champions,MIL,103,#FB090B,San Siro
+Inter Milan,Team,Soccer,Men's Team,uefa.champions,INT,108,#0068A8,San Siro
+Paris Saint-Germain,Team,Soccer,Men's Team,uefa.champions,PSG,160,#004170,Parc des Princes
+Real Madrid,Team,Soccer,Men's Team,uefa.champions,RMA,86,#FEBE10,Santiago Bernabéu
+Bayern München,Team,Soccer,Men's Team,uefa.champions,BAY,132,#DC052D,Allianz Arena
+Barcelona,Team,Soccer,Men's Team,uefa.champions,BAR,83,#A50044,Camp Nou
+Sporting CP,Team,Soccer,Men's Team,uefa.champions,SCP,184,#008B45,José Alvalade Stadium
+Monaco,Team,Soccer,Men's Team,uefa.champions,MON,174,#E2001A,Stade Louis II
+GNK Dinamo Zagreb,Team,Soccer,Men's Team,uefa.champions,DIN,2446,#004B9E,Maksimir Stadium
+Girona,Team,Soccer,Men's Team,uefa.champions,GIR,93,#CC0000,Estadi Montilivi
+Celtic,Team,Soccer,Men's Team,uefa.champions,CEL,295,#007A33,Celtic Park
+Shakhtar Donetsk,Team,Soccer,Men's Team,uefa.champions,SHA,623,#FF6600,Donbass Arena
+Bologna,Team,Soccer,Men's Team,uefa.champions,BOL,104,#0033CC,Stadio Renato Dall'Ara
+Juventus,Team,Soccer,Men's Team,uefa.champions,JUV,111,#000000,Allianz Stadium
+RB Leipzig,Team,Soccer,Men's Team,uefa.champions,RBL,147,#DD0000,Red Bull Arena
+Club Brugge,Team,Soccer,Men's Team,uefa.champions,BRU,300,#003CA6,Jan Breydel Stadium
+Atalanta,Team,Soccer,Men's Team,uefa.champions,ATA,102,#1D2F5F,Gewiss Stadium
+Young Boys,Team,Soccer,Men's Team,uefa.champions,YB,343,#FFD900,Wankdorf Stadium
+Crvena Zvezda,Team,Soccer,Men's Team,uefa.champions,CZV,619,#D90007,Rajko Mitić Stadium
+Slovan Bratislava,Team,Soccer,Men's Team,uefa.champions,SLO,647,#0054A6,Tehelné pole
+Borussia Dortmund,Team,Soccer,Men's Team,uefa.champions,BVB,124,#FDE100,Signal Iduna Park
+Bayer Leverkusen,Team,Soccer,Men's Team,uefa.champions,B04,131,#E32221,BayArena
+RB Salzburg,Team,Soccer,Men's Team,uefa.champions,RBS,379,#DD003C,Red Bull Arena
+Lille,Team,Soccer,Men's Team,uefa.champions,LIL,167,#C8102E,Stade Pierre-Mauroy
+Atlético Madrid,Team,Soccer,Men's Team,uefa.champions,ATM,92,#CB3524,Cívitas Metropolitano

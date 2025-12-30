@@ -4,7 +4,7 @@
  * @date 2025-11-27
  * 
  * This interface enables polymorphic behavior - the same data structures
- * (Account, Opportunity, Contact) behave differently based on sport type.
+ * (Account, Match__c, Contact) behave differently based on sport type.
  */
 public interface ISportDataHandler {
     
@@ -15,12 +15,12 @@ public interface ISportDataHandler {
     String getSportType();
     
     /**
-     * @description Maps raw JSON from API to a Salesforce Opportunity (Fixture)
+     * @description Maps raw JSON from API to a Salesforce Match__c record
      * @param apiData Raw JSON data from ESPN API
-     * @param leagueId Opportunity_Group__c record ID
-     * @return Opportunity Mapped Opportunity record (not yet inserted)
+     * @param competitionId Competition__c record ID
+     * @return Match__c Mapped Match__c record (not yet inserted)
      */
-    Opportunity mapFixture(Map<String, Object> apiData, Id leagueId);
+    Match__c mapFixture(Map<String, Object> apiData, Id competitionId);
     
     /**
      * @description Maps raw JSON from API to a Salesforce Contact (Player)

@@ -9,15 +9,14 @@ public class NBAHandler extends SportHandlerBase implements ISportDataHandler {
         return 'Basketball';
     }
     
-    public Opportunity mapFixture(Map<String, Object> apiData, Id leagueId) {
-        Opportunity opp = new Opportunity();
+    public Match__c mapFixture(Map<String, Object> apiData, Id competitionId) {
+        Match__c match = new Match__c();
         
-        opp.ESPN_ID__c = safeString(apiData, 'id');
-        opp.Name = safeString(apiData, 'name');
-        opp.Start_Date_Time__c = parseIsoDate(safeString(apiData, 'date'));
-        opp.Opportunity_Group__c = leagueId;
+        match.ESPN_Event_ID__c = safeString(apiData, 'id');
+        match.Match_Date_Time__c = parseIsoDate(safeString(apiData, 'date'));
+        match.Competition__c = competitionId;
         
-        // NBA scoring: Points go to Total Score
+        // NBA scoring: Points go to Final Score
         List<Object> competitions = (List<Object>)apiData.get('competitions');
         if (competitions != null && !competitions.isEmpty()) {
             Map<String, Object> competition = (Map<String, Object>)competitions[0];
@@ -30,11 +29,11 @@ public class NBAHandler extends SportHandlerBase implements ISportDataHandler {
                     Decimal points = safeDecimal(teamData, 'score');
                     
                     if (homeAway == 'home') {
-                        opp.Home_Score_Total__c = points;
-                        opp.Home_Sub_Score__c = null; // NBA doesn't use sub-score
+                        match.Home_Score_Final__c = points;
+                        match.Home_Sub_Score__c = null; // NBA doesn't use sub-score
                     } else if (homeAway == 'away') {
-                        opp.Away_Score_Total__c = points;
-                        opp.Away_Sub_Score__c = null;
+                        match.Away_Score_Final__c = points;
+                        match.Away_Sub_Score__c = null;
                     }
                 }
             }
@@ -44,25 +43,25 @@ public class NBAHandler extends SportHandlerBase implements ISportDataHandler {
             if (status != null) {
                 String period = safeString(status, 'period');
                 if (String.isNotBlank(period)) {
-                    opp.Current_Period__c = 'Q' + period; // e.g., "Q1", "Q2"
+                    match.Current_Period__c = 'Q' + period; // e.g., "Q1", "Q2"
                 }
             }
         }
         
-        // Set stage
+        // Set status
         Map<String, Object> status = (Map<String, Object>)apiData.get('status');
         if (status != null) {
             String statusType = safeString(status, 'type');
             if (statusType == 'STATUS_FINAL') {
-                opp.StageName = 'Completed';
+                match.Status__c = 'Completed';
             } else if (statusType == 'STATUS_IN_PROGRESS') {
-                opp.StageName = 'In Progress';
+                match.Status__c = 'Live';
             } else {
-                opp.StageName = 'Scheduled';
+                match.Status__c = 'Scheduled';
             }
         }
         
-        return opp;
+        return match;
     }
     
     public Contact mapPlayer(Map<String, Object> playerData, Id teamId) {
@@ -74,7 +73,7 @@ public class NBAHandler extends SportHandlerBase implements ISportDataHandler {
         c.ESPN_Player_ID__c = safeString(playerData, 'id');
         c.Jersey_Number__c = safeDecimal(playerData, 'jersey');
         c.Profile_Image_URL__c = safeString(playerData, 'headshotUrl');
-        c.Roster_Status__c = 'Active';
+        c.Player_Role__c = 'Active'; // Using Player_Role__c instead of Roster_Status__c
         
         return c;
     }

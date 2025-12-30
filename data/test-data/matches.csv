@@ -1,0 +1,55 @@
+Competition,Season,Home_Team,Away_Team,Match_Date_Time__c,Status__c,Home_Score_Final__c,Away_Score_Final__c,Venue__c,Attendance__c
+Premier League 2024-25,2024-2025,Chelsea,Aston Villa,2024-12-01T14:00:00Z,Finished,3,0,Stamford Bridge,39866
+Premier League 2024-25,2024-2025,Manchester United,Everton,2024-12-01T14:00:00Z,Finished,4,0,Old Trafford,73783
+Premier League 2024-25,2024-2025,Tottenham Hotspur,Fulham,2024-12-01T16:30:00Z,Finished,1,1,Tottenham Hotspur Stadium,61277
+Premier League 2024-25,2024-2025,Liverpool,Manchester City,2024-12-01T16:30:00Z,Finished,2,0,Anfield,60343
+Premier League 2024-25,2024-2025,Brentford,Leicester City,2024-11-30T15:00:00Z,Finished,4,1,Gtech Community Stadium,17141
+Premier League 2024-25,2024-2025,Crystal Palace,Newcastle United,2024-11-30T15:00:00Z,Finished,1,1,Selhurst Park,25142
+Premier League 2024-25,2024-2025,Nottingham Forest,Ipswich Town,2024-11-30T15:00:00Z,Finished,1,0,City Ground,29353
+Premier League 2024-25,2024-2025,Wolverhampton Wanderers,AFC Bournemouth,2024-11-30T15:00:00Z,Finished,2,4,Molineux Stadium,31375
+Premier League 2024-25,2024-2025,West Ham United,Arsenal,2024-11-30T17:30:00Z,Finished,2,5,London Stadium,62471
+Premier League 2024-25,2024-2025,Ipswich Town,Crystal Palace,2024-12-03T19:45:00Z,Finished,0,1,Portman Road,29131
+Premier League 2024-25,2024-2025,Leicester City,West Ham United,2024-12-03T20:00:00Z,Finished,3,1,King Power Stadium,31861
+Premier League 2024-25,2024-2025,Everton,Wolverhampton Wanderers,2024-12-04T19:30:00Z,Finished,4,0,Goodison Park,39299
+Premier League 2024-25,2024-2025,Manchester City,Nottingham Forest,2024-12-04T20:00:00Z,Finished,3,0,Etihad Stadium,52790
+Premier League 2024-25,2024-2025,Newcastle United,Liverpool,2024-12-04T19:30:00Z,Finished,3,3,St James' Park,52249
+Premier League 2024-25,2024-2025,Southampton,Chelsea,2024-12-04T19:30:00Z,Finished,1,5,St Mary's Stadium,31163
+Premier League 2024-25,2024-2025,Arsenal,Manchester United,2024-12-04T20:15:00Z,Finished,2,0,Emirates Stadium,60383
+Premier League 2024-25,2024-2025,Aston Villa,Brentford,2024-12-04T19:30:00Z,Finished,3,1,Villa Park,41905
+Premier League 2024-25,2024-2025,Fulham,Brighton & Hove Albion,2024-12-05T19:30:00Z,Finished,3,1,Craven Cottage,24402
+Premier League 2024-25,2024-2025,AFC Bournemouth,Tottenham Hotspur,2024-12-05T20:15:00Z,Finished,1,0,Vitality Stadium,11224
+Premier League 2024-25,2024-2025,Arsenal,Everton,2024-12-14T12:30:00Z,Finished,0,0,Emirates Stadium,60298
+Premier League 2024-25,2024-2025,Liverpool,Fulham,2024-12-14T15:00:00Z,Finished,2,2,Anfield,60134
+Premier League 2024-25,2024-2025,Newcastle United,Leicester City,2024-12-14T15:00:00Z,Finished,4,0,St James' Park,52186
+Premier League 2024-25,2024-2025,Wolverhampton Wanderers,Ipswich Town,2024-12-14T15:00:00Z,Finished,1,2,Molineux Stadium,31343
+Premier League 2024-25,2024-2025,Nottingham Forest,Aston Villa,2024-12-14T15:00:00Z,Finished,2,1,City Ground,29467
+Premier League 2024-25,2024-2025,Brighton & Hove Albion,Crystal Palace,2024-12-15T14:00:00Z,Finished,1,3,Amex Stadium,31520
+Premier League 2024-25,2024-2025,Manchester City,Manchester United,2024-12-15T16:30:00Z,Finished,1,2,Etihad Stadium,52772
+Premier League 2024-25,2024-2025,Chelsea,Brentford,2024-12-15T14:00:00Z,Finished,2,1,Stamford Bridge,39671
+Premier League 2024-25,2024-2025,Southampton,Tottenham Hotspur,2024-12-15T14:00:00Z,Finished,0,5,St Mary's Stadium,31270
+Premier League 2024-25,2024-2025,AFC Bournemouth,West Ham United,2024-12-16T20:00:00Z,Finished,1,1,Vitality Stadium,11223
+Premier League 2024-25,2024-2025,Aston Villa,Manchester City,2024-12-21T12:30:00Z,Finished,2,1,Villa Park,42089
+Premier League 2024-25,2024-2025,Brentford,Nottingham Forest,2024-12-21T15:00:00Z,Finished,0,2,Gtech Community Stadium,17135
+Premier League 2024-25,2024-2025,Ipswich Town,Newcastle United,2024-12-21T15:00:00Z,Finished,0,4,Portman Road,29883
+Premier League 2024-25,2024-2025,West Ham United,Brighton & Hove Albion,2024-12-21T15:00:00Z,Finished,1,1,London Stadium,62458
+Premier League 2024-25,2024-2025,Crystal Palace,Arsenal,2024-12-21T17:30:00Z,Finished,1,5,Selhurst Park,25181
+Premier League 2024-25,2024-2025,Everton,Chelsea,2024-12-22T14:00:00Z,Finished,0,0,Goodison Park,39320
+Premier League 2024-25,2024-2025,Fulham,Southampton,2024-12-22T14:00:00Z,Finished,0,0,Craven Cottage,24328
+Premier League 2024-25,2024-2025,Leicester City,Wolverhampton Wanderers,2024-12-22T16:30:00Z,Finished,3,0,King Power Stadium,31865
+Premier League 2024-25,2024-2025,Manchester United,AFC Bournemouth,2024-12-22T14:00:00Z,Finished,0,3,Old Trafford,73894
+Premier League 2024-25,2024-2025,Tottenham Hotspur,Liverpool,2024-12-22T16:30:00Z,Finished,3,6,Tottenham Hotspur Stadium,61595
+UEFA Champions League 2024-25,2024-2025,Arsenal,Monaco,2024-12-11T20:00:00Z,Finished,3,0,Emirates Stadium,60278
+UEFA Champions League 2024-25,2024-2025,Aston Villa,RB Leipzig,2024-12-10T20:00:00Z,Finished,3,2,Villa Park,41905
+UEFA Champions League 2024-25,2024-2025,AC Milan,Crvena Zvezda,2024-12-11T20:00:00Z,Finished,2,1,San Siro,56912
+UEFA Champions League 2024-25,2024-2025,Atalanta,Real Madrid,2024-12-10T20:00:00Z,Finished,2,3,Gewiss Stadium,22378
+UEFA Champions League 2024-25,2024-2025,Barcelona,Borussia Dortmund,2024-12-11T20:00:00Z,Finished,3,2,Camp Nou,48502
+UEFA Champions League 2024-25,2024-2025,Bayern München,Shakhtar Donetsk,2024-12-10T20:00:00Z,Finished,5,1,Allianz Arena,75000
+UEFA Champions League 2024-25,2024-2025,Inter Milan,Bayer Leverkusen,2024-12-10T20:00:00Z,Finished,6,0,San Siro,70123
+UEFA Champions League 2024-25,2024-2025,Juventus,Manchester City,2024-12-11T20:00:00Z,Finished,2,0,Allianz Stadium,40736
+UEFA Champions League 2024-25,2024-2025,Liverpool,Girona,2024-12-10T20:00:00Z,Finished,1,0,Anfield,59762
+UEFA Champions League 2024-25,2024-2025,Paris Saint-Germain,RB Salzburg,2024-12-10T20:00:00Z,Finished,3,0,Parc des Princes,47826
+UEFA Champions League 2024-25,2024-2025,Sporting CP,Club Brugge,2024-12-10T17:45:00Z,Finished,2,1,José Alvalade Stadium,39000
+UEFA Champions League 2024-25,2024-2025,Celtic,Young Boys,2024-12-11T17:45:00Z,Finished,1,0,Celtic Park,58793
+UEFA Champions League 2024-25,2024-2025,Bologna,Lille,2024-12-10T17:45:00Z,Finished,1,2,Stadio Renato Dall'Ara,27500
+UEFA Champions League 2024-25,2024-2025,GNK Dinamo Zagreb,Celtic,2024-12-10T17:45:00Z,Finished,0,0,Maksimir Stadium,20134
+

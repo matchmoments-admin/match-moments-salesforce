@@ -13,13 +13,12 @@ public class CricketHandler extends SportHandlerBase implements ISportDataHandle
         return 'Cricket';
     }
     
-    public Opportunity mapFixture(Map<String, Object> apiData, Id leagueId) {
-        Opportunity opp = new Opportunity();
+    public Match__c mapFixture(Map<String, Object> apiData, Id competitionId) {
+        Match__c match = new Match__c();
         
-        opp.ESPN_ID__c = safeString(apiData, 'id');
-        opp.Name = safeString(apiData, 'name'); // e.g., "AUS vs IND"
-        opp.Start_Date_Time__c = parseIsoDate(safeString(apiData, 'date'));
-        opp.Opportunity_Group__c = leagueId;
+        match.ESPN_Event_ID__c = safeString(apiData, 'id');
+        match.Match_Date_Time__c = parseIsoDate(safeString(apiData, 'date'));
+        match.Competition__c = competitionId;
         
         // Cricket Specific Scoring Logic
         List<Object> competitions = (List<Object>)apiData.get('competitions');
@@ -35,7 +34,7 @@ public class CricketHandler extends SportHandlerBase implements ISportDataHandle
                     
                     // Parse "245/8" -> Total: 245, Sub: 8 (Wickets)
                     Decimal runs = 0;
-                    String wickets = '';
+                    Decimal wickets = 0;
                     
                     if (String.isNotBlank(scoreStr)) {
                         List<String> parts = scoreStr.split('/');
@@ -47,35 +46,39 @@ public class CricketHandler extends SportHandlerBase implements ISportDataHandle
                             }
                         }
                         if (parts.size() > 1) {
-                            wickets = parts[1].trim();
+                            try {
+                                wickets = Decimal.valueOf(parts[1].trim());
+                            } catch (Exception e) {
+                                wickets = 0;
+                            }
                         }
                     }
                     
                     if (homeAway == 'home') {
-                        opp.Home_Score_Total__c = runs;
-                        opp.Home_Sub_Score__c = wickets; // Storing wickets in sub-score
+                        match.Home_Score_Final__c = runs;
+                        match.Home_Sub_Score__c = wickets; // Storing wickets as number
                     } else if (homeAway == 'away') {
-                        opp.Away_Score_Total__c = runs;
-                        opp.Away_Sub_Score__c = wickets;
+                        match.Away_Score_Final__c = runs;
+                        match.Away_Sub_Score__c = wickets; // Storing wickets as number
                     }
                 }
             }
         }
         
-        // Set stage
+        // Set status
         Map<String, Object> status = (Map<String, Object>)apiData.get('status');
         if (status != null) {
             String statusType = safeString(status, 'type');
             if (statusType == 'STATUS_FINAL') {
-                opp.StageName = 'Completed';
+                match.Status__c = 'Completed';
             } else if (statusType == 'STATUS_IN_PROGRESS') {
-                opp.StageName = 'In Progress';
+                match.Status__c = 'Live';
             } else {
-                opp.StageName = 'Scheduled';
+                match.Status__c = 'Scheduled';
             }
         }
         
-        return opp;
+        return match;
     }
     
     public Contact mapPlayer(Map<String, Object> playerData, Id teamId) {
@@ -87,7 +90,7 @@ public class CricketHandler extends SportHandlerBase implements ISportDataHandle
         c.ESPN_Player_ID__c = safeString(playerData, 'id');
         c.Jersey_Number__c = safeDecimal(playerData, 'jersey');
         c.Profile_Image_URL__c = safeString(playerData, 'headshotUrl');
-        c.Roster_Status__c = 'Active';
+        c.Player_Role__c = 'Active'; // Using Player_Role__c instead of Roster_Status__c
         
         return c;
     }

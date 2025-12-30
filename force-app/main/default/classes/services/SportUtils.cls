@@ -132,36 +132,35 @@ public class SportUtils {
      * @param sportType Sport type string
      * @return Type The handler class type
      */
-    // Sport handler methods commented out until handler classes are deployed
-    // public static Type getSportHandlerType(String sportType) {
-    //     if (String.isBlank(sportType)) {
-    //         return SoccerHandler.class;
-    //     }
-    //     
-    //     switch on sportType.toLowerCase() {
-    //         when 'cricket' {
-    //             return CricketHandler.class;
-    //         }
-    //         when 'afl' {
-    //             return AFLHandler.class;
-    //         }
-    //         when 'basketball', 'nba' {
-    //             return NBAHandler.class;
-    //         }
-    //         when else {
-    //             return SoccerHandler.class;
-    //         }
-    //     }
-    // }
+    public static Type getSportHandlerType(String sportType) {
+        if (String.isBlank(sportType)) {
+            return SoccerHandler.class;
+        }
+        
+        switch on sportType.toLowerCase() {
+            when 'cricket' {
+                return CricketHandler.class;
+            }
+            when 'afl' {
+                return AFLHandler.class;
+            }
+            when 'basketball', 'nba' {
+                return NBAHandler.class;
+            }
+            when else {
+                return SoccerHandler.class;
+            }
+        }
+    }
     
-    // /**
-    //  * @description Create sport handler instance
-    //  * @param sportType Sport type string
-    //  * @return ISportDataHandler Handler instance
-    //  */
-    // public static ISportDataHandler getSportHandler(String sportType) {
-    //     Type handlerType = getSportHandlerType(sportType);
-    //     return (ISportDataHandler) handlerType.newInstance();
-    // }
+    /**
+     * @description Create sport handler instance
+     * @param sportType Sport type string
+     * @return ISportDataHandler Handler instance
+     */
+    public static ISportDataHandler getSportHandler(String sportType) {
+        Type handlerType = getSportHandlerType(sportType);
+        return (ISportDataHandler) handlerType.newInstance();
+    }
 }
 
