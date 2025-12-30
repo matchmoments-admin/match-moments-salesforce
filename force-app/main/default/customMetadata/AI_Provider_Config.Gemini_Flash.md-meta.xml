@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Gemini Flash</label>
+    <protected>false</protected>
+    <values>
+        <field>Provider_Name__c</field>
+        <value xsi:type="xsd:string">Gemini</value>
+    </values>
+    <values>
+        <field>Named_Credential__c</field>
+        <value xsi:type="xsd:string">Gemini_AI_API</value>
+    </values>
+    <values>
+        <field>Model_Name__c</field>
+        <value xsi:type="xsd:string">gemini-1.5-flash</value>
+    </values>
+    <values>
+        <field>Max_Tokens__c</field>
+        <value xsi:type="xsd:double">8000.0</value>
+    </values>
+    <values>
+        <field>Is_Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
+    </values>
+    <values>
+        <field>Priority__c</field>
+        <value xsi:type="xsd:double">1.0</value>
+    </values>
+    <values>
+        <field>Capabilities__c</field>
+        <value xsi:type="xsd:string">Web Search;Content Generation;Summarization</value>
+    </values>
+    <values>
+        <field>Cost_Per_1K_Tokens__c</field>
+        <value xsi:type="xsd:double">0.000075</value>
+    </values>
+</CustomMetadata>
+

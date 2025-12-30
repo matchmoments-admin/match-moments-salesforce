@@ -111,7 +111,7 @@ public with sharing class ESPNDataParser {
             fixture.ESPN_Event_ID__c = event.id;
             // Name field is auto-generated, don't set it
             fixture.Competition__c = competitionId;
-            fixture.Status__c = event.status;
+            fixture.Status__c = mapESPNStatusToSalesforce(event.status);
             fixture.Venue__c = event.venueName;
             
             // Parse date
@@ -204,13 +204,67 @@ public with sharing class ESPNDataParser {
         }
         
         try {
-            // ESPN format: 2024-12-20T19:00Z or 2024-12-20T19:00:00Z
-            String cleaned = espnDate.replace('T', ' ').replace('Z', '');
-            return DateTime.valueOf(cleaned);
+            // ESPN format: 2025-12-21T16:30Z or 2025-12-21T16:30:00Z
+            // Salesforce DateTime.valueOf() requires: YYYY-MM-DD HH:MM:SS
+            String dateStr = espnDate;
+            
+            // Remove the Z timezone indicator
+            dateStr = dateStr.replace('Z', '');
+            
+            // Check if seconds are missing (format HH:MM instead of HH:MM:SS)
+            // Count colons in the time part only (after the T)
+            Integer colonCount = dateStr.length() - dateStr.replace(':', '').length();
+            if (colonCount == 1) {
+                // Has YYYY-MM-DDTHH:MM format (only 1 colon), add :00 for seconds
+                dateStr = dateStr + ':00';
+            }
+            
+            // Replace T with space to get Salesforce format
+            dateStr = dateStr.replace('T', ' ');
+            
+            return DateTime.valueOf(dateStr);
         } catch (Exception e) {
             System.debug('Failed to parse ESPN date: ' + espnDate + ' - ' + e.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * @description Map ESPN status values to Salesforce picklist values
+     * ESPN returns: FT (Full Time), Scheduled, Live, etc.
+     * Salesforce expects: Scheduled, Live, Completed, Postponed, Cancelled
+     * @param espnStatus ESPN status string
+     * @return String Salesforce Status__c picklist value
+     */
+    private static String mapESPNStatusToSalesforce(String espnStatus) {
+        if (String.isBlank(espnStatus)) {
+            return 'Scheduled';
+        }
+        
+        String status = espnStatus.toLowerCase();
+        
+        // Map ESPN status codes to Salesforce picklist
+        if (status == 'ft' || status == 'final' || status == 'completed') {
+            return 'Completed';
+        } else if (status.contains('live') || status == 'in progress') {
+            return 'Live';
+        } else if (status.contains('postponed')) {
+            return 'Postponed';
+        } else if (status.contains('cancel')) {
+            return 'Cancelled';
+        } else if (status.contains('scheduled') || status.contains('pre')) {
+            return 'Scheduled';
+        }
+        
+        // If status looks like a date/time string (e.g., "Sun, December 28th at 9:00 AM EST")
+        // it's a scheduled match
+        if (status.contains(',') || status.contains('at') || status.contains('am') || status.contains('pm')) {
+            return 'Scheduled';
+        }
+        
+        // Default to Scheduled for unknown statuses
+        System.debug('Unknown ESPN status "' + espnStatus + '", defaulting to Scheduled');
+        return 'Scheduled';
     }
 }
 
