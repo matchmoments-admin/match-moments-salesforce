@@ -47,7 +47,11 @@
                                         <div class="slds-media slds-media_center">
                                             <div class="slds-media__figure">
                                                 <template if:true={homeTeamLogo}>
-                                                    <img src={homeTeamLogo} alt={homeTeamName} class="team-logo-small" />
+                                                    <img src={homeTeamLogo} alt={homeTeamName} class="team-logo-small" 
+                                                         onerror={handleImageError} data-team="home" />
+                                                </template>
+                                                <template if:false={homeTeamLogo}>
+                                                    <lightning-icon icon-name="standard:account" size="small" alternative-text={homeTeamName}></lightning-icon>
                                                 </template>
                                             </div>
                                             <div class="slds-media__body">
@@ -106,7 +110,11 @@
                                         <div class="slds-media slds-media_center">
                                             <div class="slds-media__figure">
                                                 <template if:true={awayTeamLogo}>
-                                                    <img src={awayTeamLogo} alt={awayTeamName} class="team-logo-small" />
+                                                    <img src={awayTeamLogo} alt={awayTeamName} class="team-logo-small" 
+                                                         onerror={handleImageError} data-team="away" />
+                                                </template>
+                                                <template if:false={awayTeamLogo}>
+                                                    <lightning-icon icon-name="standard:account" size="small" alternative-text={awayTeamName}></lightning-icon>
                                                 </template>
                                             </div>
                                             <div class="slds-media__body">

@@ -986,6 +986,14 @@ public with sharing class MatchSummaryController {
                     continue;
                 }
                 
+                // Null safety check for lineupData
+                if (lineupData == null) {
+                    String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                    System.debug(LoggingLevel.ERROR, 'Lineup data is null for team: ' + teamName);
+                    processingErrors.add('Failed to parse lineup data for ' + teamName + ' - parser returned null');
+                    continue;
+                }
+                
                 Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
                     
                     if (lineupRecord != null) {
