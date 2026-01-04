@@ -82,27 +82,25 @@ if (!existingLineups.isEmpty()) {
 System.debug('\n=== STEP 4: Syncing lineups from ESPN ===');
 
 try {
-    Map<String, Object> syncResult = MatchSummaryController.syncLineupsFromESPN(testMatch.Id);
+    // Use ESPNSyncServiceImpl directly (avoids AuraHandledException in anonymous Apex)
+    fflib_ISObjectUnitOfWork uow = Application.UnitOfWork.newInstance();
+    ESPNSyncServiceImpl service = new ESPNSyncServiceImpl();
+    ESPNSyncResult result = service.syncMatchLineups(testMatch.Id, uow);
     
-    System.debug('Sync result: ' + JSON.serialize(syncResult));
-    
-    if ((Boolean) syncResult.get('success')) {
+    if (result.success) {
         System.debug('SUCCESS: Lineup sync completed');
-        System.debug('Lineups created: ' + syncResult.get('lineupCount'));
-        System.debug('Participations created: ' + syncResult.get('participationCount'));
+        System.debug('Result message: ' + result.message);
         
-        if (syncResult.get('warnings') != null) {
-            List<String> warnings = (List<String>) syncResult.get('warnings');
-            if (!warnings.isEmpty()) {
-                System.debug('WARNINGS: ' + String.join(warnings, '; '));
-            }
-        }
+        // Commit the unit of work
+        uow.commitWork();
+        System.debug('✓ Unit of work committed successfully');
     } else {
-        System.debug('ERROR: Sync failed - ' + syncResult.get('message'));
+        System.debug('ERROR: Sync failed - ' + result.message);
         return;
     }
 } catch (Exception e) {
     System.debug('ERROR: Exception during sync - ' + e.getMessage());
+    System.debug('Exception type: ' + e.getTypeName());
     System.debug('Stack trace: ' + e.getStackTraceString());
     return;
 }
@@ -133,16 +131,22 @@ if (newPlayers > 0) {
 // ============================================
 System.debug('\n=== STEP 6: Verifying lineups were created ===');
 
-List<Lineup__c> createdLineups = [
-    SELECT Id, Team__c, Team__r.Name, Formation__c, Starting_XI_Count__c
-    FROM Lineup__c
-    WHERE Match__c = :testMatch.Id
-];
+// Query lineups - use basic fields that should exist
+List<Lineup__c> createdLineups = new List<Lineup__c>();
+try {
+    createdLineups = [
+        SELECT Id
+        FROM Lineup__c
+        WHERE Match__c = :testMatch.Id
+    ];
+} catch (Exception e) {
+    System.debug('ERROR: Could not query Lineup__c: ' + e.getMessage());
+    System.debug('This may indicate the Lineup__c object or Match__c relationship is not deployed');
+}
 
 System.debug('Lineups created: ' + createdLineups.size());
 for (Lineup__c lineup : createdLineups) {
-    System.debug('  - ' + lineup.Team__r.Name + ': Formation ' + lineup.Formation__c + 
-                 ', Starting XI: ' + lineup.Starting_XI_Count__c);
+    System.debug('  - Lineup ID: ' + lineup.Id);
 }
 
 // ============================================
@@ -232,10 +236,15 @@ if (playersMissingName > 0) {
 // STEP 9: Final summary
 // ============================================
 System.debug('\n=== STEP 9: Final Summary ===');
-System.debug('Match: ' + testMatch.Name);
-System.debug('Lineups created: ' + createdLineups.size());
-System.debug('Participations created: ' + participations.size());
+System.debug('Match: ' + testMatch.Name + ' (ID: ' + testMatch.Id + ')');
+System.debug('ESPN Event ID: ' + testMatch.ESPN_Event_ID__c);
+System.debug('Lineups found: ' + createdLineups.size());
+System.debug('Participations found: ' + participations.size());
 System.debug('Players in lineup: ' + playersInLineup.size());
 System.debug('New players created: ' + newPlayers);
 System.debug('\n✓ TEST COMPLETE - Check results above');
+System.debug('\nNext steps:');
+System.debug('1. Verify lineups were created in Salesforce UI');
+System.debug('2. Check Match_Participation__c records are linked correctly');
+System.debug('3. Verify all players have Person__c set on participations');
 
