@@ -1,0 +1,214 @@
+<!--
+    AI Article Helper Component
+    
+    EXAM CONCEPT: DOM Manipulation & Event Handling
+    - querySelector/querySelectorAll for element selection
+    - Event listeners and propagation
+    - Dynamic content creation
+-->
+<template>
+    <lightning-card title="AI Article Generator" icon-name="custom:custom63">
+        
+        <!-- EXAM CONCEPT: Conditional Rendering with if:true/if:false -->
+        <div class="slds-card__body slds-card__body_inner">
+            
+            <!-- Step 1: Article Configuration -->
+            <template if:true={showConfigStep}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Step 1: Configure Your Article</h3>
+                    
+                    <!-- EXAM CONCEPT: Two-way data binding with onchange -->
+                    <lightning-combobox
+                        name="articleType"
+                        label="Article Type"
+                        value={articleType}
+                        placeholder="Select article type"
+                        options={articleTypeOptions}
+                        onchange={handleArticleTypeChange}
+                        required>
+                    </lightning-combobox>
+
+                    <!-- EXAM CONCEPT: Conditional rendering based on selection -->
+                    <template if:true={showMatchSelector}>
+                        <lightning-record-picker
+                            label="Select Match"
+                            placeholder="Search for a match"
+                            object-api-name="Match__c"
+                            onchange={handleMatchSelection}
+                            class="slds-m-top_small">
+                        </lightning-record-picker>
+                    </template>
+
+                    <template if:true={showTeamSelector}>
+                        <lightning-record-picker
+                            label="Select Team"
+                            placeholder="Search for a team"
+                            object-api-name="Account"
+                            onchange={handleTeamSelection}
+                            class="slds-m-top_small">
+                        </lightning-record-picker>
+                    </template>
+
+                    <template if:true={showPlayerSelector}>
+                        <lightning-record-picker
+                            label="Select Player"
+                            placeholder="Search for a player"
+                            object-api-name="Contact"
+                            onchange={handlePlayerSelection}
+                            class="slds-m-top_small">
+                        </lightning-record-picker>
+                    </template>
+
+                    <!-- EXAM CONCEPT: Textarea for user input -->
+                    <lightning-textarea
+                        name="additionalContext"
+                        label="Additional Context (Optional)"
+                        value={additionalContext}
+                        onchange={handleContextChange}
+                        placeholder="Add any specific details, angles, or focus areas..."
+                        max-length="500"
+                        class="slds-m-top_small">
+                    </lightning-textarea>
+
+                    <!-- EXAM CONCEPT: Character counter (computed property) -->
+                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                        {characterCount} / 500 characters
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label="Generate Article"
+                        title="Generate AI article"
+                        onclick={handleGenerate}
+                        disabled={isGenerateDisabled}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Step 2: Loading State -->
+            <!-- EXAM CONCEPT: Spinner component for async operations -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-m-vertical_large">
+                    <lightning-spinner
+                        alternative-text="Generating article..."
+                        size="medium">
+                    </lightning-spinner>
+                    <p class="slds-m-top_small">AI is crafting your article...</p>
+                </div>
+            </template>
+
+            <!-- Step 3: Generated Article -->
+            <template if:true={showResultStep}>
+                <div class="slds-m-bottom_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Article</h3>
+                    
+                    <!-- EXAM CONCEPT: Input field with two-way binding -->
+                    <lightning-input
+                        name="headline"
+                        label="Headline"
+                        value={generatedHeadline}
+                        onchange={handleHeadlineChange}
+                        required>
+                    </lightning-input>
+
+                    <!-- EXAM CONCEPT: Rich text editor -->
+                    <lightning-input-rich-text
+                        label="Article Body"
+                        value={generatedBody}
+                        onchange={handleBodyChange}
+                        class="slds-m-top_small"
+                        formats="font,size,bold,italic,underline,list,link">
+                    </lightning-input-rich-text>
+
+                    <!-- Article Metadata -->
+                    <div class="slds-grid slds-gutters slds-m-top_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input
+                                name="readingTime"
+                                label="Reading Time (minutes)"
+                                type="number"
+                                value={readingTime}
+                                onchange={handleReadingTimeChange}
+                                min="1"
+                                readonly>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-combobox
+                                name="sportType"
+                                label="Sport Type"
+                                value={sportType}
+                                options={sportTypeOptions}
+                                onchange={handleSportTypeChange}
+                                required>
+                            </lightning-combobox>
+                        </div>
+                    </div>
+
+                    <!-- AI Provider Info -->
+                    <div class="slds-box slds-box_x-small slds-theme_shade slds-m-top_small">
+                        <p class="slds-text-body_small">
+                            <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                            <strong>AI Provider:</strong> {aiProvider}
+                        </p>
+                        <p class="slds-text-body_small slds-m-top_xx-small">
+                            <strong>Tokens Used:</strong> {tokensUsed}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="slds-m-top_medium">
+                    <lightning-button
+                        variant="brand"
+                        label="Save Article"
+                        title="Save article to Salesforce"
+                        onclick={handleSave}
+                        disabled={isSaving}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="Regenerate"
+                        title="Generate new version"
+                        onclick={handleRegenerate}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="Start Over"
+                        title="Start over"
+                        onclick={handleReset}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Error Display -->
+            <!-- EXAM CONCEPT: Error handling display -->
+            <template if:true={error}>
+                <div class="slds-m-top_medium">
+                    <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                        <span class="slds-assistive-text">error</span>
+                        <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
+                        <h2>{error}</h2>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Success Display -->
+            <template if:true={success}>
+                <div class="slds-m-top_medium">
+                    <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success" role="alert">
+                        <span class="slds-assistive-text">success</span>
+                        <lightning-icon icon-name="utility:success" size="small" variant="inverse"></lightning-icon>
+                        <h2>{success}</h2>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

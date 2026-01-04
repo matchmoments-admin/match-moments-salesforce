@@ -31,19 +31,19 @@ public inherited sharing class CommentariesSelector extends fflib_SObjectSelecto
     }
     
     /**
-     * @description Select commentaries by match IDs
-     * @param matchIds Set of Match__c record IDs
-     * @return Map of Match__c Id -> Commentary__c
+     * @description Select commentaries by fixture IDs (legacy - Commentary__c uses Fixture__c, not Match__c)
+     * @param fixtureIds Set of Fixture__c record IDs
+     * @return Map of Fixture__c Id -> Commentary__c
      */
-    public Map<Id, Commentary__c> selectByMatchIds(Set<Id> matchIds) {
+    public Map<Id, Commentary__c> selectByFixtureIds(Set<Id> fixtureIds) {
         fflib_QueryFactory query = newQueryFactory()
-            .setCondition('Match__c IN :matchIds');
+            .setCondition('Fixture__c IN :fixtureIds');
         
         List<Commentary__c> commentaries = (List<Commentary__c>) Database.query(query.toSOQL());
         
         Map<Id, Commentary__c> result = new Map<Id, Commentary__c>();
         for (Commentary__c comm : commentaries) {
-            result.put(comm.Match__c, comm);
+            result.put(comm.Fixture__c, comm);
         }
         
         return result;

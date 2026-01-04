@@ -179,7 +179,7 @@ public inherited sharing class ArticleGeneratorServiceImpl implements IArticleGe
             Body__c = response.content,
             Source__c = 'AI: ' + response.provider + ' (' + response.model + ')',
             Sport_Type__c = match.Competition__r.Sport__c,
-            Match__c = match.Id,
+            Related_Match__c = match.Id,
             Article_Date__c = Date.today(),
             Is_Published__c = false,
             Reading_Time__c = calculateReadingTime(response.content)
@@ -209,7 +209,7 @@ public inherited sharing class ArticleGeneratorServiceImpl implements IArticleGe
         // Set related records
         if (relatedRecords != null) {
             if (relatedRecords.containsKey('Match__c')) {
-                article.Match__c = relatedRecords.get('Match__c');
+                article.Related_Match__c = (Id) relatedRecords.get('Match__c');
             }
             if (relatedRecords.containsKey('Account')) {
                 article.Related_Team__c = relatedRecords.get('Account');
@@ -244,15 +244,19 @@ public inherited sharing class ArticleGeneratorServiceImpl implements IArticleGe
      */
     private Set<Id> getMatchIdsWithArticles(List<Match__c> matches) {
         Set<Id> matchesWithArticles = new Set<Id>();
+        Set<Id> matchIds = new Set<Id>();
+        for (Match__c match : matches) {
+            matchIds.add(match.Id);
+        }
         
         List<Article__c> existingArticles = [
-            SELECT Match__c
+            SELECT Related_Match__c
             FROM Article__c
-            WHERE Match__c IN :matches
+            WHERE Related_Match__c IN :matchIds
         ];
         
         for (Article__c article : existingArticles) {
-            matchesWithArticles.add(article.Match__c);
+            matchesWithArticles.add(article.Related_Match__c);
         }
         
         return matchesWithArticles;

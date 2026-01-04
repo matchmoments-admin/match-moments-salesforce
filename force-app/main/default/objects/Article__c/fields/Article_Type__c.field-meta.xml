@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Article_Type__c</fullName>
+    <description>Type of article (Match Preview, Match Recap, Team Analysis, Player Profile, Season Review)</description>
+    <externalId>false</externalId>
+    <label>Article Type</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>matchPreview</fullName>
+                <default>false</default>
+                <label>Match Preview</label>
+            </value>
+            <value>
+                <fullName>matchRecap</fullName>
+                <default>false</default>
+                <label>Match Recap</label>
+            </value>
+            <value>
+                <fullName>teamAnalysis</fullName>
+                <default>false</default>
+                <label>Team Analysis</label>
+            </value>
+            <value>
+                <fullName>playerProfile</fullName>
+                <default>false</default>
+                <label>Player Profile</label>
+            </value>
+            <value>
+                <fullName>seasonReview</fullName>
+                <default>false</default>
+                <label>Season Review</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

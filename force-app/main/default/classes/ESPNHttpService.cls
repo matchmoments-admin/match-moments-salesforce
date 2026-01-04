@@ -197,6 +197,28 @@ public with sharing class ESPNHttpService {
         }
     }
     
+    /**
+     * @description Get comprehensive match summary with lineups, commentary, and periods
+     * @param sport The sport type
+     * @param leagueCode The league code
+     * @param eventId ESPN event/fixture ID
+     * @return ESPNMatchSummaryResponse Parsed comprehensive match data
+     */
+    public static ESPNMatchSummaryResponse getMatchSummaryDetailed(String sport, String leagueCode, String eventId) {
+        String sportPath = buildSportPath(sport, leagueCode);
+        String endpoint = ESPN_BASE_URL + sportPath + '/summary?event=' + eventId;
+        
+        System.debug('ESPNHttpService: Fetching detailed match summary - ' + endpoint);
+        
+        HttpResponse response = makeCallout(endpoint);
+        
+        if (response.getStatusCode() == 200) {
+            return parseMatchSummaryResponse(response.getBody());
+        } else {
+            throw new ESPNException('Failed to fetch match summary for event ' + eventId + ': ' + response.getStatus());
+        }
+    }
+    
     // ========================================
     // PRIVATE HELPER METHODS
     // ========================================
@@ -575,6 +597,189 @@ public with sharing class ESPNHttpService {
     }
     
     /**
+     * @description Parse comprehensive match summary response
+     */
+    private static ESPNMatchSummaryResponse parseMatchSummaryResponse(String jsonBody) {
+        ESPNMatchSummaryResponse result = new ESPNMatchSummaryResponse();
+        result.lineups = new List<ESPNLineup>();
+        result.commentaryItems = new List<ESPNCommentaryItem>();
+        result.periods = new List<ESPNPeriod>();
+        
+        try {
+            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(jsonBody);
+            
+            // Parse header for basic match info
+            Map<String, Object> header = (Map<String, Object>) responseMap.get('header');
+            if (header != null) {
+                result.eventId = (String) header.get('id');
+                
+                List<Object> competitions = (List<Object>) header.get('competitions');
+                if (competitions != null && !competitions.isEmpty()) {
+                    Map<String, Object> competition = (Map<String, Object>) competitions[0];
+                    result.eventDate = (String) competition.get('date');
+                    
+                    // Parse competitors (teams)
+                    List<Object> competitors = (List<Object>) competition.get('competitors');
+                    if (competitors != null && competitors.size() >= 2) {
+                        for (Object compObj : competitors) {
+                            Map<String, Object> comp = (Map<String, Object>) compObj;
+                            String homeAway = (String) comp.get('homeAway');
+                            Map<String, Object> team = (Map<String, Object>) comp.get('team');
+                            
+                            if (team != null) {
+                                if (homeAway == 'home') {
+                                    result.homeTeamId = (String) team.get('id');
+                                    result.homeTeamName = (String) team.get('displayName');
+                                    result.homeScore = (String) comp.get('score');
+                                } else if (homeAway == 'away') {
+                                    result.awayTeamId = (String) team.get('id');
+                                    result.awayTeamName = (String) team.get('displayName');
+                                    result.awayScore = (String) comp.get('score');
+                                }
+                            }
+                            
+                            // Parse period scores (linescores)
+                            List<Object> linescores = (List<Object>) comp.get('linescores');
+                            if (linescores != null && homeAway != null) {
+                                for (Integer i = 0; i < linescores.size(); i++) {
+                                    Map<String, Object> linescore = (Map<String, Object>) linescores[i];
+                                    String scoreValue = (String) linescore.get('displayValue');
+                                    
+                                    // Find or create period
+                                    ESPNPeriod period = null;
+                                    for (ESPNPeriod p : result.periods) {
+                                        if (p.periodNumber == i + 1) {
+                                            period = p;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (period == null) {
+                                        period = new ESPNPeriod();
+                                        period.periodNumber = i + 1;
+                                        period.periodType = i == 0 ? 'First Half' : (i == 1 ? 'Second Half' : 'Period ' + (i + 1));
+                                        result.periods.add(period);
+                                    }
+                                    
+                                    if (homeAway == 'home' && String.isNotBlank(scoreValue)) {
+                                        try {
+                                            period.homeScore = Decimal.valueOf(scoreValue);
+                                        } catch (Exception e) {
+                                            System.debug('Failed to parse home period score: ' + scoreValue);
+                                        }
+                                    } else if (homeAway == 'away' && String.isNotBlank(scoreValue)) {
+                                        try {
+                                            period.awayScore = Decimal.valueOf(scoreValue);
+                                        } catch (Exception e) {
+                                            System.debug('Failed to parse away period score: ' + scoreValue);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Parse status
+                    Map<String, Object> status = (Map<String, Object>) competition.get('status');
+                    if (status != null) {
+                        Map<String, Object> statusType = (Map<String, Object>) status.get('type');
+                        if (statusType != null) {
+                            result.matchStatus = (String) statusType.get('detail');
+                        }
+                    }
+                }
+            }
+            
+            // Parse rosters (lineups)
+            List<Object> rosters = (List<Object>) responseMap.get('rosters');
+            if (rosters != null) {
+                for (Object rosterObj : rosters) {
+                    Map<String, Object> rosterData = (Map<String, Object>) rosterObj;
+                    ESPNLineup lineup = new ESPNLineup();
+                    
+                    String homeAway = (String) rosterData.get('homeAway');
+                    lineup.isHome = (homeAway == 'home');
+                    
+                    Map<String, Object> team = (Map<String, Object>) rosterData.get('team');
+                    if (team != null) {
+                        lineup.teamId = (String) team.get('id');
+                        lineup.teamName = (String) team.get('displayName');
+                    }
+                    
+                    lineup.players = new List<ESPNLineupPlayer>();
+                    List<Object> roster = (List<Object>) rosterData.get('roster');
+                    if (roster != null) {
+                        for (Object playerObj : roster) {
+                            Map<String, Object> playerData = (Map<String, Object>) playerObj;
+                            ESPNLineupPlayer player = new ESPNLineupPlayer();
+                            
+                            player.starter = Boolean.valueOf(playerData.get('starter'));
+                            player.jersey = String.valueOf(playerData.get('jersey'));
+                            
+                            Map<String, Object> athlete = (Map<String, Object>) playerData.get('athlete');
+                            if (athlete != null) {
+                                player.athleteId = (String) athlete.get('id');
+                                player.displayName = (String) athlete.get('displayName');
+                                player.fullName = (String) athlete.get('fullName');
+                                
+                                Map<String, Object> headshot = (Map<String, Object>) athlete.get('headshot');
+                                if (headshot != null) {
+                                    player.headshotUrl = (String) headshot.get('href');
+                                }
+                            }
+                            
+                            Map<String, Object> position = (Map<String, Object>) playerData.get('position');
+                            if (position != null) {
+                                player.position = (String) position.get('displayName');
+                                player.positionAbbreviation = (String) position.get('abbreviation');
+                            }
+                            
+                            player.subbedIn = Boolean.valueOf(playerData.get('subbedIn'));
+                            player.subbedOut = Boolean.valueOf(playerData.get('subbedOut'));
+                            
+                            lineup.players.add(player);
+                        }
+                    }
+                    
+                    result.lineups.add(lineup);
+                }
+            }
+            
+            // Parse commentary
+            List<Object> commentary = (List<Object>) responseMap.get('commentary');
+            if (commentary != null) {
+                for (Object commObj : commentary) {
+                    Map<String, Object> commData = (Map<String, Object>) commObj;
+                    ESPNCommentaryItem item = new ESPNCommentaryItem();
+                    
+                    item.sequence = Integer.valueOf(commData.get('sequence'));
+                    item.text = (String) commData.get('text');
+                    
+                    Map<String, Object> time = (Map<String, Object>) commData.get('time');
+                    if (time != null) {
+                        item.timeDisplay = (String) time.get('displayValue');
+                        Object timeValue = time.get('value');
+                        if (timeValue != null) {
+                            item.timeValue = Decimal.valueOf(String.valueOf(timeValue));
+                        }
+                    }
+                    
+                    result.commentaryItems.add(item);
+                }
+            }
+            
+            result.success = true;
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to parse match summary response: ' + e.getMessage();
+            System.debug(LoggingLevel.ERROR, result.errorMessage);
+            System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
+        }
+        
+        return result;
+    }
+    
+    /**
      * @description Helper method to parse event data (used by scoreboard and schedule)
      */
     private static ESPNEvent parseEventData(Map<String, Object> eventData) {
@@ -720,6 +925,58 @@ public with sharing class ESPNHttpService {
         public Boolean success;
         public String errorMessage;
         public ESPNAthlete athlete;
+    }
+    
+    public class ESPNMatchSummaryResponse {
+        public Boolean success;
+        public String errorMessage;
+        public String eventId;
+        public String eventDate;
+        public String homeTeamId;
+        public String homeTeamName;
+        public String homeScore;
+        public String awayTeamId;
+        public String awayTeamName;
+        public String awayScore;
+        public String matchStatus;
+        public List<ESPNLineup> lineups;
+        public List<ESPNCommentaryItem> commentaryItems;
+        public List<ESPNPeriod> periods;
+    }
+    
+    public class ESPNLineup {
+        public Boolean isHome;
+        public String teamId;
+        public String teamName;
+        public String formation;
+        public List<ESPNLineupPlayer> players;
+    }
+    
+    public class ESPNLineupPlayer {
+        public String athleteId;
+        public String displayName;
+        public String fullName;
+        public String jersey;
+        public String position;
+        public String positionAbbreviation;
+        public Boolean starter;
+        public Boolean subbedIn;
+        public Boolean subbedOut;
+        public String headshotUrl;
+    }
+    
+    public class ESPNCommentaryItem {
+        public Integer sequence;
+        public String text;
+        public String timeDisplay;
+        public Decimal timeValue;
+    }
+    
+    public class ESPNPeriod {
+        public Integer periodNumber;
+        public String periodType;
+        public Decimal homeScore;
+        public Decimal awayScore;
     }
     
     public class ESPNException extends Exception {}

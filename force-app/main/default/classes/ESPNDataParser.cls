@@ -111,6 +111,7 @@ public with sharing class ESPNDataParser {
             fixture.ESPN_Event_ID__c = event.id;
             // Name field is auto-generated, don't set it
             fixture.Competition__c = competitionId;
+            fixture.Match_Level__c = 'Professional'; // ESPN-synced matches are always Professional
             fixture.Status__c = mapESPNStatusToSalesforce(event.status);
             fixture.Venue__c = event.venueName;
             
@@ -172,6 +173,444 @@ public with sharing class ESPNDataParser {
         return periods;
     }
     
+    /**
+     * @description Parse ESPN lineup data to Lineup__c and Match_Participation__c records
+     * @param lineup ESPNLineup from ESPNMatchSummaryResponse
+     * @param matchId Salesforce Match__c ID
+     * @param teamId Salesforce Account (Team) ID
+     * @return Map with 'lineup' (Lineup__c) and 'participations' (List<Match_Participation__c>)
+     */
+    public static Map<String, Object> parseLineupToLineup(
+        ESPNHttpService.ESPNLineup lineup, 
+        Id matchId, 
+        Id teamId
+    ) {
+        Map<String, Object> result = new Map<String, Object>();
+        List<Match_Participation__c> participations = new List<Match_Participation__c>();
+        
+        if (lineup == null || lineup.players == null) {
+            System.debug('Invalid lineup data');
+            result.put('lineup', null);
+            result.put('participations', participations);
+            return result;
+        }
+        
+        // Build lineup JSON structure
+        Map<String, Object> lineupJson = new Map<String, Object>();
+        List<Object> lines = new List<Object>();
+        Map<String, Object> goalkeeper = null;
+        List<Object> bench = new List<Object>();
+        
+        // Group players by position to determine formation
+        Map<String, List<ESPNHttpService.ESPNLineupPlayer>> playersByPosition = new Map<String, List<ESPNHttpService.ESPNLineupPlayer>>();
+        
+        for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            if (player.starter) {
+                if (player.positionAbbreviation == 'G' || player.position == 'Goalkeeper') {
+                    goalkeeper = new Map<String, Object>{
+                        'playerId' => findOrCreatePlayer(player, teamId),
+                        'jersey' => player.jersey,
+                        'name' => player.displayName,
+                        'position' => 'GK'
+                    };
+                } else {
+                    String positionKey = player.positionAbbreviation != null ? player.positionAbbreviation : 'M';
+                    if (!playersByPosition.containsKey(positionKey)) {
+                        playersByPosition.put(positionKey, new List<ESPNHttpService.ESPNLineupPlayer>());
+                    }
+                    playersByPosition.get(positionKey).add(player);
+                }
+            } else {
+                // Substitute
+                Map<String, Object> benchPlayer = new Map<String, Object>{
+                    'playerId' => findOrCreatePlayer(player, teamId),
+                    'jersey' => player.jersey,
+                    'name' => player.displayName,
+                    'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'M'
+                };
+                bench.add(benchPlayer);
+            }
+        }
+        
+        // Build formation lines (simplified - assumes standard formations)
+        // This is a basic implementation - could be enhanced to detect actual formation
+        Integer defCount = 0, midCount = 0, fwdCount = 0;
+        for (String posKey : playersByPosition.keySet()) {
+            if (posKey.startsWith('D') || posKey.startsWith('CD') || posKey.startsWith('FB')) {
+                defCount += playersByPosition.get(posKey).size();
+            } else if (posKey.startsWith('M') || posKey.startsWith('CM') || posKey.startsWith('AM')) {
+                midCount += playersByPosition.get(posKey).size();
+            } else if (posKey.startsWith('F') || posKey.startsWith('FW') || posKey.startsWith('ST')) {
+                fwdCount += playersByPosition.get(posKey).size();
+            }
+        }
+        
+        // Determine formation string
+        String formation = defCount + '-' + midCount + '-' + fwdCount;
+        if (defCount == 0 && midCount == 0 && fwdCount == 0) {
+            formation = 'Unknown';
+        }
+        
+        // Build lines for JSON (grouped by position type)
+        if (defCount > 0) {
+            List<Object> defLine = new List<Object>();
+            for (String posKey : playersByPosition.keySet()) {
+                if (posKey.startsWith('D') || posKey.startsWith('CD') || posKey.startsWith('FB')) {
+                    for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
+                        defLine.add(new Map<String, Object>{
+                            'playerId' => findOrCreatePlayer(player, teamId),
+                            'jersey' => player.jersey,
+                            'name' => player.displayName,
+                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'D'
+                        });
+                    }
+                }
+            }
+            lines.add(new Map<String, Object>{'players' => defLine});
+        }
+        
+        if (midCount > 0) {
+            List<Object> midLine = new List<Object>();
+            for (String posKey : playersByPosition.keySet()) {
+                if (posKey.startsWith('M') || posKey.startsWith('CM') || posKey.startsWith('AM')) {
+                    for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
+                        midLine.add(new Map<String, Object>{
+                            'playerId' => findOrCreatePlayer(player, teamId),
+                            'jersey' => player.jersey,
+                            'name' => player.displayName,
+                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'M'
+                        });
+                    }
+                }
+            }
+            lines.add(new Map<String, Object>{'players' => midLine});
+        }
+        
+        if (fwdCount > 0) {
+            List<Object> fwdLine = new List<Object>();
+            for (String posKey : playersByPosition.keySet()) {
+                if (posKey.startsWith('F') || posKey.startsWith('FW') || posKey.startsWith('ST')) {
+                    for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
+                        fwdLine.add(new Map<String, Object>{
+                            'playerId' => findOrCreatePlayer(player, teamId),
+                            'jersey' => player.jersey,
+                            'name' => player.displayName,
+                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'F'
+                        });
+                    }
+                }
+            }
+            lines.add(new Map<String, Object>{'players' => fwdLine});
+        }
+        
+        lineupJson.put('goalkeeper', goalkeeper);
+        lineupJson.put('lines', lines);
+        lineupJson.put('bench', bench);
+        
+        // Create Lineup__c record
+        Lineup__c lineupRecord = new Lineup__c();
+        lineupRecord.Match__c = matchId;
+        lineupRecord.Team__c = teamId;
+        lineupRecord.Formation__c = formation;
+        lineupRecord.Lineup_JSON__c = JSON.serialize(lineupJson);
+        // Count starters
+        Integer starterCount = 0;
+        if (lineup.players != null) {
+            for (ESPNHttpService.ESPNLineupPlayer p : lineup.players) {
+                if (p.starter) {
+                    starterCount++;
+                }
+            }
+        }
+        lineupRecord.Starting_XI_Count__c = starterCount;
+        
+        // Create Match_Participation__c records
+        for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            Match_Participation__c participation = new Match_Participation__c();
+            participation.Match__c = matchId;
+            participation.Team__c = teamId;
+            participation.Player__c = findOrCreatePlayer(player, teamId);
+            participation.Position__c = player.positionAbbreviation != null ? player.positionAbbreviation : 
+                (player.position != null ? player.position : 'Unknown');
+            participation.Role__c = player.starter ? 'Starter' : 'Substitute';
+            
+            participations.add(participation);
+        }
+        
+        result.put('lineup', lineupRecord);
+        result.put('participations', participations);
+        
+        System.debug('Parsed lineup with ' + participations.size() + ' participations');
+        return result;
+    }
+    
+    /**
+     * @description Parse ESPN commentary to Commentary__c and Match_Moment__c records
+     * @param commentaryItems List of ESPNCommentaryItem from ESPNMatchSummaryResponse
+     * @param matchId Salesforce Match__c ID
+     * @return Map with 'commentary' (Commentary__c) and 'moments' (List<Match_Moment__c>)
+     */
+    public static Map<String, Object> parseCommentaryToMatchMoments(
+        List<ESPNHttpService.ESPNCommentaryItem> commentaryItems,
+        Id matchId
+    ) {
+        Map<String, Object> result = new Map<String, Object>();
+        List<Match_Moment__c> moments = new List<Match_Moment__c>();
+        
+        if (commentaryItems == null || commentaryItems.isEmpty()) {
+            System.debug('No commentary items to parse');
+            result.put('commentary', null);
+            result.put('moments', moments);
+            return result;
+        }
+        
+        // Create parent Commentary__c record (deprecated - uses Fixture__c, not Match__c)
+        Commentary__c commentary = new Commentary__c();
+        // Note: Commentary__c is deprecated and uses Fixture__c field, not Match__c
+        // Since we're working with Match__c IDs, we'll leave Fixture__c unset for now
+        commentary.Commentary_JSON__c = JSON.serialize(commentaryItems);
+        
+        // Parse commentary items into Match_Moment__c records
+        for (ESPNHttpService.ESPNCommentaryItem item : commentaryItems) {
+            if (String.isBlank(item.text)) {
+                continue;
+            }
+            
+            Match_Moment__c moment = new Match_Moment__c();
+            moment.Match__c = matchId;
+            moment.Description__c = item.text;
+            moment.Event_Time__c = item.timeValue != null ? item.timeValue : 0;
+            
+            // Parse time display to extract minute/second
+            if (String.isNotBlank(item.timeDisplay)) {
+                parseTimeDisplay(item.timeDisplay, moment);
+            }
+            
+            // Determine event type from text
+            moment.Event_Type__c = determineEventType(item.text);
+            moment.Event_Importance__c = determineEventImportance(item.text);
+            moment.Is_Shareable__c = (moment.Event_Type__c == 'Goal' || 
+                                      moment.Event_Type__c == 'Card' || 
+                                      moment.Event_Type__c == 'Substitution');
+            
+            moments.add(moment);
+        }
+        
+        result.put('commentary', commentary);
+        result.put('moments', moments);
+        
+        System.debug('Parsed ' + moments.size() + ' match moments from commentary');
+        return result;
+    }
+    
+    /**
+     * @description Parse ESPN periods to Match_Period__c records
+     * @param periods List of ESPNPeriod from ESPNMatchSummaryResponse
+     * @param matchId Salesforce Match__c ID
+     * @return List<Match_Period__c> Period records ready for insert
+     */
+    public static List<Match_Period__c> parsePeriodsToMatchPeriods(
+        List<ESPNHttpService.ESPNPeriod> periods,
+        Id matchId
+    ) {
+        List<Match_Period__c> periodRecords = new List<Match_Period__c>();
+        
+        if (periods == null || periods.isEmpty()) {
+            System.debug('No periods to parse');
+            return periodRecords;
+        }
+        
+        Decimal homeCumulative = 0;
+        Decimal awayCumulative = 0;
+        
+        for (ESPNHttpService.ESPNPeriod period : periods) {
+            Match_Period__c periodRecord = new Match_Period__c();
+            periodRecord.Match__c = matchId;
+            periodRecord.Period_Number__c = period.periodNumber;
+            periodRecord.Period_Type__c = period.periodType;
+            
+            periodRecord.Home_Score_Period__c = period.homeScore != null ? period.homeScore : 0;
+            periodRecord.Away_Score_Period__c = period.awayScore != null ? period.awayScore : 0;
+            
+            homeCumulative += periodRecord.Home_Score_Period__c;
+            awayCumulative += periodRecord.Away_Score_Period__c;
+            
+            periodRecord.Home_Score_Cumulative__c = homeCumulative;
+            periodRecord.Away_Score_Cumulative__c = awayCumulative;
+            periodRecord.Status__c = 'Completed'; // Historical periods are completed
+            
+            periodRecords.add(periodRecord);
+        }
+        
+        System.debug('Parsed ' + periodRecords.size() + ' match periods');
+        return periodRecords;
+    }
+    
+    // ========================================
+    // PRIVATE HELPER METHODS FOR PARSERS
+    // ========================================
+    
+    /**
+     * @description Find or create a player Contact from ESPN lineup player data
+     * @param player ESPNLineupPlayer
+     * @param teamId Team Account ID
+     * @return Contact ID
+     */
+    private static Id findOrCreatePlayer(ESPNHttpService.ESPNLineupPlayer player, Id teamId) {
+        if (String.isBlank(player.athleteId)) {
+            return null;
+        }
+        
+        // Try to find existing player by ESPN ID
+        List<Contact> existingPlayers = [
+            SELECT Id 
+            FROM Contact 
+            WHERE ESPN_Player_ID__c = :player.athleteId 
+            LIMIT 1
+        ];
+        
+        if (!existingPlayers.isEmpty()) {
+            return existingPlayers[0].Id;
+        }
+        
+        // Create new player if not found
+        Contact newPlayer = new Contact();
+        newPlayer.AccountId = teamId;
+        newPlayer.ESPN_Player_ID__c = player.athleteId;
+        
+        // Parse name
+        if (String.isNotBlank(player.fullName)) {
+            List<String> nameParts = player.fullName.split(' ', 2);
+            newPlayer.FirstName = nameParts.size() > 0 ? nameParts[0] : player.displayName;
+            newPlayer.LastName = nameParts.size() > 1 ? nameParts[1] : 'Player';
+        } else if (String.isNotBlank(player.displayName)) {
+            List<String> nameParts = player.displayName.split(' ', 2);
+            newPlayer.FirstName = nameParts.size() > 0 ? nameParts[0] : player.displayName;
+            newPlayer.LastName = nameParts.size() > 1 ? nameParts[1] : 'Player';
+        }
+        
+        if (String.isNotBlank(player.jersey)) {
+            try {
+                newPlayer.Jersey_Number__c = Decimal.valueOf(player.jersey);
+            } catch (Exception e) {
+                System.debug('Failed to parse jersey: ' + player.jersey);
+            }
+        }
+        
+        newPlayer.Position__c = player.position;
+        newPlayer.Profile_Image_URL__c = player.headshotUrl;
+        
+        // Note: This method should be called within a Unit of Work context
+        // The caller is responsible for inserting the contact
+        // For now, we'll insert it here but this should be refactored
+        try {
+            insert newPlayer;
+            return newPlayer.Id;
+        } catch (Exception e) {
+            System.debug('Failed to create player: ' + e.getMessage());
+            // Try to find again in case it was created concurrently
+            List<Contact> retryPlayers = [
+                SELECT Id 
+                FROM Contact 
+                WHERE ESPN_Player_ID__c = :player.athleteId 
+                LIMIT 1
+            ];
+            if (!retryPlayers.isEmpty()) {
+                return retryPlayers[0].Id;
+            }
+            return null;
+        }
+    }
+    
+    /**
+     * @description Parse time display string to extract minute and second
+     * @param timeDisplay Time display string (e.g., "10'", "45'+2", "90'+7")
+     * @param moment Match_Moment__c to populate
+     */
+    private static void parseTimeDisplay(String timeDisplay, Match_Moment__c moment) {
+        if (String.isBlank(timeDisplay)) {
+            return;
+        }
+        
+        try {
+            // Handle formats like "10'", "45'+2", "90'+7"
+            if (timeDisplay.contains("'")) {
+                String[] parts = timeDisplay.split("'");
+                if (parts.size() > 0) {
+                    String minuteStr = parts[0].trim();
+                    moment.Event_Minute__c = Decimal.valueOf(minuteStr);
+                }
+                
+                // Check for added time (e.g., "+2")
+                if (parts.size() > 1 && parts[1].contains('+')) {
+                    String addedTime = parts[1].replace('+', '').trim();
+                    if (String.isNotBlank(addedTime)) {
+                        moment.Event_Second__c = Decimal.valueOf(addedTime);
+                    }
+                }
+            } else {
+                // Try to parse as decimal
+                moment.Event_Minute__c = Decimal.valueOf(timeDisplay);
+            }
+        } catch (Exception e) {
+            System.debug('Failed to parse time display: ' + timeDisplay);
+        }
+    }
+    
+    /**
+     * @description Determine event type from commentary text
+     * @param text Commentary text
+     * @return String Event type
+     */
+    private static String determineEventType(String text) {
+        if (String.isBlank(text)) {
+            return 'Other';
+        }
+        
+        String lowerText = text.toLowerCase();
+        
+        if (lowerText.contains('goal') || lowerText.contains('scores')) {
+            return 'Goal';
+        } else if (lowerText.contains('yellow card')) {
+            return 'Yellow Card';
+        } else if (lowerText.contains('red card')) {
+            return 'Red Card';
+        } else if (lowerText.contains('substitution') || lowerText.contains('subbed')) {
+            return 'Substitution';
+        } else if (lowerText.contains('penalty')) {
+            return 'Penalty';
+        } else if (lowerText.contains('corner')) {
+            return 'Corner';
+        } else if (lowerText.contains('foul')) {
+            return 'Foul';
+        } else if (lowerText.contains('offside')) {
+            return 'Offside';
+        } else {
+            return 'Other';
+        }
+    }
+    
+    /**
+     * @description Determine event importance from commentary text
+     * @param text Commentary text
+     * @return String Event importance
+     */
+    private static String determineEventImportance(String text) {
+        if (String.isBlank(text)) {
+            return 'Low';
+        }
+        
+        String lowerText = text.toLowerCase();
+        
+        if (lowerText.contains('goal') || lowerText.contains('red card')) {
+            return 'High';
+        } else if (lowerText.contains('yellow card') || lowerText.contains('penalty')) {
+            return 'Medium';
+        } else {
+            return 'Low';
+        }
+    }
+    
     // ========================================
     // HELPER METHODS
     // ========================================
@@ -198,7 +637,7 @@ public with sharing class ESPNDataParser {
      * @param espnDate ESPN date string (ISO 8601 format)
      * @return DateTime Salesforce DateTime object
      */
-    private static DateTime parseESPNDateTime(String espnDate) {
+    public static DateTime parseESPNDateTime(String espnDate) {
         if (String.isBlank(espnDate)) {
             return null;
         }

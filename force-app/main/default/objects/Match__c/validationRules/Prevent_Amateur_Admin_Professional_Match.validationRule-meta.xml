@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Prevent_Amateur_Admin_Professional_Match</fullName>
+    <active>false</active>
+    <description>NOTE: Validation rules cannot check permission sets directly. For full enforcement, implement Apex triggers that check user's permission sets and prevent Amateur_Match_Admin users from creating/editing Professional matches. Permission sets provide base access control, and Apex classes with 'with sharing' enforce record-level filtering.</description>
+    <errorConditionFormula>FALSE</errorConditionFormula>
+    <errorDisplayField>Match_Level__c</errorDisplayField>
+    <errorMessage>This validation rule is disabled. Implement Apex trigger for permission set-based enforcement.</errorMessage>
+</ValidationRule>
+

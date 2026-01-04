@@ -424,10 +424,8 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             
             // 8. Sync commentary and create Match_Moment__c records
             if (response.commentaryItems != null && !response.commentaryItems.isEmpty()) {
-                // Bulk query existing commentary and moments upfront (FFLIB best practice)
-                Map<Id, Commentary__c> existingCommentariesMap = 
-                    CommentariesSelector.newInstance().selectByMatchIds(new Set<Id>{ fixtureId });
-                
+                // Bulk query existing moments upfront (FFLIB best practice)
+                // Note: Commentary__c is deprecated and uses Fixture__c, not Match__c, so we skip querying existing commentaries
                 List<Match_Moment__c> existingMoments = 
                     MatchMomentsSelector.newInstance().selectByMatchIds(new Set<Id>{ fixtureId });
                 
@@ -438,13 +436,8 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 
                 Commentary__c commentary = (Commentary__c) commentaryData.get('commentary');
                 if (commentary != null) {
-                    // Check if commentary already exists (from bulk query)
-                    if (existingCommentariesMap.containsKey(fixtureId)) {
-                        commentary.Id = existingCommentariesMap.get(fixtureId).Id;
-                        uow.registerDirty(commentary);
-                    } else {
-                        uow.registerNew(commentary);
-                    }
+                    // Commentary__c is deprecated - always create new since we can't reliably query by Match__c
+                    uow.registerNew(commentary);
                     
                     // Register Match_Moment__c records
                     List<Match_Moment__c> moments = (List<Match_Moment__c>) commentaryData.get('moments');
@@ -619,19 +612,13 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             
             Commentary__c commentary = (Commentary__c) commentaryData.get('commentary');
             if (commentary != null) {
-                // Bulk query existing commentary and moments upfront (FFLIB best practice)
-                Map<Id, Commentary__c> existingCommentariesMap = 
-                    CommentariesSelector.newInstance().selectByMatchIds(new Set<Id>{ fixtureId });
-                
+                // Bulk query existing moments upfront (FFLIB best practice)
+                // Note: Commentary__c is deprecated and uses Fixture__c, not Match__c, so we skip querying existing commentaries
                 List<Match_Moment__c> existingMoments = 
                     MatchMomentsSelector.newInstance().selectByMatchIds(new Set<Id>{ fixtureId });
                 
-                if (existingCommentariesMap.containsKey(fixtureId)) {
-                    commentary.Id = existingCommentariesMap.get(fixtureId).Id;
-                    uow.registerDirty(commentary);
-                } else {
-                    uow.registerNew(commentary);
-                }
+                // Commentary__c is deprecated - always create new since we can't reliably query by Match__c
+                uow.registerNew(commentary);
                 
                 List<Match_Moment__c> moments = (List<Match_Moment__c>) commentaryData.get('moments');
                 if (moments != null && !moments.isEmpty()) {

@@ -1,0 +1,305 @@
+<!--
+    Lineup Builder Component - Drag and Drop Interface
+    
+    EXAM CONCEPTS:
+    - DOM manipulation and event handling
+    - Drag and Drop API (dragstart, dragover, drop events)
+    - Template iteration with for:each
+    - Conditional rendering
+    - Event propagation (stopPropagation, preventDefault)
+-->
+<template>
+    <lightning-card title="Lineup Builder" icon-name="custom:custom78">
+        <div class="slds-card__body slds-card__body_inner">
+            
+            <!-- Match Selection -->
+            <div class="slds-m-bottom_medium">
+                <lightning-record-picker
+                    label="Select Match"
+                    placeholder="Choose a match to create lineup"
+                    object-api-name="Match__c"
+                    onchange={handleMatchSelection}>
+                </lightning-record-picker>
+            </div>
+
+            <!-- EXAM CONCEPT: Conditional rendering based on match selection -->
+            <template if:true={selectedMatchId}>
+                
+                <!-- Team Selection -->
+                <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox
+                            name="homeTeam"
+                            label="Home Team"
+                            value={homeTeamId}
+                            options={teamOptions}
+                            onchange={handleHomeTeamChange}
+                            required>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-combobox
+                            name="formation"
+                            label="Formation"
+                            value={selectedFormation}
+                            options={formationOptions}
+                            onchange={handleFormationChange}
+                            required>
+                        </lightning-combobox>
+                    </div>
+                </div>
+
+                <!-- EXAM CONCEPT: Grid layout with conditionally rendered sections -->
+                <template if:true={homeTeamId}>
+                    <div class="slds-grid slds-gutters">
+                        
+                        <!-- Left Panel: Available Players -->
+                        <!-- EXAM CONCEPT: Drag source - players can be dragged from here -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="slds-box slds-box_small">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">
+                                    Available Players
+                                </h3>
+                                
+                                <!-- Search/Filter -->
+                                <lightning-input
+                                    type="search"
+                                    label="Search Players"
+                                    value={playerSearchTerm}
+                                    onchange={handlePlayerSearch}
+                                    class="slds-m-bottom_small">
+                                </lightning-input>
+
+                                <!-- EXAM CONCEPT: for:each iteration over array -->
+                                <!-- Each player is draggable -->
+                                <div class="player-list" style="max-height: 500px; overflow-y: auto;">
+                                    <template for:each={filteredAvailablePlayers} for:item="player">
+                                        <div
+                                            key={player.Id}
+                                            class="player-card slds-box slds-box_xx-small slds-m-bottom_xx-small"
+                                            draggable="true"
+                                            data-player-id={player.Id}
+                                            ondragstart={handleDragStart}
+                                            ondragend={handleDragEnd}>
+                                            
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <div class="slds-col">
+                                                    <p class="slds-text-body_small">
+                                                        <strong>{player.Name}</strong>
+                                                    </p>
+                                                    <p class="slds-text-body_small slds-text-color_weak">
+                                                        #{player.Jersey_Number__c} - {player.Position__c}
+                                                    </p>
+                                                </div>
+                                                <div class="slds-col slds-no-flex">
+                                                    <lightning-icon
+                                                        icon-name="utility:drag_and_drop"
+                                                        size="x-small">
+                                                    </lightning-icon>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- EXAM CONCEPT: Conditional message when array is empty -->
+                                    <template if:false={hasAvailablePlayers}>
+                                        <p class="slds-text-color_weak slds-text-align_center slds-m-top_small">
+                                            No available players
+                                        </p>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Center Panel: Formation Field -->
+                        <!-- EXAM CONCEPT: Drop zones for players -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="slds-box formation-container" style="position: relative; min-height: 600px; background: linear-gradient(to bottom, #2d5016 0%, #3d6b1f 100%);">
+                                
+                                <!-- Field Lines -->
+                                <div class="field-lines">
+                                    <!-- Halfway line -->
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: white; opacity: 0.5;"></div>
+                                    <!-- Center circle -->
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border: 2px solid white; border-radius: 50%; opacity: 0.5;"></div>
+                                </div>
+
+                                <!-- EXAM CONCEPT: Nested for:each for formation rows -->
+                                <!-- Outer loop: formation lines (Defense, Midfield, Attack) -->
+                                <template for:each={formationLines} for:item="line">
+                                    <div
+                                        key={line.id}
+                                        class="formation-line"
+                                        data-line-id={line.id}
+                                        style={line.style}>
+                                        
+                                        <!-- Inner loop: positions in each line -->
+                                        <template for:each={line.positions} for:item="position">
+                                            <div
+                                                key={position.id}
+                                                class="position-slot"
+                                                data-position-id={position.id}
+                                                data-line-id={line.id}
+                                                ondragover={handleDragOver}
+                                                ondrop={handleDrop}
+                                                style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px;">
+                                                
+                                                <!-- EXAM CONCEPT: Conditional rendering - show player or empty slot -->
+                                                <template if:true={position.player}>
+                                                    <div
+                                                        class="assigned-player"
+                                                        draggable="true"
+                                                        data-player-id={position.player.Id}
+                                                        data-position-id={position.id}
+                                                        ondragstart={handlePlayerDragStart}
+                                                        ondragend={handleDragEnd}
+                                                        style="background: white; border-radius: 50%; width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: move; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                                        <p class="slds-text-body_small" style="font-size: 10px; font-weight: bold; margin: 0;">
+                                                            {position.player.Jersey_Number__c}
+                                                        </p>
+                                                        <p class="slds-text-body_small" style="font-size: 8px; margin: 0; max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                            {position.player.Last_Name__c}
+                                                        </p>
+                                                    </div>
+                                                </template>
+
+                                                <template if:false={position.player}>
+                                                    <div class="empty-slot" style="background: rgba(255,255,255,0.2); border: 2px dashed rgba(255,255,255,0.5); border-radius: 50%; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center;">
+                                                        <lightning-icon
+                                                            icon-name="utility:add"
+                                                            size="small"
+                                                            variant="inverse">
+                                                        </lightning-icon>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- Goalkeeper Position (Fixed at bottom) -->
+                                <div class="goalkeeper-line" style="position: absolute; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center;">
+                                    <div
+                                        class="position-slot"
+                                        data-position-id="GK"
+                                        data-line-id="goalkeeper"
+                                        ondragover={handleDragOver}
+                                        ondrop={handleDrop}
+                                        style="padding: 10px;">
+                                        
+                                        <template if:true={goalkeeperPosition.player}>
+                                            <div
+                                                class="assigned-player"
+                                                draggable="true"
+                                                data-player-id={goalkeeperPosition.player.Id}
+                                                data-position-id="GK"
+                                                ondragstart={handlePlayerDragStart}
+                                                ondragend={handleDragEnd}
+                                                style="background: yellow; border-radius: 50%; width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: move; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                                <p class="slds-text-body_small" style="font-size: 10px; font-weight: bold; margin: 0;">
+                                                    {goalkeeperPosition.player.Jersey_Number__c}
+                                                </p>
+                                                <p class="slds-text-body_small" style="font-size: 8px; margin: 0;">
+                                                    {goalkeeperPosition.player.Last_Name__c}
+                                                </p>
+                                            </div>
+                                        </template>
+
+                                        <template if:false={goalkeeperPosition.player}>
+                                            <div class="empty-slot" style="background: rgba(255,255,0,0.2); border: 2px dashed rgba(255,255,0,0.5); border-radius: 50%; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center;">
+                                                <lightning-icon
+                                                    icon-name="utility:add"
+                                                    size="small">
+                                                </lightning-icon>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Bench / Substitutes -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class="slds-box slds-box_small">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">
+                                    Bench ({benchPlayers.length})
+                                </h3>
+                                
+                                <!-- EXAM CONCEPT: Drop zone for bench -->
+                                <div
+                                    class="bench-area"
+                                    data-area="bench"
+                                    ondragover={handleDragOver}
+                                    ondrop={handleDropToBench}
+                                    style="min-height: 300px; border: 2px dashed #ccc; border-radius: 4px; padding: 8px;">
+                                    
+                                    <template for:each={benchPlayers} for:item="player">
+                                        <div
+                                            key={player.Id}
+                                            class="player-card slds-box slds-box_xx-small slds-m-bottom_xx-small"
+                                            draggable="true"
+                                            data-player-id={player.Id}
+                                            data-area="bench"
+                                            ondragstart={handleBenchDragStart}
+                                            ondragend={handleDragEnd}>
+                                            
+                                            <p class="slds-text-body_small">
+                                                <strong>{player.Name}</strong>
+                                            </p>
+                                            <p class="slds-text-body_small slds-text-color_weak">
+                                                #{player.Jersey_Number__c} - {player.Position__c}
+                                            </p>
+                                        </div>
+                                    </template>
+
+                                    <template if:false={hasBenchPlayers}>
+                                        <p class="slds-text-color_weak slds-text-align_center slds-m-top_medium">
+                                            Drag players here for bench
+                                        </p>
+                                    </template>
+                                </div>
+
+                                <!-- Captain Selection -->
+                                <div class="slds-m-top_medium">
+                                    <lightning-combobox
+                                        name="captain"
+                                        label="Captain"
+                                        value={captainId}
+                                        options={startingXIOptions}
+                                        onchange={handleCaptainChange}
+                                        placeholder="Select captain">
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="slds-m-top_medium slds-align_absolute-center">
+                        <lightning-button
+                            variant="brand"
+                            label="Save Lineup"
+                            title="Save lineup to Salesforce"
+                            onclick={handleSaveLineup}
+                            disabled={isSaving}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                        <lightning-button
+                            variant="neutral"
+                            label="Clear Lineup"
+                            title="Clear all positions"
+                            onclick={handleClearLineup}>
+                        </lightning-button>
+                    </div>
+                </template>
+            </template>
+
+            <!-- Loading State -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-m-vertical_large">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

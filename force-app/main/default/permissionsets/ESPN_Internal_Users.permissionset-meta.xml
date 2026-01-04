@@ -683,6 +683,11 @@
         <field>Match__c.Display_Score__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Match__c.Match_Level__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     
     <!-- Fixture__c Fields -->
     <fieldPermissions>
@@ -1374,6 +1379,18 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Competition__c.Season__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
+    <!-- Lineup__c New Fields -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Lineup__c.Match__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Lineup__c.Lineup_JSON__c</field>
         <readable>true</readable>
     </fieldPermissions>
     
