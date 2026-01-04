@@ -228,8 +228,8 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             String eventId = fixture.ESPN_Event_ID__c;
             
             if (String.isBlank(eventId)) {
-                // Try to find by date
-                eventId = searchFixtureByDate(fixture, espnSport, leagueCode);
+                // Try to find by date and teams using resolver
+                eventId = ESPNEventIdResolver.resolveEventId(fixture, espnSport, leagueCode);
                 
                 if (String.isBlank(eventId)) {
                     return ESPNSyncResult.failure('ESPN Event ID not found. Set ESPN_Event_ID__c on the fixture.', fixtureId);
@@ -299,8 +299,8 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
             String eventId = fixture.ESPN_Event_ID__c;
             
             if (String.isBlank(eventId)) {
-                // Try to find by date
-                eventId = searchFixtureByDate(fixture, espnSport, leagueCode);
+                // Try to find by date and teams using resolver
+                eventId = ESPNEventIdResolver.resolveEventId(fixture, espnSport, leagueCode);
                 
                 if (String.isBlank(eventId)) {
                     return ESPNSyncResult.failure('ESPN Event ID not found. Set ESPN_Event_ID__c on the fixture.', fixtureId);
@@ -1004,36 +1004,6 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
         return null;
     }
     
-    /**
-     * @description Search for fixture by date and teams
-     * @param fixture Fixture record
-     * @param espnSport ESPN sport code
-     * @param leagueCode ESPN league code
-     * @return ESPN Event ID if found
-     */
-    private String searchFixtureByDate(Match__c fixture, String espnSport, String leagueCode) {
-        Date fixtureDate = fixture.Match_Date_Time__c != null 
-            ? fixture.Match_Date_Time__c.date() : Date.today();
-        String dateStr = fixtureDate.year() + 
-            String.valueOf(fixtureDate.month()).leftPad(2, '0') + 
-            String.valueOf(fixtureDate.day()).leftPad(2, '0');
-        
-        ESPNHttpService.ESPNScoreboardResponse response = ESPNHttpService.getFixtures(espnSport, leagueCode, dateStr);
-        
-        if (response.success && response.events != null) {
-            for (ESPNHttpService.ESPNEvent event : response.events) {
-                // Match by name if available
-                if (event.name != null && fixture.Name != null) {
-                    if (event.name.containsIgnoreCase(fixture.Name) || 
-                        fixture.Name.containsIgnoreCase(event.name)) {
-                        return event.id;
-                    }
-                }
-            }
-        }
-        
-        return null;
-    }
     
     /**
      * @description Sync or find team by ESPN ID

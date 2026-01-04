@@ -627,21 +627,8 @@ public with sharing class ESPNActionController {
             String eventId = String.isNotBlank(fixture.ESPN_Event_ID__c) ? fixture.ESPN_Event_ID__c : espnEventId;
             
             if (String.isBlank(eventId)) {
-                // Try to search by date and teams
-                Date fixtureDate = fixture.Match_Date_Time__c != null ? fixture.Match_Date_Time__c.date() : Date.today();
-                String dateStr = fixtureDate.year() + String.valueOf(fixtureDate.month()).leftPad(2, '0') + String.valueOf(fixtureDate.day()).leftPad(2, '0');
-                
-                ESPNHttpService.ESPNScoreboardResponse scoreboardResponse = ESPNHttpService.getFixtures(espnSport, leagueCode, dateStr);
-                
-                if (scoreboardResponse.success && scoreboardResponse.events != null) {
-                    // Find matching fixture by name
-                    for (ESPNHttpService.ESPNEvent event : scoreboardResponse.events) {
-                        if (event.name.containsIgnoreCase(fixture.Name) || fixture.Name.containsIgnoreCase(event.name)) {
-                            eventId = event.id;
-                            break;
-                        }
-                    }
-                }
+                // Try to search by date and teams using resolver
+                eventId = ESPNEventIdResolver.resolveEventId(fixture, espnSport, leagueCode);
             }
             
             if (String.isBlank(eventId)) {

@@ -33,6 +33,12 @@ public with sharing class MatchTriggerHandler {
             } else if (Trigger.isDelete) {
                 validateDelete((List<Match__c>) Trigger.old);
             }
+        } else if (Trigger.isAfter) {
+            if (Trigger.isInsert) {
+                handleAfterInsert((List<Match__c>) Trigger.new);
+            } else if (Trigger.isUpdate) {
+                handleAfterUpdate((List<Match__c>) Trigger.new, (Map<Id, Match__c>) Trigger.oldMap);
+            }
         }
     }
     
@@ -184,6 +190,85 @@ public with sharing class MatchTriggerHandler {
             return userProfile.Name == 'System Administrator';
         } catch (Exception e) {
             return false;
+        }
+    }
+    
+    /**
+     * @description Handle after insert - auto-resolve ESPN Event ID
+     * @param newMatches List of new Match__c records
+     */
+    private static void handleAfterInsert(List<Match__c> newMatches) {
+        Set<Id> matchesToResolve = new Set<Id>();
+        
+        for (Match__c match : newMatches) {
+            // Only attempt auto-resolution if:
+            // 1. ESPN_Event_ID__c is blank
+            // 2. Match_Date_Time__c is set
+            // 3. Competition__c is set
+            // 4. At least one team is set
+            // 5. Match is Professional level (or we can make it configurable)
+            if (String.isBlank(match.ESPN_Event_ID__c) &&
+                match.Match_Date_Time__c != null &&
+                match.Competition__c != null &&
+                (match.Home_Team__c != null || match.Away_Team__c != null)) {
+                
+                // Only auto-resolve for Professional matches to avoid unnecessary API calls
+                // Can be expanded later if needed
+                if (match.Match_Level__c == MATCH_LEVEL_PROFESSIONAL) {
+                    matchesToResolve.add(match.Id);
+                }
+            }
+        }
+        
+        if (!matchesToResolve.isEmpty()) {
+            // Enqueue async job to resolve Event IDs (callouts not allowed in triggers)
+            System.enqueueJob(new ESPNEventIdResolverQueueable(matchesToResolve));
+            System.debug(LoggingLevel.INFO, 'MatchTriggerHandler: Enqueued ESPN Event ID resolution for ' + matchesToResolve.size() + ' match(es)');
+        }
+    }
+    
+    /**
+     * @description Handle after update - auto-resolve ESPN Event ID if conditions changed
+     * @param newMatches List of updated Match__c records
+     * @param oldMap Map of old Match__c records
+     */
+    private static void handleAfterUpdate(List<Match__c> newMatches, Map<Id, Match__c> oldMap) {
+        Set<Id> matchesToResolve = new Set<Id>();
+        
+        for (Match__c match : newMatches) {
+            Match__c oldMatch = oldMap.get(match.Id);
+            
+            // Only attempt auto-resolution if:
+            // 1. ESPN_Event_ID__c is blank (or was just cleared)
+            // 2. One of the key fields changed (Match_Date_Time__c, Home_Team__c, Away_Team__c, Competition__c)
+            // 3. Required fields are now set
+            Boolean shouldResolve = String.isBlank(match.ESPN_Event_ID__c) &&
+                match.Match_Date_Time__c != null &&
+                match.Competition__c != null &&
+                (match.Home_Team__c != null || match.Away_Team__c != null) &&
+                match.Match_Level__c == MATCH_LEVEL_PROFESSIONAL;
+            
+            if (shouldResolve) {
+                // Check if a relevant field changed
+                // Also trigger if Match_Level__c changed to Professional (from null or other level)
+                Boolean fieldChanged = 
+                    match.Match_Date_Time__c != oldMatch.Match_Date_Time__c ||
+                    match.Home_Team__c != oldMatch.Home_Team__c ||
+                    match.Away_Team__c != oldMatch.Away_Team__c ||
+                    match.Competition__c != oldMatch.Competition__c ||
+                    match.Match_Level__c != oldMatch.Match_Level__c ||
+                    (String.isNotBlank(oldMatch.ESPN_Event_ID__c) && String.isBlank(match.ESPN_Event_ID__c));
+                
+                if (fieldChanged) {
+                    matchesToResolve.add(match.Id);
+                }
+            }
+        }
+        
+        if (!matchesToResolve.isEmpty()) {
+            // Enqueue async job to resolve Event IDs (callouts not allowed in triggers)
+            System.enqueueJob(new ESPNEventIdResolverQueueable(matchesToResolve));
+            System.debug(LoggingLevel.INFO, 'MatchTriggerHandler: Enqueued ESPN Event ID resolution for ' + matchesToResolve.size() + ' updated match(es)');
         }
     }
 }
