@@ -163,10 +163,7 @@ public with sharing class MatchSummaryController {
             
             Match__c match = matches[0];
             
-            // Query lineups
-            List<Lineup__c> lineups = LineupsSelector.newInstance().selectByMatchIds(new Set<Id>{matchId});
-            
-            // Query teams for additional data
+            // Query teams for additional data (always query teams, even if no lineups)
             // Using direct SOQL for Team_Logo_URL__c field not in TeamsSelector defaults
             Set<Id> teamIds = new Set<Id>();
             if (match.Home_Team__c != null) teamIds.add(match.Home_Team__c);
@@ -179,25 +176,72 @@ public with sharing class MatchSummaryController {
             ];
             
             Map<Id, Account> teamMap = new Map<Id, Account>(teams);
-            Map<Id, Lineup__c> lineupMap = new Map<Id, Lineup__c>();
             
+            // Query lineups with fallback if selector fails
+            List<Lineup__c> lineups = new List<Lineup__c>();
+            try {
+                lineups = LineupsSelector.newInstance().selectByMatchIds(new Set<Id>{matchId});
+            } catch (Exception selectorError) {
+                // Fallback to direct SOQL if selector not available
+                System.debug('LineupsSelector not available, using direct SOQL: ' + selectorError.getMessage());
+                try {
+                    lineups = [
+                        SELECT Id, Match__c, Team__c, Formation__c, Lineup_JSON__c, Captain__c
+                        FROM Lineup__c
+                        WHERE Match__c = :matchId
+                    ];
+                } catch (Exception soqlError) {
+                    // If SOQL also fails, just continue with empty list
+                    System.debug('Direct SOQL also failed: ' + soqlError.getMessage());
+                    lineups = new List<Lineup__c>();
+                }
+            }
+            
+            Map<Id, Lineup__c> lineupMap = new Map<Id, Lineup__c>();
             for (Lineup__c lineup : lineups) {
                 lineupMap.put(lineup.Team__c, lineup);
             }
             
-            // Build home team lineup
-            if (match.Home_Team__c != null && lineupMap.containsKey(match.Home_Team__c)) {
-                Lineup__c homeLineup = lineupMap.get(match.Home_Team__c);
+            // Build home team lineup (return team info even if no lineup exists)
+            if (match.Home_Team__c != null) {
                 Account homeTeam = teamMap.get(match.Home_Team__c);
-                result.put('homeLineup', buildLineupData(homeLineup, homeTeam));
+                if (lineupMap.containsKey(match.Home_Team__c)) {
+                    Lineup__c homeLineup = lineupMap.get(match.Home_Team__c);
+                    result.put('homeLineup', buildLineupData(homeLineup, homeTeam));
+                } else if (homeTeam != null) {
+                    // Return team info even when lineup doesn't exist
+                    result.put('homeLineup', new Map<String, Object>{
+                        'team' => new Map<String, Object>{
+                            'id' => homeTeam.Id,
+                            'name' => homeTeam.Name,
+                            'logoUrl' => homeTeam.Team_Logo_URL__c != null ? homeTeam.Team_Logo_URL__c : homeTeam.Logo_Url__c
+                        },
+                        'hasLineup' => false
+                    });
+                }
             }
             
-            // Build away team lineup
-            if (match.Away_Team__c != null && lineupMap.containsKey(match.Away_Team__c)) {
-                Lineup__c awayLineup = lineupMap.get(match.Away_Team__c);
+            // Build away team lineup (return team info even if no lineup exists)
+            if (match.Away_Team__c != null) {
                 Account awayTeam = teamMap.get(match.Away_Team__c);
-                result.put('awayLineup', buildLineupData(awayLineup, awayTeam));
+                if (lineupMap.containsKey(match.Away_Team__c)) {
+                    Lineup__c awayLineup = lineupMap.get(match.Away_Team__c);
+                    result.put('awayLineup', buildLineupData(awayLineup, awayTeam));
+                } else if (awayTeam != null) {
+                    // Return team info even when lineup doesn't exist
+                    result.put('awayLineup', new Map<String, Object>{
+                        'team' => new Map<String, Object>{
+                            'id' => awayTeam.Id,
+                            'name' => awayTeam.Name,
+                            'logoUrl' => awayTeam.Team_Logo_URL__c != null ? awayTeam.Team_Logo_URL__c : awayTeam.Logo_Url__c
+                        },
+                        'hasLineup' => false
+                    });
+                }
             }
+            
+            // Add hasLineups flag for UI
+            result.put('hasLineups', !lineups.isEmpty());
             
             return result;
             
@@ -218,6 +262,7 @@ public with sharing class MatchSummaryController {
         lineupData.put('formation', lineup.Formation__c);
         lineupData.put('lineupJSON', lineup.Lineup_JSON__c);
         lineupData.put('captainId', lineup.Captain__c);
+        lineupData.put('hasLineup', true);
         
         if (team != null) {
             lineupData.put('team', new Map<String, Object>{
@@ -462,6 +507,428 @@ public with sharing class MatchSummaryController {
         stats.put('awayPossession', 50);
         
         return stats;
+    }
+    
+    /**
+     * @description Create a basic lineup from team players when no lineup exists
+     * @param matchId Match__c record ID
+     * @param teamId Account (Team) record ID
+     * @return Map containing created lineup data
+     */
+    @AuraEnabled
+    public static Map<String, Object> createLineupFromTeam(String matchId, String teamId) {
+        try {
+            // Verify match exists
+            List<Match__c> matches = [
+                SELECT Id, Home_Team__c, Away_Team__c
+                FROM Match__c
+                WHERE Id = :matchId
+                LIMIT 1
+            ];
+            
+            if (matches.isEmpty()) {
+                throw new AuraHandledException('Match not found');
+            }
+            
+            Match__c match = matches[0];
+            
+            // Verify team is part of this match
+            if (match.Home_Team__c != teamId && match.Away_Team__c != teamId) {
+                throw new AuraHandledException('Team is not part of this match');
+            }
+            
+            // Check if lineup already exists
+            List<Lineup__c> existingLineups = [
+                SELECT Id
+                FROM Lineup__c
+                WHERE Match__c = :matchId
+                AND Team__c = :teamId
+                LIMIT 1
+            ];
+            
+            if (!existingLineups.isEmpty()) {
+                throw new AuraHandledException('Lineup already exists for this team');
+            }
+            
+            // Get team players - try both Current_Team__c and Team_Membership__c
+            List<Contact> players = new List<Contact>();
+            
+            // First try Current_Team__c lookup
+            players = [
+                SELECT Id, Name, FirstName, LastName, Position__c, Jersey_Number__c
+                FROM Contact
+                WHERE Current_Team__c = :teamId
+                ORDER BY Jersey_Number__c NULLS LAST, Name
+                LIMIT 25
+            ];
+            
+            // If no players found via Current_Team__c, try Team_Membership__c
+            if (players.isEmpty()) {
+                List<Team_Membership__c> memberships = [
+                    SELECT Player__c
+                    FROM Team_Membership__c
+                    WHERE Team__c = :teamId
+                    AND Status__c = 'Active'
+                    LIMIT 25
+                ];
+                
+                Set<Id> playerIds = new Set<Id>();
+                for (Team_Membership__c membership : memberships) {
+                    playerIds.add(membership.Player__c);
+                }
+                
+                if (!playerIds.isEmpty()) {
+                    players = [
+                        SELECT Id, Name, FirstName, LastName, Position__c, Jersey_Number__c
+                        FROM Contact
+                        WHERE Id IN :playerIds
+                        ORDER BY Jersey_Number__c NULLS LAST, Name
+                    ];
+                }
+            }
+            
+            if (players.isEmpty()) {
+                throw new AuraHandledException('No players found for this team. Please add players to the team first.');
+            }
+            
+            // Build basic lineup structure
+            Map<String, Object> lineupJson = new Map<String, Object>();
+            List<Object> lines = new List<Object>();
+            List<Object> bench = new List<Object>();
+            Map<String, Object> goalkeeper = null;
+            
+            // Separate players by position
+            List<Contact> goalkeepers = new List<Contact>();
+            List<Contact> defenders = new List<Contact>();
+            List<Contact> midfielders = new List<Contact>();
+            List<Contact> forwards = new List<Contact>();
+            List<Contact> others = new List<Contact>();
+            
+            for (Contact player : players) {
+                String position = player.Position__c != null ? player.Position__c.toUpperCase() : '';
+                if (position.contains('GK') || position.contains('GOALKEEPER')) {
+                    goalkeepers.add(player);
+                } else if (position.contains('D') || position.contains('DEFENDER') || position.contains('CB') || position.contains('LB') || position.contains('RB')) {
+                    defenders.add(player);
+                } else if (position.contains('M') || position.contains('MIDFIELDER') || position.contains('CM') || position.contains('AM')) {
+                    midfielders.add(player);
+                } else if (position.contains('F') || position.contains('FORWARD') || position.contains('ST') || position.contains('FW')) {
+                    forwards.add(player);
+                } else {
+                    others.add(player);
+                }
+            }
+            
+            // Select starting XI (1 GK, 4-5 defenders, 3-4 midfielders, 1-2 forwards)
+            Integer selectedCount = 0;
+            Integer maxStarting = 11;
+            
+            // Goalkeeper
+            if (!goalkeepers.isEmpty() && selectedCount < maxStarting) {
+                Contact gk = goalkeepers[0];
+                goalkeeper = new Map<String, Object>{
+                    'playerId' => gk.Id,
+                    'playerName' => gk.Name,
+                    'jersey' => gk.Jersey_Number__c,
+                    'position' => 'GK'
+                };
+                selectedCount++;
+            }
+            
+            // Defenders (up to 5)
+            List<Object> defLine = new List<Object>();
+            Integer defCount = Math.min(defenders.size(), Math.min(5, maxStarting - selectedCount));
+            for (Integer i = 0; i < defCount; i++) {
+                Contact def = defenders[i];
+                defLine.add(new Map<String, Object>{
+                    'playerId' => def.Id,
+                    'playerName' => def.Name,
+                    'jersey' => def.Jersey_Number__c,
+                    'position' => def.Position__c != null ? def.Position__c : 'D'
+                });
+                selectedCount++;
+            }
+            if (!defLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => defLine});
+            }
+            
+            // Midfielders (up to 4)
+            List<Object> midLine = new List<Object>();
+            Integer midCount = Math.min(midfielders.size(), Math.min(4, maxStarting - selectedCount));
+            for (Integer i = 0; i < midCount; i++) {
+                Contact mid = midfielders[i];
+                midLine.add(new Map<String, Object>{
+                    'playerId' => mid.Id,
+                    'playerName' => mid.Name,
+                    'jersey' => mid.Jersey_Number__c,
+                    'position' => mid.Position__c != null ? mid.Position__c : 'M'
+                });
+                selectedCount++;
+            }
+            if (!midLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => midLine});
+            }
+            
+            // Forwards (up to 2)
+            List<Object> fwdLine = new List<Object>();
+            Integer fwdCount = Math.min(forwards.size(), Math.min(2, maxStarting - selectedCount));
+            for (Integer i = 0; i < fwdCount; i++) {
+                Contact fwd = forwards[i];
+                fwdLine.add(new Map<String, Object>{
+                    'playerId' => fwd.Id,
+                    'playerName' => fwd.Name,
+                    'jersey' => fwd.Jersey_Number__c,
+                    'position' => fwd.Position__c != null ? fwd.Position__c : 'F'
+                });
+                selectedCount++;
+            }
+            if (!fwdLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => fwdLine});
+            }
+            
+            // Fill remaining spots with others if needed
+            if (selectedCount < maxStarting && !others.isEmpty()) {
+                List<Object> otherLine = new List<Object>();
+                Integer otherCount = Math.min(others.size(), maxStarting - selectedCount);
+                for (Integer i = 0; i < otherCount; i++) {
+                    Contact other = others[i];
+                    otherLine.add(new Map<String, Object>{
+                        'playerId' => other.Id,
+                        'playerName' => other.Name,
+                        'jersey' => other.Jersey_Number__c,
+                        'position' => other.Position__c != null ? other.Position__c : 'M'
+                    });
+                    selectedCount++;
+                }
+                if (!otherLine.isEmpty()) {
+                    lines.add(new Map<String, Object>{'players' => otherLine});
+                }
+            }
+            
+            // Add remaining players to bench
+            Integer benchStart = selectedCount;
+            for (Integer i = benchStart; i < players.size(); i++) {
+                Contact player = players[i];
+                bench.add(new Map<String, Object>{
+                    'playerId' => player.Id,
+                    'playerName' => player.Name,
+                    'jersey' => player.Jersey_Number__c,
+                    'position' => player.Position__c != null ? player.Position__c : 'SUB'
+                });
+            }
+            
+            // Build lineup JSON
+            lineupJson.put('goalkeeper', goalkeeper);
+            lineupJson.put('lines', lines);
+            lineupJson.put('bench', bench);
+            
+            // Determine formation (e.g., 4-4-2)
+            String formation = determineFormation(defLine.size(), midLine.size(), fwdLine.size());
+            
+            // Create Lineup__c record
+            Lineup__c lineup = new Lineup__c();
+            lineup.Match__c = matchId;
+            lineup.Team__c = teamId;
+            lineup.Formation__c = formation;
+            lineup.Lineup_JSON__c = JSON.serialize(lineupJson);
+            lineup.Starting_XI_Count__c = selectedCount;
+            
+            insert lineup;
+            
+            // Get team info for response
+            Account team = [
+                SELECT Id, Name, Team_Logo_URL__c, Logo_Url__c
+                FROM Account
+                WHERE Id = :teamId
+                LIMIT 1
+            ];
+            
+            // Return lineup data in same format as getMatchLineups
+            Map<String, Object> result = new Map<String, Object>();
+            result.put('lineup', buildLineupData(lineup, team));
+            result.put('success', true);
+            result.put('message', 'Lineup created successfully');
+            
+            return result;
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error creating lineup: ' + e.getMessage());
+        }
+    }
+    
+    /**
+     * @description Determine formation string based on player counts
+     * @param defenders Number of defenders
+     * @param midfielders Number of midfielders
+     * @param forwards Number of forwards
+     * @return Formation string (e.g., "4-4-2")
+     */
+    private static String determineFormation(Integer defenders, Integer midfielders, Integer forwards) {
+        // Common formations
+        if (defenders == 4 && midfielders == 4 && forwards == 2) return '4-4-2';
+        if (defenders == 4 && midfielders == 3 && forwards == 3) return '4-3-3';
+        if (defenders == 4 && midfielders == 5 && forwards == 1) return '4-5-1';
+        if (defenders == 3 && midfielders == 5 && forwards == 2) return '3-5-2';
+        if (defenders == 5 && midfielders == 3 && forwards == 2) return '5-3-2';
+        if (defenders == 3 && midfielders == 4 && forwards == 3) return '3-4-3';
+        
+        // Default: return actual counts
+        return defenders + '-' + midfielders + '-' + forwards;
+    }
+    
+    /**
+     * @description Sync lineups from ESPN API for a match
+     * @param matchId Match__c record ID
+     * @return Map containing sync result
+     */
+    @AuraEnabled
+    public static Map<String, Object> syncLineupsFromESPN(String matchId) {
+        try {
+            // Get match with ESPN Event ID
+            List<Match__c> matches = [
+                SELECT Id, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
+                       Competition__r.ESPN_League_ID__c, Home_Team__c, Away_Team__c
+                FROM Match__c
+                WHERE Id = :matchId
+                LIMIT 1
+            ];
+            
+            if (matches.isEmpty()) {
+                throw new AuraHandledException('Match not found');
+            }
+            
+            Match__c match = matches[0];
+            
+            if (String.isBlank(match.ESPN_Event_ID__c)) {
+                throw new AuraHandledException('ESPN Event ID not found on this match. Please set ESPN_Event_ID__c field.');
+            }
+            
+            // Sync lineups from ESPN - implement logic directly
+            String eventId = match.ESPN_Event_ID__c;
+            String sportType = (match.Competition__c != null && match.Competition__r.Sport__c != null)
+                ? match.Competition__r.Sport__c : 'Soccer';
+            String espnSport = SportUtils.normalizeSportForESPN(sportType);
+            String leagueCode = (match.Competition__c != null && match.Competition__r.ESPN_League_ID__c != null)
+                ? match.Competition__r.ESPN_League_ID__c : SportUtils.getDefaultLeagueCode(sportType);
+            
+            // Get match summary from ESPN
+            ESPNHttpService.ESPNMatchSummaryResponse response = ESPNHttpService.getMatchSummaryDetailed(espnSport, leagueCode, eventId);
+            
+            if (!response.success || response.lineups == null || response.lineups.isEmpty()) {
+                throw new AuraHandledException('No lineup data available from ESPN for this match.');
+            }
+            
+            // Map ESPN team IDs to Salesforce team IDs
+            Map<String, Id> teamIdMap = new Map<String, Id>();
+            if (match.Home_Team__c != null && String.isNotBlank(response.homeTeamId)) {
+                teamIdMap.put(response.homeTeamId, match.Home_Team__c);
+            }
+            if (match.Away_Team__c != null && String.isNotBlank(response.awayTeamId)) {
+                teamIdMap.put(response.awayTeamId, match.Away_Team__c);
+            }
+            
+            // Create UOW for bulk operations
+            fflib_ISObjectUnitOfWork uow = Application.UnitOfWork.newInstance();
+            Integer lineupCount = 0;
+            
+            // Query existing lineups and participations to avoid duplicates
+            Map<Id, Lineup__c> existingLineupsMap = new Map<Id, Lineup__c>();
+            List<Lineup__c> existingLineups = [
+                SELECT Id, Team__c
+                FROM Lineup__c
+                WHERE Match__c = :matchId
+            ];
+            for (Lineup__c existing : existingLineups) {
+                existingLineupsMap.put(existing.Team__c, existing);
+            }
+            
+            // Query existing participations to delete before creating new ones
+            Map<Id, List<Match_Participation__c>> existingParticipationsMap = new Map<Id, List<Match_Participation__c>>();
+            List<Match_Participation__c> existingParticipations = [
+                SELECT Id, Team__c
+                FROM Match_Participation__c
+                WHERE Match__c = :matchId
+            ];
+            for (Match_Participation__c existing : existingParticipations) {
+                if (!existingParticipationsMap.containsKey(existing.Team__c)) {
+                    existingParticipationsMap.put(existing.Team__c, new List<Match_Participation__c>());
+                }
+                existingParticipationsMap.get(existing.Team__c).add(existing);
+            }
+            
+            // Process each lineup from ESPN
+            for (ESPNHttpService.ESPNLineup espnLineup : response.lineups) {
+                Id teamId = teamIdMap.get(espnLineup.teamId);
+                if (teamId == null) {
+                    System.debug('Team ID not found for ESPN team: ' + espnLineup.teamId);
+                    continue;
+                }
+                
+                // Parse lineup data (players are created immediately if needed)
+                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(espnLineup, matchId, teamId, uow);
+                Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
+                
+                if (lineupRecord != null) {
+                    // Check if lineup already exists
+                    if (existingLineupsMap.containsKey(teamId)) {
+                        lineupRecord.Id = existingLineupsMap.get(teamId).Id;
+                        uow.registerDirty(lineupRecord);
+                    } else {
+                        uow.registerNew(lineupRecord);
+                    }
+                    
+                    // Handle Match_Participation__c records
+                    List<Match_Participation__c> participations = 
+                        (List<Match_Participation__c>) lineupData.get('participations');
+                    
+                    if (participations != null && !participations.isEmpty()) {
+                        // Delete existing participations for this team
+                        if (existingParticipationsMap.containsKey(teamId)) {
+                            uow.registerDeleted(existingParticipationsMap.get(teamId));
+                        }
+                        
+                        // Register new participations
+                        for (Match_Participation__c participation : participations) {
+                            if (participation.Player__c != null) {
+                                uow.registerNew(participation);
+                            } else {
+                                System.debug('Skipping participation with null player ID');
+                            }
+                        }
+                    }
+                    
+                    lineupCount++;
+                }
+            }
+            
+            // Commit all changes
+            uow.commitWork();
+            
+            // Reload lineups after sync
+            Map<String, Object> lineupData = getMatchLineups(matchId);
+            
+            return new Map<String, Object>{
+                'success' => true,
+                'message' => 'Synced ' + lineupCount + ' lineups from ESPN',
+                'lineups' => lineupData
+            };
+            
+        } catch (AuraHandledException e) {
+            // Re-throw AuraHandledException as-is
+            throw e;
+        } catch (DmlException e) {
+            // Handle DML errors (e.g., validation rules, required fields)
+            String errorMsg = 'Error saving lineup data: ' + e.getMessage();
+            if (e.getDmlFieldNames(0) != null && !e.getDmlFieldNames(0).isEmpty()) {
+                errorMsg += ' (Fields: ' + String.join(e.getDmlFieldNames(0), ', ') + ')';
+            }
+            throw new AuraHandledException(errorMsg);
+        } catch (Exception e) {
+            // Log full exception for debugging
+            System.debug(LoggingLevel.ERROR, 'Error syncing lineups from ESPN: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            throw new AuraHandledException('Error syncing lineups from ESPN: ' + e.getMessage());
+        }
     }
 }
 

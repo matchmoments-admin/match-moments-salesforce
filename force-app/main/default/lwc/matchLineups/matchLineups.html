@@ -38,7 +38,7 @@
                 </div>
                 
                 <div class="slds-card__body slds-card__body_inner">
-                    <template if:true={hasLineups}>
+                    <template if:true={hasAnyLineups}>
                         <div class="slds-grid slds-gutters">
                             <!-- Home Team Lineup -->
                             <div class="slds-col slds-size_1-of-2">
@@ -159,9 +159,23 @@
                             </div>
                         </div>
                     </template>
-                    <template if:false={hasLineups}>
+                    <template if:false={hasAnyLineups}>
                         <div class="slds-text-align_center slds-p-around_medium">
-                            <p class="slds-text-color_weak">No lineups available for this match.</p>
+                            <lightning-icon icon-name="utility:info" size="small" class="slds-m-bottom_small"></lightning-icon>
+                            <p class="slds-text-color_weak slds-m-bottom_medium">No lineups available for this match.</p>
+                            <lightning-button
+                                label="Sync Lineups from ESPN"
+                                variant="brand"
+                                onclick={handleSyncFromESPN}
+                                disabled={isCreatingLineup}
+                                class="slds-m-top_small">
+                            </lightning-button>
+                            <template if:true={isCreatingLineup}>
+                                <div class="slds-m-top_small">
+                                    <lightning-spinner alternative-text="Syncing lineups from ESPN..." size="small"></lightning-spinner>
+                                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">Syncing lineups from ESPN...</p>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>

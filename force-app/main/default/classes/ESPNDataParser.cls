@@ -178,12 +178,14 @@ public with sharing class ESPNDataParser {
      * @param lineup ESPNLineup from ESPNMatchSummaryResponse
      * @param matchId Salesforce Match__c ID
      * @param teamId Salesforce Account (Team) ID
+     * @param uow Unit of Work for registering new records (required)
      * @return Map with 'lineup' (Lineup__c) and 'participations' (List<Match_Participation__c>)
      */
     public static Map<String, Object> parseLineupToLineup(
         ESPNHttpService.ESPNLineup lineup, 
         Id matchId, 
-        Id teamId
+        Id teamId,
+        fflib_ISobjectUnitOfWork uow
     ) {
         Map<String, Object> result = new Map<String, Object>();
         List<Match_Participation__c> participations = new List<Match_Participation__c>();
@@ -204,11 +206,78 @@ public with sharing class ESPNDataParser {
         // Group players by position to determine formation
         Map<String, List<ESPNHttpService.ESPNLineupPlayer>> playersByPosition = new Map<String, List<ESPNHttpService.ESPNLineupPlayer>>();
         
+        // First pass: Bulk query existing players, then create missing ones
+        // Note: We need player IDs immediately for lineup JSON, so we insert new players
+        // directly (not via UOW). This is acceptable for user-initiated syncs.
+        Set<String> athleteIds = new Set<String>();
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            if (String.isNotBlank(player.athleteId)) {
+                athleteIds.add(player.athleteId);
+            }
+        }
+        
+        // Query existing players in bulk
+        Map<String, Id> playerIdMap = new Map<String, Id>();
+        if (!athleteIds.isEmpty()) {
+            List<Contact> existingPlayers = [
+                SELECT Id, ESPN_Player_ID__c
+                FROM Contact
+                WHERE ESPN_Player_ID__c IN :athleteIds
+            ];
+            for (Contact existingPlayer : existingPlayers) {
+                playerIdMap.put(existingPlayer.ESPN_Player_ID__c, existingPlayer.Id);
+            }
+        }
+        
+        // Create missing players immediately (we need IDs for lineup JSON)
+        // This is acceptable for user-initiated actions where Contact is a prerequisite
+        List<Contact> newPlayers = new List<Contact>();
+        for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            if (String.isNotBlank(player.athleteId) && !playerIdMap.containsKey(player.athleteId)) {
+                Contact newPlayer = createPlayerContact(player, teamId);
+                if (newPlayer != null) {
+                    newPlayers.add(newPlayer);
+                }
+            }
+        }
+        
+        // Insert new players if any
+        if (!newPlayers.isEmpty()) {
+            try {
+                insert newPlayers;
+                // Add new player IDs to map
+                for (Contact newPlayer : newPlayers) {
+                    if (String.isNotBlank(newPlayer.ESPN_Player_ID__c)) {
+                        playerIdMap.put(newPlayer.ESPN_Player_ID__c, newPlayer.Id);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug('Error inserting new players: ' + e.getMessage());
+                // Try to find players that may have been created concurrently
+                List<Contact> retryPlayers = [
+                    SELECT Id, ESPN_Player_ID__c
+                    FROM Contact
+                    WHERE ESPN_Player_ID__c IN :athleteIds
+                    AND Id NOT IN :playerIdMap.values()
+                ];
+                for (Contact retryPlayer : retryPlayers) {
+                    playerIdMap.put(retryPlayer.ESPN_Player_ID__c, retryPlayer.Id);
+                }
+            }
+        }
+        
+        // Second pass: build lineup structure using player IDs
+        for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            Id playerId = playerIdMap.get(player.athleteId);
+            if (playerId == null) {
+                System.debug('Skipping player without valid ID: ' + player.displayName);
+                continue;
+            }
+            
             if (player.starter) {
                 if (player.positionAbbreviation == 'G' || player.position == 'Goalkeeper') {
                     goalkeeper = new Map<String, Object>{
-                        'playerId' => findOrCreatePlayer(player, teamId),
+                        'playerId' => playerId,
                         'jersey' => player.jersey,
                         'name' => player.displayName,
                         'position' => 'GK'
@@ -223,7 +292,7 @@ public with sharing class ESPNDataParser {
             } else {
                 // Substitute
                 Map<String, Object> benchPlayer = new Map<String, Object>{
-                    'playerId' => findOrCreatePlayer(player, teamId),
+                    'playerId' => playerId,
                     'jersey' => player.jersey,
                     'name' => player.displayName,
                     'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'M'
@@ -257,16 +326,21 @@ public with sharing class ESPNDataParser {
             for (String posKey : playersByPosition.keySet()) {
                 if (posKey.startsWith('D') || posKey.startsWith('CD') || posKey.startsWith('FB')) {
                     for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
-                        defLine.add(new Map<String, Object>{
-                            'playerId' => findOrCreatePlayer(player, teamId),
-                            'jersey' => player.jersey,
-                            'name' => player.displayName,
-                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'D'
-                        });
+                        Id playerId = playerIdMap.get(player.athleteId);
+                        if (playerId != null) {
+                            defLine.add(new Map<String, Object>{
+                                'playerId' => playerId,
+                                'jersey' => player.jersey,
+                                'name' => player.displayName,
+                                'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'D'
+                            });
+                        }
                     }
                 }
             }
-            lines.add(new Map<String, Object>{'players' => defLine});
+            if (!defLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => defLine});
+            }
         }
         
         if (midCount > 0) {
@@ -274,16 +348,21 @@ public with sharing class ESPNDataParser {
             for (String posKey : playersByPosition.keySet()) {
                 if (posKey.startsWith('M') || posKey.startsWith('CM') || posKey.startsWith('AM')) {
                     for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
-                        midLine.add(new Map<String, Object>{
-                            'playerId' => findOrCreatePlayer(player, teamId),
-                            'jersey' => player.jersey,
-                            'name' => player.displayName,
-                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'M'
-                        });
+                        Id playerId = playerIdMap.get(player.athleteId);
+                        if (playerId != null) {
+                            midLine.add(new Map<String, Object>{
+                                'playerId' => playerId,
+                                'jersey' => player.jersey,
+                                'name' => player.displayName,
+                                'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'M'
+                            });
+                        }
                     }
                 }
             }
-            lines.add(new Map<String, Object>{'players' => midLine});
+            if (!midLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => midLine});
+            }
         }
         
         if (fwdCount > 0) {
@@ -291,16 +370,21 @@ public with sharing class ESPNDataParser {
             for (String posKey : playersByPosition.keySet()) {
                 if (posKey.startsWith('F') || posKey.startsWith('FW') || posKey.startsWith('ST')) {
                     for (ESPNHttpService.ESPNLineupPlayer player : playersByPosition.get(posKey)) {
-                        fwdLine.add(new Map<String, Object>{
-                            'playerId' => findOrCreatePlayer(player, teamId),
-                            'jersey' => player.jersey,
-                            'name' => player.displayName,
-                            'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'F'
-                        });
+                        Id playerId = playerIdMap.get(player.athleteId);
+                        if (playerId != null) {
+                            fwdLine.add(new Map<String, Object>{
+                                'playerId' => playerId,
+                                'jersey' => player.jersey,
+                                'name' => player.displayName,
+                                'position' => player.positionAbbreviation != null ? player.positionAbbreviation : 'F'
+                            });
+                        }
                     }
                 }
             }
-            lines.add(new Map<String, Object>{'players' => fwdLine});
+            if (!fwdLine.isEmpty()) {
+                lines.add(new Map<String, Object>{'players' => fwdLine});
+            }
         }
         
         lineupJson.put('goalkeeper', goalkeeper);
@@ -326,10 +410,16 @@ public with sharing class ESPNDataParser {
         
         // Create Match_Participation__c records
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            Id playerId = playerIdMap.get(player.athleteId);
+            if (playerId == null) {
+                System.debug('Skipping participation for player without valid ID: ' + player.displayName);
+                continue;
+            }
+            
             Match_Participation__c participation = new Match_Participation__c();
             participation.Match__c = matchId;
             participation.Team__c = teamId;
-            participation.Player__c = findOrCreatePlayer(player, teamId);
+            participation.Player__c = playerId;
             participation.Position__c = player.positionAbbreviation != null ? player.positionAbbreviation : 
                 (player.position != null ? player.position : 'Unknown');
             participation.Role__c = player.starter ? 'Starter' : 'Substitute';
@@ -452,44 +542,48 @@ public with sharing class ESPNDataParser {
     // ========================================
     
     /**
-     * @description Find or create a player Contact from ESPN lineup player data
+     * @description Create a player Contact from ESPN lineup player data
+     * Helper method that creates Contact SObject (does not insert)
      * @param player ESPNLineupPlayer
      * @param teamId Team Account ID
-     * @return Contact ID
+     * @return Contact record (not inserted)
      */
-    private static Id findOrCreatePlayer(ESPNHttpService.ESPNLineupPlayer player, Id teamId) {
+    private static Contact createPlayerContact(
+        ESPNHttpService.ESPNLineupPlayer player, 
+        Id teamId
+    ) {
         if (String.isBlank(player.athleteId)) {
+            System.debug('Player missing athleteId: ' + player.displayName);
             return null;
         }
         
-        // Try to find existing player by ESPN ID
-        List<Contact> existingPlayers = [
-            SELECT Id 
-            FROM Contact 
-            WHERE ESPN_Player_ID__c = :player.athleteId 
-            LIMIT 1
-        ];
-        
-        if (!existingPlayers.isEmpty()) {
-            return existingPlayers[0].Id;
-        }
-        
-        // Create new player if not found
+        // Create new player
         Contact newPlayer = new Contact();
         newPlayer.AccountId = teamId;
         newPlayer.ESPN_Player_ID__c = player.athleteId;
         
-        // Parse name
+        // Parse name - ensure LastName is set (required field)
         if (String.isNotBlank(player.fullName)) {
             List<String> nameParts = player.fullName.split(' ', 2);
-            newPlayer.FirstName = nameParts.size() > 0 ? nameParts[0] : player.displayName;
-            newPlayer.LastName = nameParts.size() > 1 ? nameParts[1] : 'Player';
+            newPlayer.FirstName = (nameParts.size() > 0 && String.isNotBlank(nameParts[0])) ? nameParts[0] : null;
+            String lastName = nameParts.size() > 1 ? nameParts[1] : (nameParts.size() > 0 ? nameParts[0] : null);
+            newPlayer.LastName = String.isNotBlank(lastName) ? lastName : 'Player';
         } else if (String.isNotBlank(player.displayName)) {
             List<String> nameParts = player.displayName.split(' ', 2);
-            newPlayer.FirstName = nameParts.size() > 0 ? nameParts[0] : player.displayName;
-            newPlayer.LastName = nameParts.size() > 1 ? nameParts[1] : 'Player';
+            newPlayer.FirstName = (nameParts.size() > 0 && String.isNotBlank(nameParts[0])) ? nameParts[0] : null;
+            String lastName = nameParts.size() > 1 ? nameParts[1] : (nameParts.size() > 0 ? nameParts[0] : null);
+            newPlayer.LastName = String.isNotBlank(lastName) ? lastName : 'Player';
+        } else {
+            // Fallback if no name available
+            newPlayer.LastName = 'Player';
         }
         
+        // Final safeguard: ensure LastName is never blank
+        if (String.isBlank(newPlayer.LastName)) {
+            newPlayer.LastName = 'Player';
+        }
+        
+        // Parse jersey number
         if (String.isNotBlank(player.jersey)) {
             try {
                 newPlayer.Jersey_Number__c = Decimal.valueOf(player.jersey);
@@ -501,26 +595,7 @@ public with sharing class ESPNDataParser {
         newPlayer.Position__c = player.position;
         newPlayer.Profile_Image_URL__c = player.headshotUrl;
         
-        // Note: This method should be called within a Unit of Work context
-        // The caller is responsible for inserting the contact
-        // For now, we'll insert it here but this should be refactored
-        try {
-            insert newPlayer;
-            return newPlayer.Id;
-        } catch (Exception e) {
-            System.debug('Failed to create player: ' + e.getMessage());
-            // Try to find again in case it was created concurrently
-            List<Contact> retryPlayers = [
-                SELECT Id 
-                FROM Contact 
-                WHERE ESPN_Player_ID__c = :player.athleteId 
-                LIMIT 1
-            ];
-            if (!retryPlayers.isEmpty()) {
-                return retryPlayers[0].Id;
-            }
-            return null;
-        }
+        return newPlayer;
     }
     
     /**

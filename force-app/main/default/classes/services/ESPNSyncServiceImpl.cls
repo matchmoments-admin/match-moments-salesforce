@@ -387,7 +387,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                         existingLineup = existingLineupsMap.get(fixtureId).get(teamId);
                     }
                     
-                    Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId);
+                    Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow);
                     Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
                     
                     if (lineupRecord != null) {
@@ -538,7 +538,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 Id teamId = teamIdMap.get(lineup.teamId);
                 if (teamId == null) continue;
                 
-                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId);
+                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow);
                 Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
                 
                 if (lineupRecord != null) {
@@ -561,6 +561,20 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                     } else {
                         uow.registerNew(lineupRecord);
                     }
+                    
+                    // Handle Match_Participation__c records
+                    List<Match_Participation__c> participations = 
+                        (List<Match_Participation__c>) lineupData.get('participations');
+                    
+                    if (participations != null && !participations.isEmpty()) {
+                        // Register new participations
+                        for (Match_Participation__c participation : participations) {
+                            if (participation.Player__c != null) {
+                                uow.registerNew(participation);
+                            }
+                        }
+                    }
+                    
                     lineupCount++;
                 }
             }

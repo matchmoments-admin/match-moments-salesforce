@@ -6,7 +6,9 @@
  */
 import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getMatchLineups from '@salesforce/apex/MatchSummaryController.getMatchLineups';
+import syncLineupsFromESPN from '@salesforce/apex/MatchSummaryController.syncLineupsFromESPN';
 
 const FIELDS = [
     'Match__c.Id',
@@ -21,6 +23,8 @@ export default class MatchLineups extends LightningElement {
     @track isLoading = true;
     @track hasError = false;
     @track errorMessage = '';
+    @track hasLineups = false;
+    @track isCreatingLineup = false;
     
     @wire(getRecord, { recordId: '$recordId', fields: FIELDS })
     wiredRecord({ error, data }) {
@@ -38,19 +42,60 @@ export default class MatchLineups extends LightningElement {
             .then(result => {
                 this.homeLineup = result.homeLineup || null;
                 this.awayLineup = result.awayLineup || null;
+                this.hasLineups = result.hasLineups || false;
                 this.isLoading = false;
             })
             .catch(error => {
                 this.hasError = true;
-                this.errorMessage = error.body?.message || 'Error loading lineups';
+                this.errorMessage = this.getErrorMessage(error);
                 this.isLoading = false;
                 console.error('Error loading lineups:', error);
             });
     }
     
+    handleSyncFromESPN() {
+        this.isCreatingLineup = true;
+        this.hasError = false;
+        
+        syncLineupsFromESPN({ matchId: this.recordId })
+            .then(result => {
+                if (result.success) {
+                    // Reload lineups after sync
+                    this.loadLineups();
+                    
+                    // Show success toast
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Success',
+                            message: result.message || 'Lineups synced from ESPN successfully',
+                            variant: 'success'
+                        })
+                    );
+                } else {
+                    throw new Error(result.message || 'Failed to sync lineups');
+                }
+            })
+            .catch(error => {
+                this.hasError = true;
+                this.errorMessage = this.getErrorMessage(error);
+                console.error('Error syncing lineups from ESPN:', error);
+                
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Error',
+                        message: this.errorMessage,
+                        variant: 'error'
+                    })
+                );
+            })
+            .finally(() => {
+                this.isCreatingLineup = false;
+            });
+    }
+    
     // Getters
-    get hasLineups() {
-        return this.homeLineup || this.awayLineup;
+    get hasAnyLineups() {
+        return this.hasLineups || (this.homeLineup?.hasLineup === true) || (this.awayLineup?.hasLineup === true);
     }
     
     get homeFormation() {
@@ -147,6 +192,68 @@ export default class MatchLineups extends LightningElement {
     
     get awayTeamLogo() {
         return this.awayLineup?.team?.logoUrl;
+    }
+    
+    get canSyncFromESPN() {
+        return !this.hasLineups && !this.isLoading && !this.isCreatingLineup;
+    }
+    
+    get homeTeamHasLineup() {
+        return this.homeLineup?.hasLineup === true;
+    }
+    
+    get awayTeamHasLineup() {
+        return this.awayLineup?.hasLineup === true;
+    }
+    
+    get homeTeamId() {
+        return this.homeLineup?.team?.id;
+    }
+    
+    get awayTeamId() {
+        return this.awayLineup?.team?.id;
+    }
+    
+    /**
+     * @description Extract error message from various error formats
+     * @param error Error object from Apex call
+     * @return String error message
+     */
+    getErrorMessage(error) {
+        if (!error) {
+            return 'An unexpected error occurred';
+        }
+        
+        try {
+            // Handle Apex exception
+            if (error.body) {
+                if (error.body.message) {
+                    return error.body.message;
+                } else if (error.body.pageErrors && error.body.pageErrors.length > 0) {
+                    return error.body.pageErrors[0].message;
+                } else if (error.body.fieldErrors) {
+                    const fieldErrors = Object.values(error.body.fieldErrors);
+                    if (fieldErrors.length > 0 && fieldErrors[0].length > 0) {
+                        return fieldErrors[0][0].message;
+                    }
+                }
+            }
+            
+            // Handle standard JavaScript error
+            if (error.message) {
+                return error.message;
+            }
+            
+            // Handle string errors
+            if (typeof error === 'string') {
+                return error;
+            }
+            
+            return 'An unexpected error occurred';
+        } catch (parseError) {
+            console.error('Error parsing error object:', parseError);
+            return 'An error occurred. Please check the browser console for details.';
+        }
     }
     
 }
