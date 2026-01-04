@@ -416,6 +416,7 @@ match-moments-salesforce/
 - [`ESPNActionControllerV2.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/controllers/ESPNActionControllerV2.cls) - FFLib-based controller
 - [`MomentPageController.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/MomentPageController.cls) - Moment detail page controller
 - [`EngagementTracker.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/EngagementTracker.cls) - Social engagement tracking
+- [`MatchSummaryController.cls`](force-app/main/default/classes/MatchSummaryController.cls) - Match summary page data retrieval
 
 **Domains:** [View all](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/classes/domains)
 - [`Teams.cls`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/classes/domains/Teams.cls)
@@ -459,6 +460,18 @@ match-moments-salesforce/
 - [`getSportData`](https://github.com/matchmoments-admin/match-moments-salesforce/tree/main/force-app/main/default/lwc/getSportData) - Quick action UI for ESPN sync
   - [`getSportData.js`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/getSportData/getSportData.js)
   - [`getSportData.html`](https://github.com/matchmoments-admin/match-moments-salesforce/blob/main/force-app/main/default/lwc/getSportData/getSportData.html)
+
+**Match Summary Page Components:**
+- [`matchHeader`](force-app/main/default/lwc/matchHeader) - Match scoreboard with teams, scores, goal scorers, and match status
+- [`gameInformation`](force-app/main/default/lwc/gameInformation) - Venue, date, attendance, referee information
+- [`matchCommentary`](force-app/main/default/lwc/matchCommentary) - Chronological list of Match_Moment__c with filtering
+- [`matchTimeline`](force-app/main/default/lwc/matchTimeline) - Visual horizontal timeline of match events
+- [`matchLineups`](force-app/main/default/lwc/matchLineups) - Both teams' lineups with formations and players
+- [`leagueTable`](force-app/main/default/lwc/leagueTable) - Sortable standings table from Team_Season_Stats__c
+- [`matchStats`](force-app/main/default/lwc/matchStats) - Possession chart and statistics comparison bars
+
+**Match Summary Page:**
+- [`Match_Summary_Page`](force-app/main/default/flexipages/Match_Summary_Page.flexipage-meta.xml) - Lightning Record Page for Match__c with tabbed interface
 
 #### Custom Objects
 
@@ -598,6 +611,116 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `refactor:` Code refactoring
 - `test:` Adding/updating tests
 - `chore:` Maintenance tasks
+
+---
+
+## 📡 Match Summary API Reference
+
+### MatchSummaryController
+
+The `MatchSummaryController` provides centralized data retrieval for the Match Summary page components.
+
+#### Methods
+
+**`getMatchSummary(String matchId)`**
+- **Returns**: `Map<String, Object>` containing match data, teams, competition, and goal scorers
+- **Cacheable**: Yes
+- **Usage**: Retrieves complete match information including team logos, scores, competition details, and goal scorer information
+- **Example**:
+```apex
+Map<String, Object> summary = MatchSummaryController.getMatchSummary('a0X5g000000ABC123');
+```
+
+**`getMatchLineups(String matchId)`**
+- **Returns**: `Map<String, Object>` containing home and away team lineups
+- **Cacheable**: Yes
+- **Usage**: Retrieves lineup data for both teams including formations, players, and substitutes
+- **Data Structure**: 
+  - `homeLineup`: Lineup data for home team
+  - `awayLineup`: Lineup data for away team
+  - Each lineup contains: `formation`, `lineupJSON`, `team`, `captainId`
+
+**`getMatchMoments(String matchId)`**
+- **Returns**: `List<Map<String, Object>>` of match moments/commentary
+- **Cacheable**: Yes
+- **Usage**: Retrieves all Match_Moment__c records for timeline and commentary display
+- **Fields**: `minute`, `second`, `eventType`, `description`, `primaryPlayer`, `team`, etc.
+
+**`getLeagueTable(String competitionId, String seasonYear)`**
+- **Returns**: `List<Map<String, Object>>` of team season statistics
+- **Cacheable**: Yes
+- **Usage**: Retrieves league standings/table for the competition
+- **Fields**: `position`, `points`, `wins`, `draws`, `losses`, `goalDifference`, `matchesPlayed`, `team`
+
+**`getMatchStats(String matchId)`**
+- **Returns**: `Map<String, Object>` containing match statistics
+- **Cacheable**: Yes
+- **Usage**: Retrieves match statistics (possession, shots, cards, corners, saves)
+- **Fields**: `homePossession`, `awayPossession`, `homeShotsOnGoal`, `awayShotsOnGoal`, etc.
+
+### Component Usage
+
+#### matchHeader Component
+- **Purpose**: Display match scoreboard with teams, scores, goal scorers
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchSummary()`
+
+#### gameInformation Component
+- **Purpose**: Display venue, date, attendance, referee
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchSummary()`
+
+#### matchCommentary Component
+- **Purpose**: Chronological list of match commentary with filtering
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchMoments()`
+- **Features**: Event type filtering, reverse chronological order
+
+#### matchTimeline Component
+- **Purpose**: Visual horizontal timeline of match events
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchMoments()` and `getMatchSummary()`
+- **Features**: Team markers, period indicators (KO, HT, FT), event icons
+
+#### matchLineups Component
+- **Purpose**: Display both teams' lineups with formations
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchLineups()`
+- **Features**: Starting XI, substitutes, captain indicator, formation display
+
+#### leagueTable Component
+- **Purpose**: Sortable standings table
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getLeagueTable()`
+- **Features**: Column sorting, current match teams highlighted
+
+#### matchStats Component
+- **Purpose**: Display match statistics with charts and comparison bars
+- **Props**: `recordId` (Match__c record ID)
+- **Data Source**: `MatchSummaryController.getMatchStats()`
+- **Features**: Possession donut chart, statistics comparison bars
+
+### SLDS 2.1 Design Patterns
+
+All Match Summary components follow SLDS 2.1 design system patterns:
+
+- **Cards**: Use `slds-card` for component containers
+- **Typography**: SLDS text utilities (`slds-text-heading_large`, `slds-text-body_regular`)
+- **Spacing**: SLDS spacing utilities (`slds-m-around_medium`, `slds-p-vertical_small`)
+- **Colors**: SLDS design tokens (`var(--slds-g-color-brand-base-50)`)
+- **Tables**: SLDS data table patterns for league table
+- **Icons**: Lightning icon library with appropriate variants
+- **Responsive**: Mobile-first design with SLDS responsive utilities
+
+### ESPN API References
+
+The Match Summary page replicates functionality from ESPN match pages:
+- **Match Summary**: https://www.espn.com.au/football/match/_/gameId/{gameId}
+- **Match Report**: https://www.espn.com.au/football/report/_/gameId/{gameId}
+- **Commentary**: https://www.espn.com.au/football/commentary/_/gameId/{gameId}
+- **Match Stats**: https://www.espn.com.au/football/matchstats/_/gameId/{gameId}
+- **Lineups**: https://www.espn.com.au/football/lineups/_/gameId/{gameId}
+- **League Table**: https://www.espn.com/soccer/table/_/league/{leagueId}
 
 ---
 
