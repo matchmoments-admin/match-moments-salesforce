@@ -974,7 +974,7 @@ public with sharing class MatchSummaryController {
                 // Parse lineup data (players are created immediately if needed)
                 Map<String, Object> lineupData;
                 try {
-                    lineupData = ESPNDataParser.parseLineupToLineup(espnLineup, matchId, teamId, uow);
+                    lineupData = ESPNDataParser.parseLineupToLineup(espnLineup, matchId, teamId, uow, espnSport, leagueCode);
                     
                     // Check for errors and warnings from parser
                     List<String> parserErrors = (List<String>) lineupData.get('errors');

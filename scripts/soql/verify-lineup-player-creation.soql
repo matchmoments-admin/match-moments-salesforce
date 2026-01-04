@@ -1,0 +1,94 @@
+-- ============================================
+-- SOQL Queries to Verify Lineup Player Creation
+-- ============================================
+-- Execute these queries in Developer Console > Query Editor
+-- or Workbench to verify lineup sync created players correctly
+
+-- 1. Find matches with lineups
+-- ============================================
+SELECT Id, Name, ESPN_Event_ID__c, Home_Team__r.Name, Away_Team__r.Name
+FROM Match__c
+WHERE Id IN (SELECT Match__c FROM Lineup__c)
+LIMIT 10
+
+-- 2. Count lineups per match
+-- ============================================
+SELECT Match__c, Match__r.Name, COUNT(Id) LineupCount
+FROM Lineup__c
+GROUP BY Match__c, Match__r.Name
+ORDER BY COUNT(Id) DESC
+LIMIT 10
+
+-- 3. Count participations per match
+-- ============================================
+SELECT Match__c, Match__r.Name, COUNT(Id) ParticipationCount
+FROM Match_Participation__c
+GROUP BY Match__c, Match__r.Name
+ORDER BY COUNT(Id) DESC
+LIMIT 10
+
+-- 4. Verify participations have Person__c set (required field)
+-- ============================================
+SELECT Id, Match__c, Player__c, Player__r.Name, Person__c, Team__c, Team__r.Name
+FROM Match_Participation__c
+WHERE Person__c = null
+LIMIT 100
+
+-- 5. Count players created by team
+-- ============================================
+SELECT AccountId, Account.Name, COUNT(Id) PlayerCount
+FROM Contact
+WHERE AccountId IN (SELECT Home_Team__c FROM Match__c WHERE Id IN (SELECT Match__c FROM Lineup__c))
+   OR AccountId IN (SELECT Away_Team__c FROM Match__c WHERE Id IN (SELECT Match__c FROM Lineup__c))
+GROUP BY AccountId, Account.Name
+ORDER BY COUNT(Id) DESC
+LIMIT 20
+
+-- 6. Find players with ESPN Player ID (created from ESPN sync)
+-- ============================================
+SELECT Id, Name, ESPN_Player_ID__c, Position__c, Jersey_Number__c, Account.Name
+FROM Contact
+WHERE ESPN_Player_ID__c != null
+AND AccountId IN (
+    SELECT Home_Team__c FROM Match__c WHERE Id IN (SELECT Match__c FROM Lineup__c)
+    UNION
+    SELECT Away_Team__c FROM Match__c WHERE Id IN (SELECT Match__c FROM Lineup__c)
+)
+ORDER BY Account.Name, Jersey_Number__c NULLS LAST
+LIMIT 100
+
+-- 7. Verify lineup structure (formation, starting XI count)
+-- ============================================
+SELECT Id, Match__c, Match__r.Name, Team__c, Team__r.Name, 
+       Formation__c, Starting_XI_Count__c
+FROM Lineup__c
+ORDER BY Match__r.Name, Team__r.Name
+LIMIT 20
+
+-- 8. Count participations by role (starter vs substitute)
+-- ============================================
+SELECT Match__c, Team__c, Team__r.Name,
+       SUM(CASE WHEN Starting_Lineup__c = true THEN 1 ELSE 0 END) Starters,
+       SUM(CASE WHEN Substitute__c = true THEN 1 ELSE 0 END) Substitutes,
+       COUNT(Id) Total
+FROM Match_Participation__c
+GROUP BY Match__c, Team__c, Team__r.Name
+ORDER BY Match__c, Team__r.Name
+LIMIT 20
+
+-- 9. Find players missing required fields
+-- ============================================
+SELECT Id, Name, LastName, AccountId, Account.Name, ESPN_Player_ID__c
+FROM Contact
+WHERE LastName = null
+AND Id IN (SELECT Player__c FROM Match_Participation__c)
+LIMIT 50
+
+-- 10. Verify all participations have valid player references
+-- ============================================
+SELECT Id, Match__c, Player__c, Person__c, Team__c
+FROM Match_Participation__c
+WHERE Player__c = null
+   OR Person__c = null
+LIMIT 50
+

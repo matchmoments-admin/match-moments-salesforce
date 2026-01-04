@@ -179,13 +179,17 @@ public with sharing class ESPNDataParser {
      * @param matchId Salesforce Match__c ID
      * @param teamId Salesforce Account (Team) ID
      * @param uow Unit of Work for registering new records (required)
+     * @param espnSport Optional: ESPN sport code (e.g., 'soccer') for fetching player details
+     * @param leagueCode Optional: ESPN league code (e.g., 'eng.1') for fetching player details
      * @return Map with 'lineup' (Lineup__c) and 'participations' (List<Match_Participation__c>)
      */
     public static Map<String, Object> parseLineupToLineup(
         ESPNHttpService.ESPNLineup lineup, 
         Id matchId, 
         Id teamId,
-        fflib_ISObjectUnitOfWork uow
+        fflib_ISObjectUnitOfWork uow,
+        String espnSport,
+        String leagueCode
     ) {
         Map<String, Object> result = new Map<String, Object>();
         List<Match_Participation__c> participations = new List<Match_Participation__c>();
@@ -568,18 +572,171 @@ public with sharing class ESPNDataParser {
         }
         lineupRecord.Starting_XI_Count__c = starterCount;
         
-        // Create Match_Participation__c records with validation
+        // Create Match_Participation__c records - ensure all players exist first
+        // Second pass: For any players still missing, try to fetch from ESPN and create them
+        Set<String> missingAthleteIds = new Set<String>();
+        for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
+            if (String.isNotBlank(player.athleteId) && !playerIdMap.containsKey(player.athleteId)) {
+                missingAthleteIds.add(player.athleteId);
+            }
+        }
+        
+        // Try to fetch missing players from ESPN if we have sport/league info
+        if (!missingAthleteIds.isEmpty() && String.isNotBlank(espnSport) && String.isNotBlank(leagueCode)) {
+            System.debug('Attempting to fetch ' + missingAthleteIds.size() + ' missing player(s) from ESPN API');
+            List<Contact> fetchedPlayers = new List<Contact>();
+            
+            for (String athleteId : missingAthleteIds) {
+                try {
+                    // Fetch player details from ESPN
+                    ESPNHttpService.ESPNAthleteResponse athleteResponse = 
+                        ESPNHttpService.getAthleteDetails(espnSport, leagueCode, athleteId);
+                    
+                    if (athleteResponse.success && athleteResponse.athlete != null) {
+                        ESPNHttpService.ESPNAthlete athlete = athleteResponse.athlete;
+                        
+                        // Find the corresponding lineup player for additional data
+                        ESPNHttpService.ESPNLineupPlayer lineupPlayer = null;
+                        for (ESPNHttpService.ESPNLineupPlayer lp : lineup.players) {
+                            if (lp.athleteId == athleteId) {
+                                lineupPlayer = lp;
+                                break;
+                            }
+                        }
+                        
+                        // Create player contact with enhanced data
+                        Contact newPlayer = new Contact();
+                        newPlayer.AccountId = teamId;
+                        newPlayer.ESPN_Player_ID__c = athleteId;
+                        
+                        // Use athlete data for name
+                        if (String.isNotBlank(athlete.fullName)) {
+                            List<String> nameParts = athlete.fullName.split(' ', 2);
+                            newPlayer.FirstName = (nameParts.size() > 0 && String.isNotBlank(nameParts[0])) ? nameParts[0] : null;
+                            String lastName = nameParts.size() > 1 ? nameParts[1] : (nameParts.size() > 0 ? nameParts[0] : null);
+                            newPlayer.LastName = String.isNotBlank(lastName) ? lastName : 'Player';
+                        } else if (String.isNotBlank(athlete.displayName)) {
+                            List<String> nameParts = athlete.displayName.split(' ', 2);
+                            newPlayer.FirstName = (nameParts.size() > 0 && String.isNotBlank(nameParts[0])) ? nameParts[0] : null;
+                            String lastName = nameParts.size() > 1 ? nameParts[1] : (nameParts.size() > 0 ? nameParts[0] : null);
+                            newPlayer.LastName = String.isNotBlank(lastName) ? lastName : 'Player';
+                        } else {
+                            newPlayer.LastName = 'Player';
+                        }
+                        
+                        // Ensure LastName is never blank
+                        if (String.isBlank(newPlayer.LastName)) {
+                            newPlayer.LastName = 'Player';
+                        }
+                        
+                        // Set position from athlete or lineup player
+                        if (String.isNotBlank(athlete.position)) {
+                            newPlayer.Position__c = athlete.position;
+                        } else if (lineupPlayer != null && String.isNotBlank(lineupPlayer.position)) {
+                            newPlayer.Position__c = lineupPlayer.position;
+                        }
+                        
+                        // Set jersey number
+                        if (String.isNotBlank(athlete.jersey)) {
+                            try {
+                                newPlayer.Jersey_Number__c = Decimal.valueOf(athlete.jersey);
+                            } catch (Exception e) {
+                                System.debug('Failed to parse jersey from athlete: ' + athlete.jersey);
+                            }
+                        } else if (lineupPlayer != null && String.isNotBlank(lineupPlayer.jersey)) {
+                            try {
+                                newPlayer.Jersey_Number__c = Decimal.valueOf(lineupPlayer.jersey);
+                            } catch (Exception e) {
+                                System.debug('Failed to parse jersey from lineup: ' + lineupPlayer.jersey);
+                            }
+                        }
+                        
+                        // Set headshot URL
+                        if (String.isNotBlank(athlete.headshotUrl)) {
+                            newPlayer.Profile_Image_URL__c = athlete.headshotUrl;
+                        } else if (lineupPlayer != null && String.isNotBlank(lineupPlayer.headshotUrl)) {
+                            newPlayer.Profile_Image_URL__c = lineupPlayer.headshotUrl;
+                        }
+                        
+                        fetchedPlayers.add(newPlayer);
+                    } else {
+                        // Fallback: create player from lineup data only
+                        ESPNHttpService.ESPNLineupPlayer lineupPlayer = null;
+                        for (ESPNHttpService.ESPNLineupPlayer lp : lineup.players) {
+                            if (lp.athleteId == athleteId) {
+                                lineupPlayer = lp;
+                                break;
+                            }
+                        }
+                        
+                        if (lineupPlayer != null) {
+                            Contact fallbackPlayer = createPlayerContact(lineupPlayer, teamId);
+                            if (fallbackPlayer != null) {
+                                fetchedPlayers.add(fallbackPlayer);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'Error fetching player from ESPN (athleteId: ' + athleteId + '): ' + e.getMessage());
+                    warnings.add('Could not fetch player details from ESPN for athlete ID "' + athleteId + '": ' + e.getMessage());
+                }
+            }
+            
+            // Insert fetched players
+            if (!fetchedPlayers.isEmpty()) {
+                try {
+                    Database.SaveResult[] saveResults = Database.insert(fetchedPlayers, false);
+                    Integer successCount = 0;
+                    for (Integer i = 0; i < saveResults.size(); i++) {
+                        Database.SaveResult sr = saveResults[i];
+                        Contact newPlayer = fetchedPlayers[i];
+                        if (sr.isSuccess() && String.isNotBlank(newPlayer.ESPN_Player_ID__c)) {
+                            playerIdMap.put(newPlayer.ESPN_Player_ID__c, sr.getId());
+                            successCount++;
+                        }
+                    }
+                    if (successCount > 0) {
+                        System.debug('Successfully created ' + successCount + ' player(s) from ESPN API');
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'Error inserting fetched players: ' + e.getMessage());
+                    warnings.add('Error inserting players fetched from ESPN: ' + e.getMessage());
+                }
+            }
+        }
+        
+        // Final pass: Create participations for all players (now all should exist)
         Integer participationErrors = 0;
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
             try {
                 Id playerId = playerIdMap.get(player.athleteId);
                 if (playerId == null) {
-                    String playerName = String.isNotBlank(player.displayName) ? player.displayName : 
-                                       (String.isNotBlank(player.athleteId) ? player.athleteId : 'Unknown');
-                    System.debug(LoggingLevel.WARN, 'Skipping participation for player without valid ID: ' + playerName);
-                    warnings.add('Skipped participation for player "' + playerName + '" - player ID not found');
-                    participationErrors++;
-                    continue;
+                    // Last resort: try to create player from lineup data only
+                    if (String.isNotBlank(player.athleteId)) {
+                        try {
+                            Contact lastResortPlayer = createPlayerContact(player, teamId);
+                            if (lastResortPlayer != null && String.isNotBlank(lastResortPlayer.LastName)) {
+                                Database.SaveResult sr = Database.insert(lastResortPlayer, false);
+                                if (sr.isSuccess()) {
+                                    playerId = sr.getId();
+                                    playerIdMap.put(player.athleteId, playerId);
+                                    System.debug('Created player as last resort: ' + player.displayName);
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.debug(LoggingLevel.ERROR, 'Last resort player creation failed: ' + e.getMessage());
+                        }
+                    }
+                    
+                    // If still null, skip with warning
+                    if (playerId == null) {
+                        String playerName = String.isNotBlank(player.displayName) ? player.displayName : 
+                                           (String.isNotBlank(player.athleteId) ? player.athleteId : 'Unknown');
+                        System.debug(LoggingLevel.WARN, 'Skipping participation for player without valid ID: ' + playerName);
+                        warnings.add('Skipped participation for player "' + playerName + '" - could not create player record');
+                        participationErrors++;
+                        continue;
+                    }
                 }
                 
                 // Validate required fields before creating participation

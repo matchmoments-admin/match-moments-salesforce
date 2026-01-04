@@ -259,23 +259,81 @@ public with sharing class LineupController {
             }
         }
         
-        // Step 2: Query to verify Contact records exist
+        // Step 2: Query to verify Contact records exist, create missing ones
         Map<Id, Contact> validContacts = new Map<Id, Contact>();
+        Set<Id> missingPlayerIds = new Set<Id>();
         if (!playerIds.isEmpty()) {
             validContacts = new Map<Id, Contact>([
                 SELECT Id, Name
                 FROM Contact
                 WHERE Id IN :playerIds
             ]);
+            
+            // Identify missing players
+            for (Id playerId : playerIds) {
+                if (!validContacts.containsKey(playerId)) {
+                    missingPlayerIds.add(playerId);
+                }
+            }
         }
         
-        // Step 3: Build participations list with validation
+        // Create missing players if any (map old ID to new ID)
+        Map<Id, Id> oldIdToNewId = new Map<Id, Id>();
+        if (!missingPlayerIds.isEmpty()) {
+            List<Contact> newPlayers = new List<Contact>();
+            List<Id> oldIdList = new List<Id>(); // Keep track of old IDs in order
+            for (Id oldPlayerId : missingPlayerIds) {
+                String playerName = playerIdToName.get(oldPlayerId);
+                if (String.isNotBlank(playerName)) {
+                    Contact newPlayer = new Contact();
+                    newPlayer.AccountId = teamId;
+                    // Parse name
+                    List<String> nameParts = playerName.split(' ', 2);
+                    newPlayer.FirstName = (nameParts.size() > 0 && String.isNotBlank(nameParts[0])) ? nameParts[0] : null;
+                    String lastName = nameParts.size() > 1 ? nameParts[1] : (nameParts.size() > 0 ? nameParts[0] : 'Player');
+                    newPlayer.LastName = String.isNotBlank(lastName) ? lastName : 'Player';
+                    newPlayers.add(newPlayer);
+                    oldIdList.add(oldPlayerId);
+                }
+            }
+            
+            if (!newPlayers.isEmpty()) {
+                try {
+                    Database.SaveResult[] results = Database.insert(newPlayers, false);
+                    Integer successCount = 0;
+                    for (Integer i = 0; i < results.size(); i++) {
+                        if (results[i].isSuccess()) {
+                            Contact newPlayer = newPlayers[i];
+                            Id newId = results[i].getId();
+                            // Map old ID to new ID
+                            Id oldId = oldIdList[i];
+                            if (oldId != null) {
+                                oldIdToNewId.put(oldId, newId);
+                                validContacts.put(newId, newPlayer);
+                                successCount++;
+                            }
+                        }
+                    }
+                    if (successCount > 0) {
+                        System.debug('Created ' + successCount + ' missing player(s)');
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'Error creating missing players: ' + e.getMessage());
+                }
+            }
+        }
+        
+        // Step 3: Build participations list
         List<Match_Participation__c> participations = new List<Match_Participation__c>();
         List<String> missingContactErrors = new List<String>();
         
         // Add goalkeeper
         if (gkData != null) {
             String gkPlayerId = (String) gkData.get('playerId');
+            // Map to new ID if player was created
+            if (oldIdToNewId.containsKey(gkPlayerId)) {
+                gkPlayerId = oldIdToNewId.get(gkPlayerId);
+            }
             if (String.isNotBlank(gkPlayerId)) {
                 if (validContacts.containsKey(gkPlayerId)) {
                     Match_Participation__c gkParticipation = new Match_Participation__c();
@@ -313,7 +371,10 @@ public with sharing class LineupController {
                     for (Object playerObj : players) {
                         Map<String, Object> player = (Map<String, Object>) playerObj;
                         String playerId = (String) player.get('playerId');
-                        
+                        // Map to new ID if player was created
+                        if (oldIdToNewId.containsKey(playerId)) {
+                            playerId = oldIdToNewId.get(playerId);
+                        }
                         if (String.isNotBlank(playerId)) {
                             if (validContacts.containsKey(playerId)) {
                                 Match_Participation__c participation = new Match_Participation__c();
@@ -349,7 +410,10 @@ public with sharing class LineupController {
             for (Object playerObj : bench) {
                 Map<String, Object> player = (Map<String, Object>) playerObj;
                 String playerId = (String) player.get('playerId');
-                
+                // Map to new ID if player was created
+                if (oldIdToNewId.containsKey(playerId)) {
+                    playerId = oldIdToNewId.get(playerId);
+                }
                 if (String.isNotBlank(playerId)) {
                     if (validContacts.containsKey(playerId)) {
                         Match_Participation__c participation = new Match_Participation__c();

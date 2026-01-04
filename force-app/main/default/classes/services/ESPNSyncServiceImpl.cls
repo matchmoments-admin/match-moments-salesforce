@@ -387,7 +387,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                         existingLineup = existingLineupsMap.get(fixtureId).get(teamId);
                     }
                     
-                    Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow);
+                    Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow, espnSport, leagueCode);
                     Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
                     
                     if (lineupRecord != null) {
@@ -538,7 +538,7 @@ public inherited sharing class ESPNSyncServiceImpl implements IESPNSyncService {
                 Id teamId = teamIdMap.get(lineup.teamId);
                 if (teamId == null) continue;
                 
-                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow);
+                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(lineup, fixtureId, teamId, uow, espnSport, leagueCode);
                 Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
                 
                 if (lineupRecord != null) {
