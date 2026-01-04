@@ -75,6 +75,7 @@ public class Application {
                 Match_Participation__c.SObjectType => MatchParticipationsSelector.class,
                 Commentary__c.SObjectType => CommentariesSelector.class,
                 Match_Moment__c.SObjectType => MatchMomentsSelector.class,
+                Lineup__c.SObjectType => LineupsSelector.class,
                 Social_Engagement__c.SObjectType => SocialEngagementsSelector.class,
                 Team_Season_Stats__c.SObjectType => TeamSeasonStatsSelector.class,
                 Player_Season_Stats__c.SObjectType => PlayerSeasonStatsSelector.class

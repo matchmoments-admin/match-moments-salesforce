@@ -38,5 +38,17 @@ public inherited sharing class MatchMomentsSelector extends fflib_SObjectSelecto
             .setOrdering('Event_Time__c', fflib_QueryFactory.SortOrder.ASCENDING);
         return (List<Match_Moment__c>) Database.query(query.toSOQL());
     }
+    
+    /**
+     * @description Select moments by match IDs
+     * @param matchIds Set of Match__c record IDs
+     * @return List of Match_Moment__c records
+     */
+    public List<Match_Moment__c> selectByMatchIds(Set<Id> matchIds) {
+        fflib_QueryFactory query = newQueryFactory()
+            .setCondition('Match__c IN :matchIds')
+            .setOrdering('Event_Time__c', fflib_QueryFactory.SortOrder.ASCENDING);
+        return (List<Match_Moment__c>) Database.query(query.toSOQL());
+    }
 }
 

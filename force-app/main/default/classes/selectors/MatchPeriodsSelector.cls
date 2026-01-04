@@ -5,6 +5,10 @@
  */
 public inherited sharing class MatchPeriodsSelector extends fflib_SObjectSelector {
     
+    public static MatchPeriodsSelector newInstance() {
+        return (MatchPeriodsSelector) Application.Selector.newInstance(Match_Period__c.SObjectType);
+    }
+    
     public Schema.SObjectType getSObjectType() {
         return Match_Period__c.SObjectType;
     }

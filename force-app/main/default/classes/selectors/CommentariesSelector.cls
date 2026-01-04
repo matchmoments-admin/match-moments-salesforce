@@ -8,6 +8,10 @@
  */
 public inherited sharing class CommentariesSelector extends fflib_SObjectSelector {
     
+    public static CommentariesSelector newInstance() {
+        return (CommentariesSelector) Application.Selector.newInstance(Commentary__c.SObjectType);
+    }
+    
     public Schema.SObjectType getSObjectType() {
         return Commentary__c.SObjectType;
     }
@@ -24,6 +28,25 @@ public inherited sharing class CommentariesSelector extends fflib_SObjectSelecto
     
     public List<Commentary__c> selectById(Set<Id> ids) {
         return (List<Commentary__c>) selectSObjectsById(ids);
+    }
+    
+    /**
+     * @description Select commentaries by match IDs
+     * @param matchIds Set of Match__c record IDs
+     * @return Map of Match__c Id -> Commentary__c
+     */
+    public Map<Id, Commentary__c> selectByMatchIds(Set<Id> matchIds) {
+        fflib_QueryFactory query = newQueryFactory()
+            .setCondition('Match__c IN :matchIds');
+        
+        List<Commentary__c> commentaries = (List<Commentary__c>) Database.query(query.toSOQL());
+        
+        Map<Id, Commentary__c> result = new Map<Id, Commentary__c>();
+        for (Commentary__c comm : commentaries) {
+            result.put(comm.Match__c, comm);
+        }
+        
+        return result;
     }
 }
 
