@@ -793,7 +793,7 @@ public with sharing class MatchSummaryController {
             
             // Get match with ESPN Event ID and related data
             List<Match__c> matches = [
-                SELECT Id, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
+                SELECT Id, Name, ESPN_Event_ID__c, Match_Date_Time__c, Competition__c, Competition__r.Sport__c, 
                        Competition__r.ESPN_League_ID__c, Home_Team__c, Away_Team__c,
                        Home_Team__r.Name, Away_Team__r.Name
                 FROM Match__c
@@ -806,11 +806,6 @@ public with sharing class MatchSummaryController {
             }
             
             Match__c match = matches[0];
-            
-            // Validate ESPN Event ID
-            if (String.isBlank(match.ESPN_Event_ID__c)) {
-                throw new AuraHandledException('ESPN Event ID is required to sync lineups. Please set the ESPN_Event_ID__c field on this match record.');
-            }
             
             // Validate Competition and Sport data
             if (match.Competition__c == null) {
@@ -839,14 +834,33 @@ public with sharing class MatchSummaryController {
                 }
             }
             
-            System.debug('MatchSummaryController: SportType=' + sportType + ', ESPN Sport=' + espnSport + ', LeagueCode=' + leagueCode + ', EventId=' + match.ESPN_Event_ID__c);
-            
             // Validate teams are present
             if (match.Home_Team__c == null && match.Away_Team__c == null) {
                 throw new AuraHandledException('This match does not have home or away teams assigned. Please set Home_Team__c and Away_Team__c before syncing lineups.');
             }
             
+            // Try to find ESPN Event ID if missing
             String eventId = match.ESPN_Event_ID__c;
+            if (String.isBlank(eventId)) {
+                System.debug(LoggingLevel.INFO, 'ESPN_Event_ID__c is blank, attempting to search for Event ID by date and teams');
+                eventId = searchESPNEventId(match, espnSport, leagueCode);
+                
+                if (String.isNotBlank(eventId)) {
+                    // Update the match record with the found Event ID
+                    try {
+                        match.ESPN_Event_ID__c = eventId;
+                        update match;
+                        System.debug(LoggingLevel.INFO, 'Successfully found and set ESPN_Event_ID__c: ' + eventId);
+                    } catch (Exception updateEx) {
+                        System.debug(LoggingLevel.WARN, 'Found Event ID but failed to update match record: ' + updateEx.getMessage());
+                        // Continue with the found Event ID even if update fails
+                    }
+                } else {
+                    throw new AuraHandledException('ESPN Event ID is required to sync lineups. Could not automatically find the Event ID. Please set the ESPN_Event_ID__c field on this match record, or ensure the match has a valid Match_Date_Time__c and teams with ESPN_Team_ID__c set.');
+                }
+            }
+            
+            System.debug('MatchSummaryController: SportType=' + sportType + ', ESPN Sport=' + espnSport + ', LeagueCode=' + leagueCode + ', EventId=' + eventId);
             
             // Get match summary from ESPN with error handling
             ESPNHttpService.ESPNMatchSummaryResponse response;
@@ -1127,6 +1141,133 @@ public with sharing class MatchSummaryController {
             }
             
             throw new AuraHandledException(errorMsg);
+        }
+    }
+    
+    /**
+     * @description Search for ESPN Event ID by matching date and teams
+     * @param match Match__c record to search for
+     * @param espnSport ESPN sport code
+     * @param leagueCode ESPN league code
+     * @return ESPN Event ID if found, null otherwise
+     */
+    private static String searchESPNEventId(Match__c match, String espnSport, String leagueCode) {
+        try {
+            // Get match date
+            Date matchDate = match.Match_Date_Time__c != null 
+                ? match.Match_Date_Time__c.date() : Date.today();
+            String dateStr = matchDate.year() + 
+                String.valueOf(matchDate.month()).leftPad(2, '0') + 
+                String.valueOf(matchDate.day()).leftPad(2, '0');
+            
+            // Get team ESPN IDs if available
+            Set<Id> teamIds = new Set<Id>();
+            if (match.Home_Team__c != null) teamIds.add(match.Home_Team__c);
+            if (match.Away_Team__c != null) teamIds.add(match.Away_Team__c);
+            
+            Map<Id, String> teamEspnIdMap = new Map<Id, String>();
+            Map<Id, String> teamNameMap = new Map<Id, String>();
+            
+            if (!teamIds.isEmpty()) {
+                List<Account> teams = [
+                    SELECT Id, Name, ESPN_Team_ID__c
+                    FROM Account
+                    WHERE Id IN :teamIds
+                ];
+                
+                for (Account team : teams) {
+                    if (String.isNotBlank(team.ESPN_Team_ID__c)) {
+                        teamEspnIdMap.put(team.Id, team.ESPN_Team_ID__c);
+                    }
+                    if (String.isNotBlank(team.Name)) {
+                        teamNameMap.put(team.Id, team.Name);
+                    }
+                }
+            }
+            
+            // Search ESPN scoreboard for the date
+            ESPNHttpService.ESPNScoreboardResponse response = ESPNHttpService.getFixtures(espnSport, leagueCode, dateStr);
+            
+            if (!response.success || response.events == null || response.events.isEmpty()) {
+                System.debug(LoggingLevel.WARN, 'No events found in ESPN scoreboard for date: ' + dateStr);
+                return null;
+            }
+            
+            // Try to match by team ESPN IDs first (most reliable)
+            if (!teamEspnIdMap.isEmpty()) {
+                String homeTeamEspnId = match.Home_Team__c != null ? teamEspnIdMap.get(match.Home_Team__c) : null;
+                String awayTeamEspnId = match.Away_Team__c != null ? teamEspnIdMap.get(match.Away_Team__c) : null;
+                
+                for (ESPNHttpService.ESPNEvent event : response.events) {
+                    // Match both teams by ESPN ID
+                    Boolean homeMatches = (homeTeamEspnId == null || event.homeTeamId == homeTeamEspnId);
+                    Boolean awayMatches = (awayTeamEspnId == null || event.awayTeamId == awayTeamEspnId);
+                    
+                    if (homeMatches && awayMatches && (homeTeamEspnId != null || awayTeamEspnId != null)) {
+                        System.debug(LoggingLevel.INFO, 'Matched event by team ESPN IDs: ' + event.id + ' (' + event.name + ')');
+                        return event.id;
+                    }
+                }
+            }
+            
+            // Fall back to matching by team names
+            if (!teamNameMap.isEmpty()) {
+                String homeTeamName = match.Home_Team__c != null ? teamNameMap.get(match.Home_Team__c) : null;
+                String awayTeamName = match.Away_Team__c != null ? teamNameMap.get(match.Away_Team__c) : null;
+                
+                for (ESPNHttpService.ESPNEvent event : response.events) {
+                    // Match by team names in event name
+                    if (String.isNotBlank(event.name)) {
+                        Boolean homeMatches = (homeTeamName == null || 
+                            event.name.containsIgnoreCase(homeTeamName) || 
+                            homeTeamName.containsIgnoreCase(event.name));
+                        Boolean awayMatches = (awayTeamName == null || 
+                            event.name.containsIgnoreCase(awayTeamName) || 
+                            awayTeamName.containsIgnoreCase(event.name));
+                        
+                        if (homeMatches && awayMatches && (homeTeamName != null || awayTeamName != null)) {
+                            System.debug(LoggingLevel.INFO, 'Matched event by team names: ' + event.id + ' (' + event.name + ')');
+                            return event.id;
+                        }
+                    }
+                    
+                    // Also try matching by individual team names in event
+                    if (String.isNotBlank(event.homeTeamName) && String.isNotBlank(event.awayTeamName)) {
+                        Boolean homeMatches = (homeTeamName == null || 
+                            event.homeTeamName.containsIgnoreCase(homeTeamName) || 
+                            homeTeamName.containsIgnoreCase(event.homeTeamName));
+                        Boolean awayMatches = (awayTeamName == null || 
+                            event.awayTeamName.containsIgnoreCase(awayTeamName) || 
+                            awayTeamName.containsIgnoreCase(event.awayTeamName));
+                        
+                        if (homeMatches && awayMatches && (homeTeamName != null || awayTeamName != null)) {
+                            System.debug(LoggingLevel.INFO, 'Matched event by individual team names: ' + event.id + ' (' + event.name + ')');
+                            return event.id;
+                        }
+                    }
+                }
+            }
+            
+            // Last resort: match by match name if available
+            if (String.isNotBlank(match.Name)) {
+                for (ESPNHttpService.ESPNEvent event : response.events) {
+                    if (event.name != null) {
+                        if (event.name.containsIgnoreCase(match.Name) || 
+                            match.Name.containsIgnoreCase(event.name)) {
+                            System.debug(LoggingLevel.INFO, 'Matched event by match name: ' + event.id + ' (' + event.name + ')');
+                            return event.id;
+                        }
+                    }
+                }
+            }
+            
+            System.debug(LoggingLevel.WARN, 'Could not find matching ESPN event for match: ' + match.Name);
+            return null;
+            
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Error searching for ESPN Event ID: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            return null;
         }
     }
 }
