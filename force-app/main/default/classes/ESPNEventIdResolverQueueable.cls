@@ -28,7 +28,7 @@ public class ESPNEventIdResolverQueueable implements Queueable, Database.AllowsC
         
         // Query matches with required fields
         List<Match__c> matches = [
-            SELECT Id, Name, ESPN_Event_ID__c, Match_Date_Time__c, 
+            SELECT Id, Name, ESPN_Event_ID__c, Match_Date_Time__c, Match_Level__c,
                    Competition__c, Competition__r.Sport__c, Competition__r.ESPN_League_ID__c,
                    Home_Team__c, Away_Team__c,
                    Home_Team__r.Name, Home_Team__r.ESPN_Team_ID__c,
@@ -39,6 +39,7 @@ public class ESPNEventIdResolverQueueable implements Queueable, Database.AllowsC
             AND Match_Date_Time__c != null
             AND Competition__c != null
             AND (Home_Team__c != null OR Away_Team__c != null)
+            AND Match_Level__c = 'Professional'
         ];
         
         if (matches.isEmpty()) {
