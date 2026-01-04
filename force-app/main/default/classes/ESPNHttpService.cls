@@ -755,10 +755,10 @@ public with sharing class ESPNHttpService {
                     item.sequence = Integer.valueOf(commData.get('sequence'));
                     item.text = (String) commData.get('text');
                     
-                    Map<String, Object> time = (Map<String, Object>) commData.get('time');
-                    if (time != null) {
-                        item.timeDisplay = (String) time.get('displayValue');
-                        Object timeValue = time.get('value');
+                    Map<String, Object> timeData = (Map<String, Object>) commData.get('time');
+                    if (timeData != null) {
+                        item.timeDisplay = (String) timeData.get('displayValue');
+                        Object timeValue = timeData.get('value');
                         if (timeValue != null) {
                             item.timeValue = Decimal.valueOf(String.valueOf(timeValue));
                         }

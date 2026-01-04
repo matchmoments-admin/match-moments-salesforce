@@ -379,7 +379,8 @@ public with sharing class ESPNDataParser {
             Match_Moment__c moment = new Match_Moment__c();
             moment.Match__c = matchId;
             moment.Description__c = item.text;
-            moment.Event_Time__c = item.timeValue != null ? item.timeValue : 0;
+            // Event_Time__c is DateTime, timeValue is Decimal - will be set from parsed minute/second
+            // moment.Event_Time__c = null; // Leave null, will be calculated if needed
             
             // Parse time display to extract minute/second
             if (String.isNotBlank(item.timeDisplay)) {
@@ -534,8 +535,8 @@ public with sharing class ESPNDataParser {
         
         try {
             // Handle formats like "10'", "45'+2", "90'+7"
-            if (timeDisplay.contains("'")) {
-                String[] parts = timeDisplay.split("'");
+            if (timeDisplay.contains('\'')) {
+                String[] parts = timeDisplay.split('\'');
                 if (parts.size() > 0) {
                     String minuteStr = parts[0].trim();
                     moment.Event_Minute__c = Decimal.valueOf(minuteStr);
