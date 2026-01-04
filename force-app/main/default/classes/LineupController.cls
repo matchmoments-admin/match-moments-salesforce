@@ -213,7 +213,8 @@ public with sharing class LineupController {
             gkParticipation.Team__c = teamId;
             gkParticipation.Player__c = (String) gkData.get('playerId');
             gkParticipation.Position__c = 'GK';
-            gkParticipation.Role__c = 'Starter';
+            gkParticipation.Role__c = 'Player';
+            gkParticipation.Starting_Lineup__c = true;
             // Jersey_Number__c is on Contact, not Match_Participation__c
             participations.add(gkParticipation);
         }
@@ -234,7 +235,8 @@ public with sharing class LineupController {
                         participation.Team__c = teamId;
                         participation.Player__c = (String) player.get('playerId');
                         participation.Position__c = (String) player.get('position');
-                        participation.Role__c = 'Starter';
+                        participation.Role__c = 'Player';
+                        participation.Starting_Lineup__c = true;
                         // Jersey_Number__c is on Contact, not Match_Participation__c
                         participations.add(participation);
                     }
@@ -253,7 +255,8 @@ public with sharing class LineupController {
                 participation.Team__c = teamId;
                 participation.Player__c = (String) player.get('playerId');
                 participation.Position__c = (String) player.get('position');
-                participation.Role__c = 'Substitute';
+                participation.Role__c = 'Player';
+                participation.Substitute__c = true;
                 // Jersey_Number__c is on Contact, not Match_Participation__c
                 participations.add(participation);
             }

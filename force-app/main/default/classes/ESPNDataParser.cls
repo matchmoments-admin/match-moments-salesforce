@@ -571,7 +571,9 @@ public with sharing class ESPNDataParser {
                 participation.Player__c = playerId;
                 participation.Position__c = player.positionAbbreviation != null ? player.positionAbbreviation : 
                     (player.position != null ? player.position : 'Unknown');
-                participation.Role__c = player.starter ? 'Starter' : 'Substitute';
+                participation.Role__c = 'Player';
+                participation.Starting_Lineup__c = player.starter;
+                participation.Substitute__c = !player.starter;
                 
                 participations.add(participation);
             } catch (Exception e) {
