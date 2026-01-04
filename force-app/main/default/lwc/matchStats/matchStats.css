@@ -1,0 +1,82 @@
+.possession-bar {
+    display: flex;
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.possession-bar-home {
+    background: var(--slds-g-color-brand-base-50, #0176d3);
+    transition: width 0.3s ease;
+}
+
+.possession-bar-away {
+    background: var(--slds-g-color-neutral-base-30, #706e6b);
+    transition: width 0.3s ease;
+}
+
+.stats-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--slds-g-color-text-base-10, #181818);
+}
+
+.stat-bars {
+    width: 100%;
+}
+
+.stat-bar-container {
+    display: flex;
+    height: 32px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stat-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.3s ease;
+    min-width: 40px;
+}
+
+.stat-bar-home {
+    background: var(--slds-g-color-brand-base-50, #0176d3);
+    color: white;
+}
+
+.stat-bar-away {
+    background: var(--slds-g-color-neutral-base-30, #706e6b);
+    color: white;
+}
+
+.stat-value {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .stat-bar {
+        min-width: 30px;
+    }
+    
+    .stat-value {
+        font-size: 12px;
+    }
+}
+

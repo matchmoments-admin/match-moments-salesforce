@@ -1,0 +1,107 @@
+.team-logo-timeline {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.timeline-container {
+    position: relative;
+    padding: 20px 0;
+    min-height: 200px;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--slds-g-color-border-base-4, #e5e5e5);
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.timeline-events {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+    overflow-x: auto;
+    padding: 0 20px;
+}
+
+.timeline-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    position: relative;
+}
+
+.timeline-marker {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timeline-label {
+    background: var(--slds-g-color-neutral-base-100, #ffffff);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--slds-g-color-text-base-10, #181818);
+    border: 1px solid var(--slds-g-color-border-base-4, #e5e5e5);
+    margin-bottom: 8px;
+}
+
+.timeline-period-marker {
+    width: 12px;
+    height: 12px;
+    background: var(--slds-g-color-brand-base-50, #0176d3);
+    border-radius: 50%;
+    border: 2px solid var(--slds-g-color-neutral-base-100, #ffffff);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.timeline-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.timeline-event {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    background: var(--slds-g-color-neutral-base-100, #ffffff);
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.timeline-event[data-team] {
+    /* Style based on team if needed */
+}
+
+@media (max-width: 768px) {
+    .timeline-events {
+        padding: 0 10px;
+    }
+    
+    .timeline-point {
+        min-width: 60px;
+    }
+    
+    .timeline-label {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+}
+

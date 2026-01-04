@@ -1,0 +1,110 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading timeline..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Timeline Card -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card">
+                <div class="slds-card__header">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="utility:timeline" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span class="slds-text-heading_small">Match Timeline</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <template if:true={hasEvents}>
+                        <!-- Team Headers -->
+                        <div class="slds-grid slds-grid_align-space-between slds-m-bottom_small">
+                            <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                                <template if:true={matchData.homeTeam}>
+                                    <div class="slds-text-body_small slds-text-color_weak">
+                                        <template if:true={matchData.homeTeam.logoUrl}>
+                                            <img src={matchData.homeTeam.logoUrl} alt={matchData.homeTeam.name} class="team-logo-timeline" />
+                                        </template>
+                                        {matchData.homeTeam.name}
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                                <template if:true={matchData.awayTeam}>
+                                    <div class="slds-text-body_small slds-text-color_weak">
+                                        <template if:true={matchData.awayTeam.logoUrl}>
+                                            <img src={matchData.awayTeam.logoUrl} alt={matchData.awayTeam.name} class="team-logo-timeline" />
+                                        </template>
+                                        {matchData.awayTeam.name}
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline -->
+                        <div class="timeline-container">
+                            <div class="timeline-line"></div>
+                            <div class="timeline-events">
+                                <template for:each={timelineEvents} for:item="timelinePoint">
+                                    <div key={timelinePoint.minute} class="timeline-point">
+                                        <div class="timeline-marker">
+                                            <div class="timeline-label">{timelinePoint.label}</div>
+                                            <template if:true={timelinePoint.isPeriodMarker}>
+                                                <div class="timeline-period-marker"></div>
+                                            </template>
+                                        </div>
+                                        <div class="timeline-events-list">
+                                            <template for:each={timelinePoint.events} for:item="event">
+                                                <div key={event.id} class="timeline-event" data-team={event.team.id}>
+                                                    <lightning-icon 
+                                                        icon-name={event.iconName}
+                                                        variant={event.iconVariant}
+                                                        size="x-small"
+                                                        title={event.eventType}>
+                                                    </lightning-icon>
+                                                    <template if:true={event.primaryPlayer}>
+                                                        <span class="slds-text-body_small slds-m-left_xx-small">
+                                                            {event.primaryPlayer.name}
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={hasEvents}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No timeline events available for this match.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+

@@ -1,0 +1,85 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading game information..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Game Information Card -->
+    <template if:true={hasData}>
+        <div class="slds-card">
+            <div class="slds-card__header">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                        <lightning-icon icon-name="utility:date_time" size="small"></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <span class="slds-text-heading_small">Game Information</span>
+                        </h2>
+                    </div>
+                </header>
+            </div>
+            
+            <div class="slds-card__body slds-card__body_inner">
+                <dl class="slds-list_horizontal slds-wrap">
+                    <!-- Venue -->
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Venue">
+                        Venue
+                    </dt>
+                    <dd class="slds-item_detail slds-truncate" title={venue}>
+                        {venue}
+                    </dd>
+                    
+                    <!-- Date & Time -->
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Date & Time">
+                        Date & Time
+                    </dt>
+                    <dd class="slds-item_detail slds-truncate" title={formattedDate}>
+                        {formattedDate}
+                    </dd>
+                    
+                    <!-- Location -->
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Location">
+                        Location
+                    </dt>
+                    <dd class="slds-item_detail slds-truncate" title={location}>
+                        {location}
+                    </dd>
+                    
+                    <!-- Attendance -->
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Attendance">
+                        Attendance
+                    </dt>
+                    <dd class="slds-item_detail slds-truncate" title={attendance}>
+                        {attendance}
+                    </dd>
+                    
+                    <!-- Referee -->
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Referee">
+                        Referee
+                    </dt>
+                    <dd class="slds-item_detail slds-truncate" title={referee}>
+                        {referee}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </template>
+</template>
+

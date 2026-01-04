@@ -1,0 +1,149 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading statistics..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Match Stats Card -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card">
+                <div class="slds-card__header">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="utility:chart" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span class="slds-text-heading_small">Match Statistics</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <template if:true={hasStats}>
+                        <!-- Possession Chart -->
+                        <div class="slds-m-bottom_large">
+                            <div class="slds-text-heading_small slds-m-bottom_small">Possession</div>
+                            <div class="slds-grid slds-grid_align-space-between slds-gutters">
+                                <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                                    <div class="slds-text-heading_large">{homePossession}%</div>
+                                    <div class="slds-text-body_small slds-text-color_weak">{homeTeamName}</div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-text-align_center">
+                                    <div class="slds-text-heading_large">{awayPossession}%</div>
+                                    <div class="slds-text-body_small slds-text-color_weak">{awayTeamName}</div>
+                                </div>
+                            </div>
+                            <div class="possession-bar">
+                                <div class="possession-bar-home" style={homePossessionStyle}></div>
+                                <div class="possession-bar-away" style={awayPossessionStyle}></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Statistics Comparison -->
+                        <div class="stats-comparison">
+                            <!-- Shots on Goal -->
+                            <div class="stat-row">
+                                <div class="stat-label">Shots on Goal</div>
+                                <div class="stat-bars">
+                                    <div class="stat-bar-container">
+                                        <div class="stat-bar stat-bar-home" style={homeShotsOnGoalStyle}>
+                                            <span class="stat-value">{homeShotsOnGoal}</span>
+                                        </div>
+                                        <div class="stat-bar stat-bar-away" style={awayShotsOnGoalStyle}>
+                                            <span class="stat-value">{awayShotsOnGoal}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Shot Attempts -->
+                            <div class="stat-row">
+                                <div class="stat-label">Shot Attempts</div>
+                                <div class="stat-bars">
+                                    <div class="stat-bar-container">
+                                        <div class="stat-bar stat-bar-home" style={homeShotAttemptsStyle}>
+                                            <span class="stat-value">{homeShotAttempts}</span>
+                                        </div>
+                                        <div class="stat-bar stat-bar-away" style={awayShotAttemptsStyle}>
+                                            <span class="stat-value">{awayShotAttempts}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Yellow Cards -->
+                            <div class="stat-row">
+                                <div class="stat-label">Yellow Cards</div>
+                                <div class="stat-bars">
+                                    <div class="stat-bar-container">
+                                        <div class="stat-bar stat-bar-home" style={homeYellowCardsStyle}>
+                                            <span class="stat-value">{homeYellowCards}</span>
+                                        </div>
+                                        <div class="stat-bar stat-bar-away" style={awayYellowCardsStyle}>
+                                            <span class="stat-value">{awayYellowCards}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Corner Kicks -->
+                            <div class="stat-row">
+                                <div class="stat-label">Corner Kicks</div>
+                                <div class="stat-bars">
+                                    <div class="stat-bar-container">
+                                        <div class="stat-bar stat-bar-home" style={homeCornerKicksStyle}>
+                                            <span class="stat-value">{homeCornerKicks}</span>
+                                        </div>
+                                        <div class="stat-bar stat-bar-away" style={awayCornerKicksStyle}>
+                                            <span class="stat-value">{awayCornerKicks}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Saves -->
+                            <div class="stat-row">
+                                <div class="stat-label">Saves</div>
+                                <div class="stat-bars">
+                                    <div class="stat-bar-container">
+                                        <div class="stat-bar stat-bar-home" style={homeSavesStyle}>
+                                            <span class="stat-value">{homeSaves}</span>
+                                        </div>
+                                        <div class="stat-bar stat-bar-away" style={awaySavesStyle}>
+                                            <span class="stat-value">{awaySaves}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={hasStats}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No statistics available for this match.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+

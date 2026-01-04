@@ -1,0 +1,115 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading commentary..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Commentary Card -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card">
+                <div class="slds-card__header">
+                    <div class="slds-grid slds-grid_align-space-between">
+                        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                            <div class="slds-media__figure">
+                                <lightning-icon icon-name="utility:comments" size="small"></lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <h2 class="slds-card__header-title">
+                                    <span class="slds-text-heading_small">Match Commentary</span>
+                                </h2>
+                            </div>
+                        </header>
+                        <div class="slds-col slds-size_1-of-3 slds-max-small-size_1-of-1">
+                            <lightning-combobox
+                                label="Filter by event type"
+                                label-class="slds-assistive-text"
+                                value={selectedEventType}
+                                options={eventTypeOptions}
+                                onchange={handleEventTypeChange}
+                                variant="label-hidden">
+                            </lightning-combobox>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <template if:true={hasMoments}>
+                        <ul class="slds-list_vertical slds-has-dividers_bottom-space">
+                            <template for:each={reverseOrderMoments} for:item="moment">
+                                <li key={moment.id} class="slds-item slds-m-bottom_small">
+                                    <div class="slds-media">
+                                        <div class="slds-media__figure">
+                                            <lightning-icon 
+                                                icon-name={moment.iconName}
+                                                variant={moment.iconVariant}
+                                                size="small"
+                                                class="slds-m-right_small">
+                                            </lightning-icon>
+                                        </div>
+                                        <div class="slds-media__body">
+                                            <div class="slds-grid slds-grid_align-spread">
+                                                <div class="slds-col">
+                                                    <div class="slds-text-body_regular">
+                                                        <span class="slds-text-heading_small slds-m-right_small">{moment.formattedTime}</span>
+                                                        <template if:true={moment.primaryPlayer}>
+                                                            <strong>{moment.primaryPlayer.name}</strong>
+                                                            <template if:true={moment.secondaryPlayer}>
+                                                                <span class="slds-m-horizontal_x-small">→</span>
+                                                                <strong>{moment.secondaryPlayer.name}</strong>
+                                                            </template>
+                                                        </template>
+                                                    </div>
+                                                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                                                        {moment.description}
+                                                    </div>
+                                                    <template if:true={moment.eventType}>
+                                                        <div class="slds-m-top_x-small">
+                                                            <lightning-badge 
+                                                                label={moment.eventType} 
+                                                                variant={moment.iconVariant}>
+                                                            </lightning-badge>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <template if:true={moment.team}>
+                                                    <div class="slds-col slds-no-flex">
+                                                        <template if:true={moment.team.logoUrl}>
+                                                            <img src={moment.team.logoUrl} alt={moment.team.name} class="team-logo-small" />
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template if:false={hasMoments}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No commentary available for this match.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+

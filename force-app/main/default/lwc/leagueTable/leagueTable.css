@@ -1,0 +1,21 @@
+.team-logo-table {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 2px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+tr[data-team-id] {
+    transition: background-color 0.2s;
+}
+
+tr[data-team-id]:hover {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+tr[data-team-id].slds-text-bold {
+    background-color: var(--slds-g-color-brand-base-95, #e8f4fd);
+}
+

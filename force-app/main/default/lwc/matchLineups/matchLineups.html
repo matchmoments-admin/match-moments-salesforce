@@ -1,0 +1,172 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading lineups..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Lineups Card -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card">
+                <div class="slds-card__header">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="custom:custom78" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span class="slds-text-heading_small">Match Lineups</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <template if:true={hasLineups}>
+                        <div class="slds-grid slds-gutters">
+                            <!-- Home Team Lineup -->
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-card slds-card_boundary">
+                                    <div class="slds-card__header slds-grid slds-grid_align-center">
+                                        <div class="slds-media slds-media_center">
+                                            <div class="slds-media__figure">
+                                                <template if:true={homeTeamLogo}>
+                                                    <img src={homeTeamLogo} alt={homeTeamName} class="team-logo-small" />
+                                                </template>
+                                            </div>
+                                            <div class="slds-media__body">
+                                                <h3 class="slds-text-heading_small">{homeTeamName}</h3>
+                                                <div class="slds-text-body_small slds-text-color_weak">Formation: {homeFormation}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-card__body slds-card__body_inner">
+                                        <div class="slds-text-heading_small slds-m-bottom_small">Starting XI</div>
+                                        <ul class="slds-list_vertical slds-has-dividers_bottom-space">
+                                            <template for:each={homeStartingXI} for:item="player">
+                                                <li key={player.playerId} class="slds-item">
+                                                    <div class="slds-grid slds-grid_align-spread">
+                                                        <div class="slds-col">
+                                                            <template if:true={player.jerseyNumber}>
+                                                                <span class="slds-text-heading_small slds-m-right_small">#{player.jerseyNumber}</span>
+                                                            </template>
+                                                            <span>{player.playerName}</span>
+                                                            <template if:true={player.position}>
+                                                                <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">({player.position})</span>
+                                                            </template>
+                                                            <template if:true={player.isCaptain}>
+                                                                <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-left_x-small" title="Captain"></lightning-icon>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                        <template if:true={homeBench.length}>
+                                            <div class="slds-text-heading_small slds-m-top_medium slds-m-bottom_small">Substitutes</div>
+                                            <ul class="slds-list_vertical slds-has-dividers_bottom-space">
+                                                <template for:each={homeBench} for:item="player">
+                                                    <li key={player.playerId} class="slds-item">
+                                                        <div class="slds-grid slds-grid_align-spread">
+                                                            <div class="slds-col">
+                                                                <template if:true={player.jerseyNumber}>
+                                                                    <span class="slds-text-heading_small slds-m-right_small">#{player.jerseyNumber}</span>
+                                                                </template>
+                                                                <span>{player.playerName}</span>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Away Team Lineup -->
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-card slds-card_boundary">
+                                    <div class="slds-card__header slds-grid slds-grid_align-center">
+                                        <div class="slds-media slds-media_center">
+                                            <div class="slds-media__figure">
+                                                <template if:true={awayTeamLogo}>
+                                                    <img src={awayTeamLogo} alt={awayTeamName} class="team-logo-small" />
+                                                </template>
+                                            </div>
+                                            <div class="slds-media__body">
+                                                <h3 class="slds-text-heading_small">{awayTeamName}</h3>
+                                                <div class="slds-text-body_small slds-text-color_weak">Formation: {awayFormation}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-card__body slds-card__body_inner">
+                                        <div class="slds-text-heading_small slds-m-bottom_small">Starting XI</div>
+                                        <ul class="slds-list_vertical slds-has-dividers_bottom-space">
+                                            <template for:each={awayStartingXI} for:item="player">
+                                                <li key={player.playerId} class="slds-item">
+                                                    <div class="slds-grid slds-grid_align-spread">
+                                                        <div class="slds-col">
+                                                            <template if:true={player.jerseyNumber}>
+                                                                <span class="slds-text-heading_small slds-m-right_small">#{player.jerseyNumber}</span>
+                                                            </template>
+                                                            <span>{player.playerName}</span>
+                                                            <template if:true={player.position}>
+                                                                <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">({player.position})</span>
+                                                            </template>
+                                                            <template if:true={player.isCaptain}>
+                                                                <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-left_x-small" title="Captain"></lightning-icon>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                        <template if:true={awayBench.length}>
+                                            <div class="slds-text-heading_small slds-m-top_medium slds-m-bottom_small">Substitutes</div>
+                                            <ul class="slds-list_vertical slds-has-dividers_bottom-space">
+                                                <template for:each={awayBench} for:item="player">
+                                                    <li key={player.playerId} class="slds-item">
+                                                        <div class="slds-grid slds-grid_align-spread">
+                                                            <div class="slds-col">
+                                                                <template if:true={player.jerseyNumber}>
+                                                                    <span class="slds-text-heading_small slds-m-right_small">#{player.jerseyNumber}</span>
+                                                                </template>
+                                                                <span>{player.playerName}</span>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={hasLineups}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No lineups available for this match.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+

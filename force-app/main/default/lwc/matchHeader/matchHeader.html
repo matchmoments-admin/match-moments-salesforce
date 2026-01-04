@@ -1,0 +1,127 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card slds-m-around_medium">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading match..." size="medium"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card slds-m-around_medium">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Match Header -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card slds-m-around_medium">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="custom:custom78" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span class="slds-text-heading_small">{competition.name}</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <!-- Match Scoreboard -->
+                    <div class="slds-grid slds-grid_align-space-between slds-grid_vertical-align-center slds-m-bottom_medium">
+                        <!-- Home Team -->
+                        <div class="slds-col slds-size_1-of-3 slds-text-align_center">
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <template if:true={homeTeam.logoUrl}>
+                                        <img src={homeTeam.logoUrl} alt={homeTeam.name} class="team-logo" />
+                                    </template>
+                                    <template if:false={homeTeam.logoUrl}>
+                                        <lightning-icon icon-name="standard:account" size="large" class="slds-icon-standard-account"></lightning-icon>
+                                    </template>
+                                </div>
+                                <div class="slds-media__body">
+                                    <div class="slds-text-heading_medium slds-truncate" title={homeTeam.name}>
+                                        {homeTeam.name}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Score -->
+                        <div class="slds-col slds-size_1-of-3 slds-text-align_center">
+                            <div class="slds-m-vertical_small">
+                                <div class="slds-text-heading_large slds-text-bold">{scoreDisplay}</div>
+                                <div class="slds-m-top_x-small">
+                                    <lightning-badge label={matchStatus} variant={statusBadgeVariant}></lightning-badge>
+                                </div>
+                                <template if:true={formattedDate}>
+                                    <div class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                                        {formattedDate}
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Away Team -->
+                        <div class="slds-col slds-size_1-of-3 slds-text-align_center">
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__body">
+                                    <div class="slds-text-heading_medium slds-truncate" title={awayTeam.name}>
+                                        {awayTeam.name}
+                                    </div>
+                                </div>
+                                <div class="slds-media__figure">
+                                    <template if:true={awayTeam.logoUrl}>
+                                        <img src={awayTeam.logoUrl} alt={awayTeam.name} class="team-logo" />
+                                    </template>
+                                    <template if:false={awayTeam.logoUrl}>
+                                        <lightning-icon icon-name="standard:account" size="large" class="slds-icon-standard-account"></lightning-icon>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goal Scorers -->
+                    <template if:true={goalScorers.length}>
+                        <div class="slds-grid slds-gutters slds-m-top_medium">
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-text-heading_small slds-m-bottom_x-small">Goal Scorers</div>
+                                <ul class="slds-list_dotted">
+                                    <template for:each={formattedHomeGoalScorers} for:item="scorerText">
+                                        <li key={scorerText} class="slds-item">
+                                            {scorerText}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-text-heading_small slds-m-bottom_x-small">Goal Scorers</div>
+                                <ul class="slds-list_dotted">
+                                    <template for:each={formattedAwayGoalScorers} for:item="scorerText">
+                                        <li key={scorerText} class="slds-item">
+                                            {scorerText}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+

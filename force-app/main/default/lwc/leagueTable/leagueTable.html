@@ -1,0 +1,152 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <lightning-spinner alternative-text="Loading league table..." size="small"></lightning-spinner>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={hasError}>
+        <div class="slds-card">
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-text-color_error">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    {errorMessage}
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- League Table Card -->
+    <template if:false={isLoading}>
+        <template if:false={hasError}>
+            <div class="slds-card">
+                <div class="slds-card__header">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="utility:table" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span class="slds-text-heading_small">League Standings</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                
+                <div class="slds-card__body slds-card__body_inner">
+                    <template if:true={hasTableData}>
+                        <div class="slds-scrollable_x">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-is-sortable" data-column="position" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Position">Pos</span>
+                                                <template if:true={isPositionSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="team" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Team">Team</span>
+                                                <template if:true={isTeamSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="matchesPlayed" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Games Played">GP</span>
+                                                <template if:true={isMatchesPlayedSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="wins" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Wins">W</span>
+                                                <template if:true={isWinsSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="draws" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Draws">D</span>
+                                                <template if:true={isDrawsSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="losses" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Losses">L</span>
+                                                <template if:true={isLossesSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="goalDifference" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Goal Difference">GD</span>
+                                                <template if:true={isGoalDifferenceSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                        <th scope="col" class="slds-is-sortable" data-column="points" onclick={handleSort}>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                                <span class="slds-truncate" title="Points">P</span>
+                                                <template if:true={isPointsSort}>
+                                                    <lightning-icon icon-name={sortIcon} size="xx-small" class="slds-m-left_x-small"></lightning-icon>
+                                                </template>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={sortedTableData} for:item="row">
+                                        <tr key={row.id} class={row.team.id} data-team-id={row.team.id}>
+                                            <td data-label="Position">
+                                                <div class="slds-grid slds-grid_vertical-align-center">
+                                                    <span>{row.position}</span>
+                                                </div>
+                                            </td>
+                                            <td data-label="Team">
+                                                <div class="slds-grid slds-grid_vertical-align-center">
+                                                    <template if:true={row.team.logoUrl}>
+                                                        <img src={row.team.logoUrl} alt={row.team.name} class="team-logo-table" />
+                                                    </template>
+                                                    <span class={row.teamClass}>{row.team.name}</span>
+                                                </div>
+                                            </td>
+                                            <td data-label="Games Played">{row.matchesPlayed}</td>
+                                            <td data-label="Wins">{row.wins}</td>
+                                            <td data-label="Draws">{row.draws}</td>
+                                            <td data-label="Losses">{row.losses}</td>
+                                            <td data-label="Goal Difference">{row.formattedGoalDifference}</td>
+                                            <td data-label="Points">
+                                                <strong>{row.points}</strong>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+                    <template if:false={hasTableData}>
+                        <div class="slds-text-align_center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No league table data available.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </template>
+</template>
+
