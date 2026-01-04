@@ -9,7 +9,14 @@ private class ArticlesSelectorTest {
     @TestSetup
     static void setupTestData() {
         // Create test competition and match
-        Competition__c comp = new Competition__c(Name = 'Test League', Sport__c = 'Soccer');
+        Competition__c comp = new Competition__c(
+            Sport__c = 'Soccer', 
+            Status__c = 'Active', 
+            Competition_Type__c = 'Domestic League', 
+            Season_Year__c = '2024-25',
+            ESPN_League_ID__c = 'test.1',
+            Season_Start_Date__c = Date.today()
+        );
         insert comp;
         
         Account homeTeam = new Account(Name = 'Home FC');
@@ -20,7 +27,8 @@ private class ArticlesSelectorTest {
             Competition__c = comp.Id,
             Home_Team__c = homeTeam.Id,
             Away_Team__c = awayTeam.Id,
-            Match_Date_Time__c = Datetime.now()
+            Match_Date_Time__c = Datetime.now(),
+            Status__c = 'Scheduled'
         );
         insert match;
         
@@ -33,7 +41,7 @@ private class ArticlesSelectorTest {
             Sport_Type__c = 'Soccer',
             Article_Date__c = Date.today(),
             Is_Published__c = true,
-            Related_Match__c = match.Id
+            Match__c = match.Id
         ));
         articles.add(new Article__c(
             Heading__c = 'Test Article 2',
@@ -72,7 +80,7 @@ private class ArticlesSelectorTest {
         Test.stopTest();
         
         Assert.areEqual(1, results.size(), 'Should return 1 article related to match');
-        Assert.areEqual(match.Id, results[0].Related_Match__c, 'Should be related to correct match');
+        Assert.areEqual(match.Id, results[0].Match__c, 'Should be related to correct match');
     }
     
     @IsTest

@@ -35,10 +35,10 @@ public without sharing class AccountTriggerHandler extends fflib_SObjectDomain {
         setRestrictionStatus(false);
         setUnrestrictedDateTime(false);
         setOwnershipToLeadOwner(false);
-        clearOwnerAssignedDatetime();
-        populatePreviousOwner();
-        populatePreviousStore();
-        clearPrimaryStore();
+        clearOwnerAssignedDatetime(existingRecords);
+        populatePreviousOwner(existingRecords);
+        populatePreviousStore(existingRecords);
+        clearPrimaryStore(existingRecords);
         setRandCode();
         updateDisabledAccount();
         setIsNationalMarketPlace(false);
@@ -233,7 +233,7 @@ public without sharing class AccountTriggerHandler extends fflib_SObjectDomain {
         }
     }
 
-    private void clearOwnerAssignedDatetime() {
+    private void clearOwnerAssignedDatetime(Map<Id, SObject> existingRecords) {
         List<Account> recordsToProcess = new List<Account>();
         for (Account accountRecord : (List<Account>) getRecords()) {
             Account oldAccount = (Account) existingRecords.get(accountRecord.Id);
@@ -563,7 +563,7 @@ public without sharing class AccountTriggerHandler extends fflib_SObjectDomain {
         }
     }
 
-    private void populatePreviousOwner() {
+    private void populatePreviousOwner(Map<Id, SObject> existingRecords) {
         List<Account> recordsToProcess = new List<Account>((List<Account>) getChangedRecords(new Set<Schema.SObjectField>{ Account.OwnerId }));
         if (recordsToProcess.isEmpty()) {
             return;
@@ -585,7 +585,7 @@ public without sharing class AccountTriggerHandler extends fflib_SObjectDomain {
         }
     }
 
-    private void populatePreviousStore() {
+    private void populatePreviousStore(Map<Id, SObject> existingRecords) {
         for (Account accountRecord : (List<Account>) getRecords()) {
             Account oldAccount = (Account) existingRecords.get(accountRecord.Id);
 
@@ -596,7 +596,7 @@ public without sharing class AccountTriggerHandler extends fflib_SObjectDomain {
         }
     }
 
-    private void clearPrimaryStore() {
+    private void clearPrimaryStore(Map<Id, SObject> existingRecords) {
         if (FeatureFlagCustomMetadata.getFeatureFlag('Enable_Appointment_Overflow') == false) {
             return;
         }
