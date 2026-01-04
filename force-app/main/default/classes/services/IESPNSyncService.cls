@@ -76,5 +76,13 @@ public interface IESPNSyncService {
         Date endDate,
         fflib_ISObjectUnitOfWork uow
     );
+    
+    /**
+     * @description Sync lineups for a match
+     * @param fixtureId Match__c record ID
+     * @param uow Unit of Work instance
+     * @return ESPNSyncResult with operation outcome
+     */
+    ESPNSyncResult syncMatchLineups(Id fixtureId, fflib_ISObjectUnitOfWork uow);
 }
 

@@ -763,6 +763,32 @@
         <readable>true</readable>
     </fieldPermissions>
     
+    <!-- Match_Participation__c Fields (excluding required fields) -->
+    <!-- Note: Role__c, Person__c, Team__c, and Match__c are required, so FLS cannot be set in permission sets -->
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Match_Participation__c.Player__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Match_Participation__c.Position__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Match_Participation__c.Starting_Lineup__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Match_Participation__c.Substitute__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
     <!-- Revenue_Stream__c Fields -->
     <fieldPermissions>
         <editable>true</editable>

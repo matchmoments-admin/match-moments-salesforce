@@ -1,0 +1,73 @@
+-- Verification queries for Match_Participation__c records
+-- These queries verify that Person__c field is set correctly
+
+-- Query 1: Find Match_Participation__c records with missing Person__c
+SELECT Id, Name, Match__c, Team__c, Player__c, Person__c, Position__c, Role__c,
+       Player__r.Name, Player__r.ESPN_Player_ID__c
+FROM Match_Participation__c
+WHERE Person__c = null
+ORDER BY CreatedDate DESC
+LIMIT 100
+
+-- Query 2: Find Match_Participation__c records where Person__c != Player__c
+-- NOTE: SOQL doesn't support field-to-field comparison in WHERE clause
+-- This query will need to be run in Apex or filtered manually
+-- Alternative: Query all with Person__c != null, then filter in code
+SELECT Id, Name, Match__c, Team__c, Player__c, Person__c, Position__c, Role__c,
+       Player__r.Name, Player__r.ESPN_Player_ID__c,
+       Person__r.Name
+FROM Match_Participation__c
+WHERE Person__c != null
+ORDER BY CreatedDate DESC
+LIMIT 100
+-- Then filter where Person__c != Player__c in Apex or manually
+
+-- Query 3: Count Match_Participation__c records by Person__c status
+SELECT 
+    COUNT(Id) totalParticipations,
+    SUM(CASE WHEN Person__c = null THEN 1 ELSE 0 END) missingPerson,
+    SUM(CASE WHEN Person__c != null AND Person__c = Player__c THEN 1 ELSE 0 END) validPerson,
+    SUM(CASE WHEN Person__c != null AND Person__c != Player__c THEN 1 ELSE 0 END) mismatchedPerson
+FROM Match_Participation__c
+
+-- Query 4: Count players created per team (recent)
+SELECT AccountId, Account.Name, COUNT(Id) playerCount
+FROM Contact
+WHERE ESPN_Player_ID__c != null
+AND CreatedDate = LAST_N_DAYS:7
+GROUP BY AccountId, Account.Name
+ORDER BY playerCount DESC
+LIMIT 50
+
+-- Query 5: Verify ESPN_Player_ID__c uniqueness
+SELECT ESPN_Player_ID__c, COUNT(Id) playerCount, 
+       STRING_AGG(Id, ', ') WITHIN GROUP (ORDER BY CreatedDate) playerIds,
+       STRING_AGG(Name, ', ') WITHIN GROUP (ORDER BY CreatedDate) playerNames
+FROM Contact
+WHERE ESPN_Player_ID__c != null
+GROUP BY ESPN_Player_ID__c
+HAVING COUNT(Id) > 1
+ORDER BY playerCount DESC
+LIMIT 50
+
+-- Query 6: Recent Match_Participation__c records with full details
+SELECT Id, Match__c, Match__r.Name, Team__c, Team__r.Name,
+       Player__c, Player__r.Name, Player__r.ESPN_Player_ID__c,
+       Person__c, Person__r.Name,
+       Position__c, Role__c, Starting_Lineup__c, Substitute__c
+FROM Match_Participation__c
+WHERE CreatedDate = LAST_N_DAYS:7
+ORDER BY CreatedDate DESC
+LIMIT 100
+
+-- Query 7: Match_Participation__c records grouped by match
+SELECT Match__c, Match__r.Name, 
+       COUNT(Id) totalParticipations,
+       SUM(CASE WHEN Person__c = null THEN 1 ELSE 0 END) missingPerson,
+       SUM(CASE WHEN Person__c != null AND Person__c = Player__c THEN 1 ELSE 0 END) validPerson
+FROM Match_Participation__c
+GROUP BY Match__c, Match__r.Name
+HAVING SUM(CASE WHEN Person__c = null THEN 1 ELSE 0 END) > 0
+ORDER BY missingPerson DESC
+LIMIT 50
+

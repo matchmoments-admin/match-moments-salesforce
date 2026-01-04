@@ -203,23 +203,24 @@ public with sharing class LineupController {
             delete existingParticipations;
         }
         
-        List<Match_Participation__c> participations = new List<Match_Participation__c>();
+        // Step 1: Collect all player IDs from lineup data
+        Set<Id> playerIds = new Set<Id>();
+        Map<String, String> playerIdToName = new Map<String, String>(); // For error messages
         
-        // Add goalkeeper
+        // Collect goalkeeper player ID
         Map<String, Object> gkData = (Map<String, Object>) lineupData.get('goalkeeper');
         if (gkData != null) {
-            Match_Participation__c gkParticipation = new Match_Participation__c();
-            gkParticipation.Match__c = matchId;
-            gkParticipation.Team__c = teamId;
-            gkParticipation.Player__c = (String) gkData.get('playerId');
-            gkParticipation.Position__c = 'GK';
-            gkParticipation.Role__c = 'Player';
-            gkParticipation.Starting_Lineup__c = true;
-            // Jersey_Number__c is on Contact, not Match_Participation__c
-            participations.add(gkParticipation);
+            String gkPlayerId = (String) gkData.get('playerId');
+            if (String.isNotBlank(gkPlayerId)) {
+                playerIds.add(gkPlayerId);
+                String gkName = (String) gkData.get('name');
+                if (String.isNotBlank(gkName)) {
+                    playerIdToName.put(gkPlayerId, gkName);
+                }
+            }
         }
         
-        // Add players from formation lines
+        // Collect player IDs from formation lines
         List<Object> lines = (List<Object>) lineupData.get('lines');
         if (lines != null) {
             for (Object lineObj : lines) {
@@ -229,41 +230,175 @@ public with sharing class LineupController {
                 if (players != null) {
                     for (Object playerObj : players) {
                         Map<String, Object> player = (Map<String, Object>) playerObj;
+                        String playerId = (String) player.get('playerId');
+                        if (String.isNotBlank(playerId)) {
+                            playerIds.add(playerId);
+                            String playerName = (String) player.get('name');
+                            if (String.isNotBlank(playerName)) {
+                                playerIdToName.put(playerId, playerName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Collect bench player IDs
+        List<Object> bench = (List<Object>) lineupData.get('bench');
+        if (bench != null) {
+            for (Object playerObj : bench) {
+                Map<String, Object> player = (Map<String, Object>) playerObj;
+                String playerId = (String) player.get('playerId');
+                if (String.isNotBlank(playerId)) {
+                    playerIds.add(playerId);
+                    String playerName = (String) player.get('name');
+                    if (String.isNotBlank(playerName)) {
+                        playerIdToName.put(playerId, playerName);
+                    }
+                }
+            }
+        }
+        
+        // Step 2: Query to verify Contact records exist
+        Map<Id, Contact> validContacts = new Map<Id, Contact>();
+        if (!playerIds.isEmpty()) {
+            validContacts = new Map<Id, Contact>([
+                SELECT Id, Name
+                FROM Contact
+                WHERE Id IN :playerIds
+            ]);
+        }
+        
+        // Step 3: Build participations list with validation
+        List<Match_Participation__c> participations = new List<Match_Participation__c>();
+        List<String> missingContactErrors = new List<String>();
+        
+        // Add goalkeeper
+        if (gkData != null) {
+            String gkPlayerId = (String) gkData.get('playerId');
+            if (String.isNotBlank(gkPlayerId)) {
+                if (validContacts.containsKey(gkPlayerId)) {
+                    Match_Participation__c gkParticipation = new Match_Participation__c();
+                    gkParticipation.Match__c = matchId;
+                    gkParticipation.Team__c = teamId;
+                    gkParticipation.Player__c = gkPlayerId;
+                    gkParticipation.Person__c = gkPlayerId; // Required field - set to same Contact ID as Player__c
+                    gkParticipation.Position__c = 'GK';
+                    gkParticipation.Role__c = 'Player';
+                    gkParticipation.Starting_Lineup__c = true;
+                    
+                    // Explicit validation that Person__c is set
+                    if (gkParticipation.Person__c == null) {
+                        String gkName = playerIdToName.get(gkPlayerId);
+                        System.debug(LoggingLevel.ERROR, 'Person__c validation failed for goalkeeper: ' + gkName);
+                        missingContactErrors.add('Goalkeeper' + (String.isNotBlank(gkName) ? ' (' + gkName + ')' : '') + ' - Person__c is null');
+                        continue;
+                    }
+                    
+                    participations.add(gkParticipation);
+                } else {
+                    String gkName = playerIdToName.get(gkPlayerId);
+                    missingContactErrors.add('Goalkeeper' + (String.isNotBlank(gkName) ? ' (' + gkName + ')' : '') + ' - Contact record not found');
+                }
+            }
+        }
+        
+        // Add players from formation lines
+        if (lines != null) {
+            for (Object lineObj : lines) {
+                Map<String, Object> line = (Map<String, Object>) lineObj;
+                List<Object> players = (List<Object>) line.get('players');
+                
+                if (players != null) {
+                    for (Object playerObj : players) {
+                        Map<String, Object> player = (Map<String, Object>) playerObj;
+                        String playerId = (String) player.get('playerId');
                         
-                        Match_Participation__c participation = new Match_Participation__c();
-                        participation.Match__c = matchId;
-                        participation.Team__c = teamId;
-                        participation.Player__c = (String) player.get('playerId');
-                        participation.Position__c = (String) player.get('position');
-                        participation.Role__c = 'Player';
-                        participation.Starting_Lineup__c = true;
-                        // Jersey_Number__c is on Contact, not Match_Participation__c
-                        participations.add(participation);
+                        if (String.isNotBlank(playerId)) {
+                            if (validContacts.containsKey(playerId)) {
+                                Match_Participation__c participation = new Match_Participation__c();
+                                participation.Match__c = matchId;
+                                participation.Team__c = teamId;
+                                participation.Player__c = playerId;
+                                participation.Person__c = playerId; // Required field - set to same Contact ID as Player__c
+                                participation.Position__c = (String) player.get('position');
+                                participation.Role__c = 'Player';
+                                participation.Starting_Lineup__c = true;
+                                
+                                // Explicit validation that Person__c is set
+                                if (participation.Person__c == null) {
+                                    String playerName = playerIdToName.get(playerId);
+                                    System.debug(LoggingLevel.ERROR, 'Person__c validation failed for player: ' + playerName);
+                                    missingContactErrors.add('Player' + (String.isNotBlank(playerName) ? ' (' + playerName + ')' : '') + ' - Person__c is null');
+                                    continue;
+                                }
+                                
+                                participations.add(participation);
+                            } else {
+                                String playerName = playerIdToName.get(playerId);
+                                missingContactErrors.add('Player' + (String.isNotBlank(playerName) ? ' (' + playerName + ')' : '') + ' - Contact record not found');
+                            }
+                        }
                     }
                 }
             }
         }
         
         // Add bench players
-        List<Object> bench = (List<Object>) lineupData.get('bench');
         if (bench != null) {
             for (Object playerObj : bench) {
                 Map<String, Object> player = (Map<String, Object>) playerObj;
+                String playerId = (String) player.get('playerId');
                 
-                Match_Participation__c participation = new Match_Participation__c();
-                participation.Match__c = matchId;
-                participation.Team__c = teamId;
-                participation.Player__c = (String) player.get('playerId');
-                participation.Position__c = (String) player.get('position');
-                participation.Role__c = 'Player';
-                participation.Substitute__c = true;
-                // Jersey_Number__c is on Contact, not Match_Participation__c
-                participations.add(participation);
+                if (String.isNotBlank(playerId)) {
+                    if (validContacts.containsKey(playerId)) {
+                        Match_Participation__c participation = new Match_Participation__c();
+                        participation.Match__c = matchId;
+                        participation.Team__c = teamId;
+                        participation.Player__c = playerId;
+                        participation.Person__c = playerId; // Required field - set to same Contact ID as Player__c
+                        participation.Position__c = (String) player.get('position');
+                        participation.Role__c = 'Player';
+                        participation.Substitute__c = true;
+                        
+                        // Explicit validation that Person__c is set
+                        if (participation.Person__c == null) {
+                            String playerName = playerIdToName.get(playerId);
+                            System.debug(LoggingLevel.ERROR, 'Person__c validation failed for bench player: ' + playerName);
+                            missingContactErrors.add('Bench player' + (String.isNotBlank(playerName) ? ' (' + playerName + ')' : '') + ' - Person__c is null');
+                            continue;
+                        }
+                        
+                        participations.add(participation);
+                    } else {
+                        String playerName = playerIdToName.get(playerId);
+                        missingContactErrors.add('Bench player' + (String.isNotBlank(playerName) ? ' (' + playerName + ')' : '') + ' - Contact record not found');
+                    }
+                }
             }
         }
         
+        // Step 4: Insert participations and handle errors
         if (!participations.isEmpty()) {
-            insert participations;
+            try {
+                insert participations;
+            } catch (DmlException e) {
+                String errorMsg = 'Error saving lineup data to Salesforce. ';
+                for (Integer i = 0; i < e.getNumDml(); i++) {
+                    errorMsg += 'Record ' + (i + 1) + ': ' + e.getDmlMessage(i);
+                    if (i < e.getNumDml() - 1) {
+                        errorMsg += '; ';
+                    }
+                }
+                throw new AuraHandledException(errorMsg);
+            }
+        }
+        
+        // Log warnings for missing Contact records
+        if (!missingContactErrors.isEmpty()) {
+            System.debug(LoggingLevel.WARN, 'Some players could not be saved - Contact records not found: ' + String.join(missingContactErrors, ', '));
+            // Note: We continue processing valid players, but could throw an exception if needed
+            // For now, we'll log and continue to allow partial saves
         }
     }
     

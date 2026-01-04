@@ -167,17 +167,7 @@
     </fieldPermissions>
     
     <!-- Match_Moment__c Field Permissions (Read-only) -->
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Match_Moment__c.Event_Type__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Match_Moment__c.Event_Minute__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
+    <!-- Note: Event_Type__c, Event_Minute__c, Event_Importance__c, Primary_Player__c, and Team__c are required, so FLS cannot be set in permission sets -->
     
     <fieldPermissions>
         <editable>false</editable>
@@ -193,12 +183,6 @@
     
     <fieldPermissions>
         <editable>false</editable>
-        <field>Match_Moment__c.Primary_Player__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Match_Moment__c.Event_Time__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -209,12 +193,6 @@
         <readable>true</readable>
     </fieldPermissions>
     
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Match_Moment__c.Event_Importance__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    
     <!-- Match_Period__c Field Permissions (Read-only) -->
     <fieldPermissions>
         <editable>false</editable>
@@ -222,11 +200,7 @@
         <readable>true</readable>
     </fieldPermissions>
     
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Match_Period__c.Period_Type__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
+    <!-- Note: Period_Type__c is required, so FLS cannot be set in permission sets -->
     
     <fieldPermissions>
         <editable>false</editable>
@@ -259,15 +233,16 @@
     </fieldPermissions>
     
     <!-- Match_Participation__c Field Permissions (Read-only) -->
+    <!-- Note: Role__c is required, so FLS cannot be set in permission sets -->
     <fieldPermissions>
         <editable>false</editable>
-        <field>Match_Participation__c.Position__c</field>
+        <field>Match_Participation__c.Player__c</field>
         <readable>true</readable>
     </fieldPermissions>
     
     <fieldPermissions>
         <editable>false</editable>
-        <field>Match_Participation__c.Role__c</field>
+        <field>Match_Participation__c.Position__c</field>
         <readable>true</readable>
     </fieldPermissions>
     

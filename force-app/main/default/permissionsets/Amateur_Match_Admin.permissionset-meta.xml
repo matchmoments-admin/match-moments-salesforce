@@ -131,6 +131,12 @@
     
     <fieldPermissions>
         <editable>true</editable>
+        <field>Match_Participation__c.Player__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Match_Moment__c.Match_Level__c</field>
         <readable>true</readable>
     </fieldPermissions>
