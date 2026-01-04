@@ -783,53 +783,143 @@ public with sharing class MatchSummaryController {
      */
     @AuraEnabled
     public static Map<String, Object> syncLineupsFromESPN(String matchId) {
+        fflib_ISObjectUnitOfWork uow = null;
+        
         try {
-            // Get match with ESPN Event ID
+            // Validate matchId parameter
+            if (String.isBlank(matchId)) {
+                throw new AuraHandledException('Match ID is required. Please provide a valid match record ID.');
+            }
+            
+            // Get match with ESPN Event ID and related data
             List<Match__c> matches = [
                 SELECT Id, ESPN_Event_ID__c, Competition__c, Competition__r.Sport__c, 
-                       Competition__r.ESPN_League_ID__c, Home_Team__c, Away_Team__c
+                       Competition__r.ESPN_League_ID__c, Home_Team__c, Away_Team__c,
+                       Home_Team__r.Name, Away_Team__r.Name
                 FROM Match__c
                 WHERE Id = :matchId
                 LIMIT 1
             ];
             
             if (matches.isEmpty()) {
-                throw new AuraHandledException('Match not found');
+                throw new AuraHandledException('Match not found with ID: ' + matchId + '. Please verify the match exists.');
             }
             
             Match__c match = matches[0];
             
+            // Validate ESPN Event ID
             if (String.isBlank(match.ESPN_Event_ID__c)) {
-                throw new AuraHandledException('ESPN Event ID not found on this match. Please set ESPN_Event_ID__c field.');
+                throw new AuraHandledException('ESPN Event ID is required to sync lineups. Please set the ESPN_Event_ID__c field on this match record.');
             }
             
-            // Sync lineups from ESPN - implement logic directly
-            String eventId = match.ESPN_Event_ID__c;
-            String sportType = (match.Competition__c != null && match.Competition__r.Sport__c != null)
+            // Validate Competition and Sport data
+            if (match.Competition__c == null) {
+                throw new AuraHandledException('This match is not linked to a Competition. Please set the Competition__c field before syncing lineups.');
+            }
+            
+            String sportType = (match.Competition__r != null && match.Competition__r.Sport__c != null)
                 ? match.Competition__r.Sport__c : 'Soccer';
-            String espnSport = SportUtils.normalizeSportForESPN(sportType);
-            String leagueCode = (match.Competition__c != null && match.Competition__r.ESPN_League_ID__c != null)
+            String leagueCode = (match.Competition__r != null && match.Competition__r.ESPN_League_ID__c != null)
                 ? match.Competition__r.ESPN_League_ID__c : SportUtils.getDefaultLeagueCode(sportType);
             
-            // Get match summary from ESPN
-            ESPNHttpService.ESPNMatchSummaryResponse response = ESPNHttpService.getMatchSummaryDetailed(espnSport, leagueCode, eventId);
-            
-            if (!response.success || response.lineups == null || response.lineups.isEmpty()) {
-                throw new AuraHandledException('No lineup data available from ESPN for this match.');
+            // Normalize sport for ESPN API
+            // Special handling: If league code indicates soccer (e.g., eng.1, uefa.champions) 
+            // but sport is "Football", it should be treated as "Soccer" for ESPN API
+            String espnSport = SportUtils.normalizeSportForESPN(sportType);
+            if (espnSport == 'football' && String.isNotBlank(leagueCode)) {
+                // Check if league code is a soccer league (not NFL)
+                String leagueLower = leagueCode.toLowerCase();
+                if (leagueLower.startsWith('eng.') || leagueLower.startsWith('uefa.') || 
+                    leagueLower.startsWith('esp.') || leagueLower.startsWith('ita.') ||
+                    leagueLower.startsWith('fra.') || leagueLower.startsWith('ger.') ||
+                    leagueLower.startsWith('usa.mls') || leagueLower.contains('champions') ||
+                    leagueLower.contains('europa') || leagueLower.startsWith('aus.')) {
+                    espnSport = 'soccer';
+                    System.debug(LoggingLevel.INFO, 'Detected soccer league code "' + leagueCode + '" - using "soccer" instead of "football" for ESPN API');
+                }
             }
             
-            // Map ESPN team IDs to Salesforce team IDs
+            System.debug('MatchSummaryController: SportType=' + sportType + ', ESPN Sport=' + espnSport + ', LeagueCode=' + leagueCode + ', EventId=' + match.ESPN_Event_ID__c);
+            
+            // Validate teams are present
+            if (match.Home_Team__c == null && match.Away_Team__c == null) {
+                throw new AuraHandledException('This match does not have home or away teams assigned. Please set Home_Team__c and Away_Team__c before syncing lineups.');
+            }
+            
+            String eventId = match.ESPN_Event_ID__c;
+            
+            // Get match summary from ESPN with error handling
+            ESPNHttpService.ESPNMatchSummaryResponse response;
+            try {
+                response = ESPNHttpService.getMatchSummaryDetailed(espnSport, leagueCode, eventId);
+            } catch (ESPNHttpService.ESPNException espnEx) {
+                String errorMsg = 'Failed to fetch lineup data from ESPN API. ';
+                if (espnEx.getMessage().contains('timeout') || espnEx.getMessage().contains('Timeout')) {
+                    errorMsg += 'The request timed out. Please try again in a moment.';
+                } else if (espnEx.getMessage().contains('404') || espnEx.getMessage().contains('Not Found')) {
+                    errorMsg += 'The ESPN Event ID "' + eventId + '" was not found. ';
+                    errorMsg += 'Please verify: (1) ESPN_Event_ID__c is correct, (2) Sport__c is set correctly (use "Soccer" not "Football" for soccer matches), (3) ESPN_League_ID__c matches the league.';
+                } else if (espnEx.getMessage().contains('500') || espnEx.getMessage().contains('Server Error') || espnEx.getMessage().contains('502') || espnEx.getMessage().contains('503')) {
+                    errorMsg += 'ESPN API returned a server error. ';
+                    errorMsg += 'This may indicate: (1) Wrong sport/league combination (e.g., "Football" with soccer league code), (2) ESPN API temporarily unavailable. ';
+                    errorMsg += 'Please verify Sport__c and ESPN_League_ID__c are correct for this match.';
+                } else {
+                    errorMsg += espnEx.getMessage();
+                }
+                System.debug(LoggingLevel.ERROR, 'ESPN API Error: ' + espnEx.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + espnEx.getStackTraceString());
+                System.debug(LoggingLevel.ERROR, 'Match Sport=' + sportType + ', ESPN Sport=' + espnSport + ', League=' + leagueCode);
+                throw new AuraHandledException(errorMsg);
+            }
+            
+            // Validate response
+            if (response == null) {
+                throw new AuraHandledException('Received null response from ESPN API. Please try again.');
+            }
+            
+            if (!response.success) {
+                String errorMsg = 'ESPN API returned an error. ';
+                if (String.isNotBlank(response.errorMessage)) {
+                    errorMsg += response.errorMessage;
+                } else {
+                    errorMsg += 'Please verify the ESPN Event ID is correct and try again.';
+                }
+                throw new AuraHandledException(errorMsg);
+            }
+            
+            if (response.lineups == null || response.lineups.isEmpty()) {
+                throw new AuraHandledException('No lineup data is available from ESPN for this match (Event ID: ' + eventId + '). The match may not have started or lineups may not be published yet.');
+            }
+            
+            // Map ESPN team IDs to Salesforce team IDs with validation
             Map<String, Id> teamIdMap = new Map<String, Id>();
+            List<String> missingTeamMappings = new List<String>();
+            
             if (match.Home_Team__c != null && String.isNotBlank(response.homeTeamId)) {
                 teamIdMap.put(response.homeTeamId, match.Home_Team__c);
+            } else if (String.isNotBlank(response.homeTeamId)) {
+                missingTeamMappings.add('Home team (ESPN ID: ' + response.homeTeamId + ')');
             }
+            
             if (match.Away_Team__c != null && String.isNotBlank(response.awayTeamId)) {
                 teamIdMap.put(response.awayTeamId, match.Away_Team__c);
+            } else if (String.isNotBlank(response.awayTeamId)) {
+                missingTeamMappings.add('Away team (ESPN ID: ' + response.awayTeamId + ')');
+            }
+            
+            if (teamIdMap.isEmpty()) {
+                throw new AuraHandledException('Unable to map ESPN teams to Salesforce teams. Please ensure Home_Team__c and Away_Team__c are set correctly on the match record.');
+            }
+            
+            if (!missingTeamMappings.isEmpty()) {
+                System.debug(LoggingLevel.WARN, 'Some teams could not be mapped: ' + String.join(missingTeamMappings, ', '));
             }
             
             // Create UOW for bulk operations
-            fflib_ISObjectUnitOfWork uow = Application.UnitOfWork.newInstance();
+            uow = Application.UnitOfWork.newInstance();
             Integer lineupCount = 0;
+            Integer participationCount = 0;
+            List<String> processingErrors = new List<String>();
             
             // Query existing lineups and participations to avoid duplicates
             Map<Id, Lineup__c> existingLineupsMap = new Map<Id, Lineup__c>();
@@ -858,76 +948,177 @@ public with sharing class MatchSummaryController {
             
             // Process each lineup from ESPN
             for (ESPNHttpService.ESPNLineup espnLineup : response.lineups) {
-                Id teamId = teamIdMap.get(espnLineup.teamId);
-                if (teamId == null) {
-                    System.debug('Team ID not found for ESPN team: ' + espnLineup.teamId);
+                try {
+                    Id teamId = teamIdMap.get(espnLineup.teamId);
+                    if (teamId == null) {
+                        String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                        System.debug(LoggingLevel.WARN, 'Team ID not found for ESPN team: ' + teamName + ' (ESPN ID: ' + espnLineup.teamId + ')');
+                        processingErrors.add('Could not sync lineup for ' + teamName + ' - team not found in Salesforce');
+                        continue;
+                    }
+                    
+                // Parse lineup data (players are created immediately if needed)
+                Map<String, Object> lineupData;
+                try {
+                    lineupData = ESPNDataParser.parseLineupToLineup(espnLineup, matchId, teamId, uow);
+                    
+                    // Check for errors and warnings from parser
+                    List<String> parserErrors = (List<String>) lineupData.get('errors');
+                    List<String> parserWarnings = (List<String>) lineupData.get('warnings');
+                    
+                    if (parserErrors != null && !parserErrors.isEmpty()) {
+                        String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                        processingErrors.add('Error parsing lineup for ' + teamName + ': ' + String.join(parserErrors, '; '));
+                    }
+                    
+                    if (parserWarnings != null && !parserWarnings.isEmpty()) {
+                        String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                        for (String warning : parserWarnings) {
+                            System.debug(LoggingLevel.WARN, 'Lineup parser warning for ' + teamName + ': ' + warning);
+                        }
+                    }
+                    
+                } catch (Exception parseEx) {
+                    String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                    System.debug(LoggingLevel.ERROR, 'Error parsing lineup for team ' + teamName + ': ' + parseEx.getMessage());
+                    System.debug(LoggingLevel.ERROR, 'Stack trace: ' + parseEx.getStackTraceString());
+                    processingErrors.add('Error parsing lineup for ' + teamName + ': ' + parseEx.getMessage());
                     continue;
                 }
                 
-                // Parse lineup data (players are created immediately if needed)
-                Map<String, Object> lineupData = ESPNDataParser.parseLineupToLineup(espnLineup, matchId, teamId, uow);
                 Lineup__c lineupRecord = (Lineup__c) lineupData.get('lineup');
-                
-                if (lineupRecord != null) {
-                    // Check if lineup already exists
-                    if (existingLineupsMap.containsKey(teamId)) {
-                        lineupRecord.Id = existingLineupsMap.get(teamId).Id;
-                        uow.registerDirty(lineupRecord);
-                    } else {
-                        uow.registerNew(lineupRecord);
-                    }
                     
-                    // Handle Match_Participation__c records
-                    List<Match_Participation__c> participations = 
-                        (List<Match_Participation__c>) lineupData.get('participations');
-                    
-                    if (participations != null && !participations.isEmpty()) {
-                        // Delete existing participations for this team
-                        if (existingParticipationsMap.containsKey(teamId)) {
-                            uow.registerDeleted(existingParticipationsMap.get(teamId));
+                    if (lineupRecord != null) {
+                        // Check if lineup already exists
+                        if (existingLineupsMap.containsKey(teamId)) {
+                            lineupRecord.Id = existingLineupsMap.get(teamId).Id;
+                            uow.registerDirty(lineupRecord);
+                        } else {
+                            uow.registerNew(lineupRecord);
                         }
                         
-                        // Register new participations
-                        for (Match_Participation__c participation : participations) {
-                            if (participation.Player__c != null) {
-                                uow.registerNew(participation);
-                            } else {
-                                System.debug('Skipping participation with null player ID');
+                        // Handle Match_Participation__c records
+                        List<Match_Participation__c> participations = 
+                            (List<Match_Participation__c>) lineupData.get('participations');
+                        
+                        if (participations != null && !participations.isEmpty()) {
+                            // Delete existing participations for this team
+                            if (existingParticipationsMap.containsKey(teamId)) {
+                                uow.registerDeleted(existingParticipationsMap.get(teamId));
+                            }
+                            
+                            // Register new participations with validation
+                            for (Match_Participation__c participation : participations) {
+                                if (participation.Player__c != null) {
+                                    uow.registerNew(participation);
+                                    participationCount++;
+                                } else {
+                                    System.debug(LoggingLevel.WARN, 'Skipping participation with null player ID for team: ' + teamId);
+                                }
                             }
                         }
+                        
+                        lineupCount++;
                     }
-                    
-                    lineupCount++;
+                } catch (Exception lineupEx) {
+                    String teamName = String.isNotBlank(espnLineup.teamName) ? espnLineup.teamName : espnLineup.teamId;
+                    System.debug(LoggingLevel.ERROR, 'Error processing lineup for team ' + teamName + ': ' + lineupEx.getMessage());
+                    System.debug(LoggingLevel.ERROR, 'Stack trace: ' + lineupEx.getStackTraceString());
+                    processingErrors.add('Error processing lineup for ' + teamName + ': ' + lineupEx.getMessage());
                 }
             }
             
-            // Commit all changes
-            uow.commitWork();
+            if (lineupCount == 0) {
+                String errorMsg = 'No lineups were successfully processed. ';
+                if (!processingErrors.isEmpty()) {
+                    errorMsg += String.join(processingErrors, '; ');
+                } else {
+                    errorMsg += 'Please check that teams are properly mapped and try again.';
+                }
+                throw new AuraHandledException(errorMsg);
+            }
+            
+            // Commit all changes with detailed error handling
+            try {
+                uow.commitWork();
+            } catch (DmlException dmlEx) {
+                // Extract detailed DML error information
+                String errorMsg = 'Error saving lineup data to Salesforce. ';
+                
+                if (dmlEx.getNumDml() > 0) {
+                    List<String> dmlErrors = new List<String>();
+                    for (Integer i = 0; i < dmlEx.getNumDml(); i++) {
+                        String recordError = dmlEx.getDmlMessage(i);
+                        if (dmlEx.getDmlFieldNames(i) != null && !dmlEx.getDmlFieldNames(i).isEmpty()) {
+                            recordError += ' (Fields: ' + String.join(dmlEx.getDmlFieldNames(i), ', ') + ')';
+                        }
+                        dmlErrors.add('Record ' + (i + 1) + ': ' + recordError);
+                    }
+                    errorMsg += String.join(dmlErrors, '; ');
+                } else {
+                    errorMsg += dmlEx.getMessage();
+                }
+                
+                System.debug(LoggingLevel.ERROR, 'DML Error: ' + errorMsg);
+                System.debug(LoggingLevel.ERROR, 'DML Type: ' + dmlEx.getDmlType(0));
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + dmlEx.getStackTraceString());
+                
+                throw new AuraHandledException(errorMsg);
+            } catch (Exception commitEx) {
+                System.debug(LoggingLevel.ERROR, 'Error committing changes: ' + commitEx.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + commitEx.getStackTraceString());
+                throw new AuraHandledException('Error saving lineup data: ' + commitEx.getMessage());
+            }
             
             // Reload lineups after sync
             Map<String, Object> lineupData = getMatchLineups(matchId);
             
+            // Build success message
+            String successMessage = 'Successfully synced ' + lineupCount + ' lineup' + (lineupCount != 1 ? 's' : '') + 
+                                   ' with ' + participationCount + ' player participation' + (participationCount != 1 ? 's' : '') + '.';
+            
+            if (!processingErrors.isEmpty()) {
+                successMessage += ' Note: Some lineups had issues: ' + String.join(processingErrors, '; ');
+            }
+            
             return new Map<String, Object>{
                 'success' => true,
-                'message' => 'Synced ' + lineupCount + ' lineups from ESPN',
-                'lineups' => lineupData
+                'message' => successMessage,
+                'lineups' => lineupData,
+                'lineupCount' => lineupCount,
+                'participationCount' => participationCount,
+                'warnings' => processingErrors
             };
             
         } catch (AuraHandledException e) {
-            // Re-throw AuraHandledException as-is
+            // Re-throw AuraHandledException as-is (already user-friendly)
             throw e;
         } catch (DmlException e) {
-            // Handle DML errors (e.g., validation rules, required fields)
+            // Handle DML errors with detailed field information
             String errorMsg = 'Error saving lineup data: ' + e.getMessage();
-            if (e.getDmlFieldNames(0) != null && !e.getDmlFieldNames(0).isEmpty()) {
+            if (e.getNumDml() > 0 && e.getDmlFieldNames(0) != null && !e.getDmlFieldNames(0).isEmpty()) {
                 errorMsg += ' (Fields: ' + String.join(e.getDmlFieldNames(0), ', ') + ')';
             }
+            System.debug(LoggingLevel.ERROR, 'DML Error: ' + errorMsg);
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException(errorMsg);
         } catch (Exception e) {
             // Log full exception for debugging
-            System.debug(LoggingLevel.ERROR, 'Error syncing lineups from ESPN: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Unexpected error syncing lineups from ESPN: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Exception type: ' + e.getTypeName());
             System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
-            throw new AuraHandledException('Error syncing lineups from ESPN: ' + e.getMessage());
+            
+            // Provide user-friendly error message
+            String errorMsg = 'An unexpected error occurred while syncing lineups. ';
+            if (e.getMessage().contains('null pointer') || e.getMessage().contains('NullPointerException')) {
+                errorMsg += 'A required field may be missing. Please verify all match data is complete.';
+            } else if (e.getMessage().contains('governor') || e.getMessage().contains('limit')) {
+                errorMsg += 'Salesforce governor limits were exceeded. Please try syncing fewer lineups at once.';
+            } else {
+                errorMsg += 'Please contact your administrator if this issue persists.';
+            }
+            
+            throw new AuraHandledException(errorMsg);
         }
     }
 }

@@ -205,17 +205,81 @@ public with sharing class ESPNHttpService {
      * @return ESPNMatchSummaryResponse Parsed comprehensive match data
      */
     public static ESPNMatchSummaryResponse getMatchSummaryDetailed(String sport, String leagueCode, String eventId) {
-        String sportPath = buildSportPath(sport, leagueCode);
+        // Validate parameters
+        if (String.isBlank(sport)) {
+            throw new ESPNException('Sport parameter is required');
+        }
+        if (String.isBlank(leagueCode)) {
+            throw new ESPNException('League code parameter is required');
+        }
+        if (String.isBlank(eventId)) {
+            throw new ESPNException('Event ID parameter is required');
+        }
+        
+        String sportPath;
+        try {
+            sportPath = buildSportPath(sport, leagueCode);
+        } catch (ESPNException e) {
+            throw e; // Re-throw sport path errors as-is
+        }
+        
         String endpoint = ESPN_BASE_URL + sportPath + '/summary?event=' + eventId;
         
         System.debug('ESPNHttpService: Fetching detailed match summary - ' + endpoint);
+        System.debug('ESPNHttpService: Sport=' + sport + ', LeagueCode=' + leagueCode + ', EventId=' + eventId);
         
-        HttpResponse response = makeCallout(endpoint);
+        HttpResponse response;
+        try {
+            response = makeCallout(endpoint);
+        } catch (ESPNException e) {
+            // Re-throw with context including endpoint URL
+            throw new ESPNException('Failed to connect to ESPN API for event ' + eventId + ' at endpoint ' + endpoint + ': ' + e.getMessage(), e);
+        }
         
-        if (response.getStatusCode() == 200) {
-            return parseMatchSummaryResponse(response.getBody());
+        Integer statusCode = response.getStatusCode();
+        String responseBody = response.getBody();
+        
+        System.debug('ESPNHttpService: Response Status Code: ' + statusCode);
+        if (statusCode != 200 && String.isNotBlank(responseBody) && responseBody.length() < 1000) {
+            System.debug('ESPNHttpService: Error Response Body: ' + responseBody);
+        }
+        
+        // Handle different HTTP status codes
+        if (statusCode == 200) {
+            // Validate response body before parsing
+            if (String.isBlank(responseBody)) {
+                System.debug(LoggingLevel.WARN, 'ESPN API returned empty response body');
+                ESPNMatchSummaryResponse emptyResult = new ESPNMatchSummaryResponse();
+                emptyResult.success = false;
+                emptyResult.errorMessage = 'ESPN API returned an empty response for event ' + eventId + ' at endpoint ' + endpoint;
+                return emptyResult;
+            }
+            
+            return parseMatchSummaryResponse(responseBody);
+        } else if (statusCode == 404) {
+            String errorMsg = 'ESPN event not found (404). Event ID "' + eventId + '" may be invalid or the match may not exist. ';
+            errorMsg += 'Endpoint: ' + endpoint + '. ';
+            errorMsg += 'If this is a soccer match, ensure Sport__c is set to "Soccer" (not "Football") and the league code is correct.';
+            throw new ESPNException(errorMsg);
+        } else if (statusCode == 400) {
+            String errorMsg = 'Invalid request to ESPN API (400). Please verify the event ID "' + eventId + '" is correct. ';
+            errorMsg += 'Endpoint: ' + endpoint + '. ';
+            errorMsg += 'Check that Sport__c and ESPN_League_ID__c are correctly set on the Competition record.';
+            throw new ESPNException(errorMsg);
+        } else if (statusCode == 500 || statusCode == 502 || statusCode == 503) {
+            String errorMsg = 'ESPN API server error (' + statusCode + '). The service may be temporarily unavailable. ';
+            errorMsg += 'Endpoint attempted: ' + endpoint + '. ';
+            errorMsg += 'If this persists, verify the Sport__c and ESPN_League_ID__c are correct for this match.';
+            throw new ESPNException(errorMsg);
+        } else if (statusCode == 429) {
+            throw new ESPNException('ESPN API rate limit exceeded (429). Please wait a moment before trying again. Endpoint: ' + endpoint);
         } else {
-            throw new ESPNException('Failed to fetch match summary for event ' + eventId + ': ' + response.getStatus());
+            String errorMsg = 'Failed to fetch match summary for event ' + eventId + '. HTTP Status: ' + statusCode + ' ' + response.getStatus();
+            errorMsg += ' Endpoint: ' + endpoint;
+            if (String.isNotBlank(responseBody) && responseBody.length() < 500) {
+                errorMsg += ' Response: ' + responseBody;
+            }
+            throw new ESPNException(errorMsg);
         }
     }
     
@@ -232,10 +296,22 @@ public with sharing class ESPNHttpService {
     private static HttpResponse makeCallout(String endpoint) {
         System.debug('=== ESPNHttpService.makeCallout START ===');
         System.debug('Endpoint URL: ' + endpoint);
+        
+        // Validate endpoint
+        if (String.isBlank(endpoint)) {
+            throw new ESPNException('Endpoint URL cannot be blank');
+        }
+        
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         
-        request.setEndpoint(endpoint);
+        try {
+            request.setEndpoint(endpoint);
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'ESPNHttpService: Invalid endpoint URL - ' + e.getMessage());
+            throw new ESPNException('Invalid endpoint URL: ' + endpoint + '. Error: ' + e.getMessage(), e);
+        }
+        
         request.setMethod(HTTP_METHOD_GET);
         request.setTimeout(HTTP_TIMEOUT);
         request.setHeader('Accept', 'application/json');
@@ -246,9 +322,36 @@ public with sharing class ESPNHttpService {
             HttpResponse response = http.send(request);
             System.debug('ESPNHttpService: Response Status - ' + response.getStatusCode());
             return response;
+        } catch (CalloutException e) {
+            // Handle callout-specific exceptions
+            String errorMsg = 'HTTP Callout failed: ';
+            if (e.getMessage().contains('timeout') || e.getMessage().contains('Timeout')) {
+                errorMsg += 'Request timed out after ' + HTTP_TIMEOUT + 'ms. The ESPN API may be slow or unavailable.';
+            } else if (e.getMessage().contains('Unauthorized') || e.getMessage().contains('401')) {
+                errorMsg += 'Authentication failed. Please verify API access.';
+            } else if (e.getMessage().contains('Forbidden') || e.getMessage().contains('403')) {
+                errorMsg += 'Access forbidden. Please verify API permissions.';
+            } else {
+                errorMsg += e.getMessage();
+            }
+            System.debug(LoggingLevel.ERROR, 'ESPNHttpService: Callout failed - ' + errorMsg);
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            throw new ESPNException(errorMsg, e);
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'ESPNHttpService: Callout failed - ' + e.getMessage());
-            throw new ESPNException('HTTP Callout failed: ' + e.getMessage(), e);
+            // Handle other exceptions (network errors, etc.)
+            String errorMsg = 'HTTP Callout failed: ';
+            String exceptionType = e.getTypeName();
+            if (exceptionType.contains('System.CalloutException')) {
+                errorMsg += 'Network error connecting to ESPN API. ';
+            } else {
+                errorMsg += 'Unexpected error: ';
+            }
+            errorMsg += e.getMessage();
+            
+            System.debug(LoggingLevel.ERROR, 'ESPNHttpService: Callout failed - ' + errorMsg);
+            System.debug(LoggingLevel.ERROR, 'Exception type: ' + exceptionType);
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            throw new ESPNException(errorMsg, e);
         }
     }
     
@@ -605,8 +708,33 @@ public with sharing class ESPNHttpService {
         result.commentaryItems = new List<ESPNCommentaryItem>();
         result.periods = new List<ESPNPeriod>();
         
+        // Validate JSON body
+        if (String.isBlank(jsonBody)) {
+            result.success = false;
+            result.errorMessage = 'Response body is empty or null';
+            System.debug(LoggingLevel.ERROR, result.errorMessage);
+            return result;
+        }
+        
         try {
-            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(jsonBody);
+            Map<String, Object> responseMap;
+            try {
+                responseMap = (Map<String, Object>) JSON.deserializeUntyped(jsonBody);
+            } catch (JSONException e) {
+                result.success = false;
+                result.errorMessage = 'Invalid JSON response from ESPN API: ' + e.getMessage();
+                System.debug(LoggingLevel.ERROR, result.errorMessage);
+                System.debug(LoggingLevel.ERROR, 'JSON body (first 500 chars): ' + jsonBody.substring(0, Math.min(500, jsonBody.length())));
+                return result;
+            }
+            
+            // Validate response structure
+            if (responseMap == null || responseMap.isEmpty()) {
+                result.success = false;
+                result.errorMessage = 'Response map is null or empty';
+                System.debug(LoggingLevel.ERROR, result.errorMessage);
+                return result;
+            }
             
             // Parse header for basic match info
             Map<String, Object> header = (Map<String, Object>) responseMap.get('header');
@@ -769,11 +897,40 @@ public with sharing class ESPNHttpService {
             }
             
             result.success = true;
+        } catch (JSONException e) {
+            // Handle JSON parsing errors specifically
+            result.success = false;
+            result.errorMessage = 'Failed to parse JSON response: ' + e.getMessage();
+            System.debug(LoggingLevel.ERROR, result.errorMessage);
+            System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
+            if (jsonBody != null && jsonBody.length() > 0) {
+                System.debug(LoggingLevel.ERROR, 'JSON body (first 1000 chars): ' + jsonBody.substring(0, Math.min(1000, jsonBody.length())));
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions (missing expected fields)
+            result.success = false;
+            result.errorMessage = 'Response structure is missing expected fields. The ESPN API response format may have changed.';
+            System.debug(LoggingLevel.ERROR, result.errorMessage);
+            System.debug(LoggingLevel.ERROR, 'NullPointerException: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
+        } catch (TypeException e) {
+            // Handle type casting errors
+            result.success = false;
+            result.errorMessage = 'Type mismatch while parsing response: ' + e.getMessage();
+            System.debug(LoggingLevel.ERROR, result.errorMessage);
+            System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
         } catch (Exception e) {
+            // Handle all other exceptions
             result.success = false;
             result.errorMessage = 'Failed to parse match summary response: ' + e.getMessage();
             System.debug(LoggingLevel.ERROR, result.errorMessage);
+            System.debug(LoggingLevel.ERROR, 'Exception type: ' + e.getTypeName());
             System.debug(LoggingLevel.ERROR, 'Stack: ' + e.getStackTraceString());
+        }
+        
+        // Log warning if no lineups were found but parsing succeeded
+        if (result.success && (result.lineups == null || result.lineups.isEmpty())) {
+            System.debug(LoggingLevel.WARN, 'Parsing succeeded but no lineups found in response');
         }
         
         return result;

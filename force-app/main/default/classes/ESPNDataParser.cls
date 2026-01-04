@@ -185,15 +185,48 @@ public with sharing class ESPNDataParser {
         ESPNHttpService.ESPNLineup lineup, 
         Id matchId, 
         Id teamId,
-        fflib_ISobjectUnitOfWork uow
+        fflib_ISObjectUnitOfWork uow
     ) {
         Map<String, Object> result = new Map<String, Object>();
         List<Match_Participation__c> participations = new List<Match_Participation__c>();
+        List<String> errors = new List<String>();
+        List<String> warnings = new List<String>();
         
-        if (lineup == null || lineup.players == null) {
-            System.debug('Invalid lineup data');
+        // Validate input parameters
+        if (lineup == null) {
             result.put('lineup', null);
             result.put('participations', participations);
+            result.put('errors', new List<String>{'Lineup data is null'});
+            result.put('warnings', warnings);
+            System.debug(LoggingLevel.ERROR, 'parseLineupToLineup: Lineup data is null');
+            return result;
+        }
+        
+        if (String.isBlank(matchId)) {
+            result.put('lineup', null);
+            result.put('participations', participations);
+            result.put('errors', new List<String>{'Match ID is required'});
+            result.put('warnings', warnings);
+            System.debug(LoggingLevel.ERROR, 'parseLineupToLineup: Match ID is blank');
+            return result;
+        }
+        
+        if (String.isBlank(teamId)) {
+            result.put('lineup', null);
+            result.put('participations', participations);
+            result.put('errors', new List<String>{'Team ID is required'});
+            result.put('warnings', warnings);
+            System.debug(LoggingLevel.ERROR, 'parseLineupToLineup: Team ID is blank');
+            return result;
+        }
+        
+        if (lineup.players == null || lineup.players.isEmpty()) {
+            System.debug(LoggingLevel.WARN, 'parseLineupToLineup: No players in lineup');
+            warnings.add('No players found in lineup data');
+            result.put('lineup', null);
+            result.put('participations', participations);
+            result.put('errors', errors);
+            result.put('warnings', warnings);
             return result;
         }
         
@@ -210,61 +243,161 @@ public with sharing class ESPNDataParser {
         // Note: We need player IDs immediately for lineup JSON, so we insert new players
         // directly (not via UOW). This is acceptable for user-initiated syncs.
         Set<String> athleteIds = new Set<String>();
+        Integer playersWithoutId = 0;
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
             if (String.isNotBlank(player.athleteId)) {
                 athleteIds.add(player.athleteId);
+            } else {
+                playersWithoutId++;
+                String playerName = String.isNotBlank(player.displayName) ? player.displayName : 'Unknown';
+                warnings.add('Player "' + playerName + '" missing ESPN athlete ID');
             }
+        }
+        
+        if (athleteIds.isEmpty()) {
+            errors.add('No valid player IDs found in lineup. Cannot create lineup without player references.');
+            result.put('lineup', null);
+            result.put('participations', participations);
+            result.put('errors', errors);
+            result.put('warnings', warnings);
+            return result;
         }
         
         // Query existing players in bulk
         Map<String, Id> playerIdMap = new Map<String, Id>();
-        if (!athleteIds.isEmpty()) {
+        try {
             List<Contact> existingPlayers = [
                 SELECT Id, ESPN_Player_ID__c
                 FROM Contact
                 WHERE ESPN_Player_ID__c IN :athleteIds
             ];
             for (Contact existingPlayer : existingPlayers) {
-                playerIdMap.put(existingPlayer.ESPN_Player_ID__c, existingPlayer.Id);
+                if (String.isNotBlank(existingPlayer.ESPN_Player_ID__c)) {
+                    playerIdMap.put(existingPlayer.ESPN_Player_ID__c, existingPlayer.Id);
+                }
             }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Error querying existing players: ' + e.getMessage());
+            errors.add('Error querying existing players: ' + e.getMessage());
         }
         
         // Create missing players immediately (we need IDs for lineup JSON)
         // This is acceptable for user-initiated actions where Contact is a prerequisite
         List<Contact> newPlayers = new List<Contact>();
+        List<String> playerCreationErrors = new List<String>();
+        
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
             if (String.isNotBlank(player.athleteId) && !playerIdMap.containsKey(player.athleteId)) {
-                Contact newPlayer = createPlayerContact(player, teamId);
-                if (newPlayer != null) {
-                    newPlayers.add(newPlayer);
+                try {
+                    Contact newPlayer = createPlayerContact(player, teamId);
+                    if (newPlayer != null) {
+                        // Validate required fields before adding
+                        if (String.isBlank(newPlayer.LastName)) {
+                            String playerName = String.isNotBlank(player.displayName) ? player.displayName : player.athleteId;
+                            playerCreationErrors.add('Player "' + playerName + '" missing required LastName field');
+                            continue;
+                        }
+                        if (newPlayer.AccountId == null) {
+                            String playerName = String.isNotBlank(player.displayName) ? player.displayName : player.athleteId;
+                            playerCreationErrors.add('Player "' + playerName + '" missing required Team (AccountId)');
+                            continue;
+                        }
+                        newPlayers.add(newPlayer);
+                    } else {
+                        String playerName = String.isNotBlank(player.displayName) ? player.displayName : player.athleteId;
+                        warnings.add('Could not create player record for "' + playerName + '"');
+                    }
+                } catch (Exception e) {
+                    String playerName = String.isNotBlank(player.displayName) ? player.displayName : player.athleteId;
+                    playerCreationErrors.add('Error creating player "' + playerName + '": ' + e.getMessage());
+                    System.debug(LoggingLevel.ERROR, 'Error creating player ' + playerName + ': ' + e.getMessage());
                 }
             }
         }
         
-        // Insert new players if any
+        // Insert new players if any, with detailed error handling
         if (!newPlayers.isEmpty()) {
             try {
-                insert newPlayers;
-                // Add new player IDs to map
-                for (Contact newPlayer : newPlayers) {
-                    if (String.isNotBlank(newPlayer.ESPN_Player_ID__c)) {
-                        playerIdMap.put(newPlayer.ESPN_Player_ID__c, newPlayer.Id);
+                // Use Database.insert with allOrNone=false to allow partial success
+                Database.SaveResult[] saveResults = Database.insert(newPlayers, false);
+                
+                Integer successCount = 0;
+                Integer failureCount = 0;
+                
+                for (Integer i = 0; i < saveResults.size(); i++) {
+                    Database.SaveResult sr = saveResults[i];
+                    Contact newPlayer = newPlayers[i];
+                    
+                    if (sr.isSuccess()) {
+                        // Add new player ID to map
+                        if (String.isNotBlank(newPlayer.ESPN_Player_ID__c)) {
+                            playerIdMap.put(newPlayer.ESPN_Player_ID__c, sr.getId());
+                            successCount++;
+                        }
+                    } else {
+                        failureCount++;
+                        String playerName = String.isNotBlank(newPlayer.LastName) ? newPlayer.LastName : 'Unknown';
+                        String errorMsg = 'Failed to create player "' + playerName + '": ';
+                        
+                        for (Database.Error err : sr.getErrors()) {
+                            errorMsg += err.getMessage();
+                            if (err.getFields() != null && !err.getFields().isEmpty()) {
+                                errorMsg += ' (Fields: ' + String.join(err.getFields(), ', ') + ')';
+                            }
+                        }
+                        playerCreationErrors.add(errorMsg);
+                        System.debug(LoggingLevel.ERROR, errorMsg);
                     }
                 }
+                
+                if (successCount > 0) {
+                    System.debug('Successfully created ' + successCount + ' new player(s)');
+                }
+                if (failureCount > 0) {
+                    warnings.add('Failed to create ' + failureCount + ' player(s). See errors for details.');
+                }
+                
+            } catch (DmlException dmlEx) {
+                // Handle DML exceptions with field-level details
+                String errorMsg = 'Error inserting new players: ' + dmlEx.getMessage();
+                if (dmlEx.getNumDml() > 0 && dmlEx.getDmlFieldNames(0) != null && !dmlEx.getDmlFieldNames(0).isEmpty()) {
+                    errorMsg += ' (Fields: ' + String.join(dmlEx.getDmlFieldNames(0), ', ') + ')';
+                }
+                playerCreationErrors.add(errorMsg);
+                System.debug(LoggingLevel.ERROR, errorMsg);
             } catch (Exception e) {
-                System.debug('Error inserting new players: ' + e.getMessage());
-                // Try to find players that may have been created concurrently
-                List<Contact> retryPlayers = [
-                    SELECT Id, ESPN_Player_ID__c
-                    FROM Contact
-                    WHERE ESPN_Player_ID__c IN :athleteIds
-                    AND Id NOT IN :playerIdMap.values()
-                ];
-                for (Contact retryPlayer : retryPlayers) {
-                    playerIdMap.put(retryPlayer.ESPN_Player_ID__c, retryPlayer.Id);
+                playerCreationErrors.add('Unexpected error inserting new players: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Error inserting new players: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            }
+            
+            // Try to find players that may have been created concurrently or in a previous attempt
+            if (!playerCreationErrors.isEmpty()) {
+                try {
+                    List<Contact> retryPlayers = [
+                        SELECT Id, ESPN_Player_ID__c
+                        FROM Contact
+                        WHERE ESPN_Player_ID__c IN :athleteIds
+                        AND Id NOT IN :playerIdMap.values()
+                    ];
+                    Integer foundCount = 0;
+                    for (Contact retryPlayer : retryPlayers) {
+                        if (String.isNotBlank(retryPlayer.ESPN_Player_ID__c)) {
+                            playerIdMap.put(retryPlayer.ESPN_Player_ID__c, retryPlayer.Id);
+                            foundCount++;
+                        }
+                    }
+                    if (foundCount > 0) {
+                        System.debug('Found ' + foundCount + ' additional player(s) that may have been created concurrently');
+                    }
+                } catch (Exception retryEx) {
+                    System.debug(LoggingLevel.ERROR, 'Error retrying player query: ' + retryEx.getMessage());
                 }
             }
         }
+        
+        // Add player creation errors to warnings (not fatal, but should be reported)
+        warnings.addAll(playerCreationErrors);
         
         // Second pass: build lineup structure using player IDs
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
@@ -408,29 +541,75 @@ public with sharing class ESPNDataParser {
         }
         lineupRecord.Starting_XI_Count__c = starterCount;
         
-        // Create Match_Participation__c records
+        // Create Match_Participation__c records with validation
+        Integer participationErrors = 0;
         for (ESPNHttpService.ESPNLineupPlayer player : lineup.players) {
-            Id playerId = playerIdMap.get(player.athleteId);
-            if (playerId == null) {
-                System.debug('Skipping participation for player without valid ID: ' + player.displayName);
-                continue;
+            try {
+                Id playerId = playerIdMap.get(player.athleteId);
+                if (playerId == null) {
+                    String playerName = String.isNotBlank(player.displayName) ? player.displayName : 
+                                       (String.isNotBlank(player.athleteId) ? player.athleteId : 'Unknown');
+                    System.debug(LoggingLevel.WARN, 'Skipping participation for player without valid ID: ' + playerName);
+                    warnings.add('Skipped participation for player "' + playerName + '" - player ID not found');
+                    participationErrors++;
+                    continue;
+                }
+                
+                // Validate required fields before creating participation
+                if (String.isBlank(matchId)) {
+                    errors.add('Match ID is required for Match_Participation__c');
+                    continue;
+                }
+                if (String.isBlank(teamId)) {
+                    errors.add('Team ID is required for Match_Participation__c');
+                    continue;
+                }
+                
+                Match_Participation__c participation = new Match_Participation__c();
+                participation.Match__c = matchId;
+                participation.Team__c = teamId;
+                participation.Player__c = playerId;
+                participation.Position__c = player.positionAbbreviation != null ? player.positionAbbreviation : 
+                    (player.position != null ? player.position : 'Unknown');
+                participation.Role__c = player.starter ? 'Starter' : 'Substitute';
+                
+                participations.add(participation);
+            } catch (Exception e) {
+                String playerName = String.isNotBlank(player.displayName) ? player.displayName : 
+                                  (String.isNotBlank(player.athleteId) ? player.athleteId : 'Unknown');
+                System.debug(LoggingLevel.ERROR, 'Error creating participation for player "' + playerName + '": ' + e.getMessage());
+                warnings.add('Error creating participation for player "' + playerName + '": ' + e.getMessage());
+                participationErrors++;
             }
-            
-            Match_Participation__c participation = new Match_Participation__c();
-            participation.Match__c = matchId;
-            participation.Team__c = teamId;
-            participation.Player__c = playerId;
-            participation.Position__c = player.positionAbbreviation != null ? player.positionAbbreviation : 
-                (player.position != null ? player.position : 'Unknown');
-            participation.Role__c = player.starter ? 'Starter' : 'Substitute';
-            
-            participations.add(participation);
+        }
+        
+        // Validate lineup record before returning
+        if (lineupRecord == null) {
+            errors.add('Failed to create lineup record');
+        } else {
+            // Validate required fields on lineup
+            if (String.isBlank(lineupRecord.Match__c)) {
+                errors.add('Lineup record missing required Match__c field');
+            }
+            if (String.isBlank(lineupRecord.Team__c)) {
+                errors.add('Lineup record missing required Team__c field');
+            }
+        }
+        
+        // If we have critical errors, don't return the lineup
+        if (!errors.isEmpty() && lineupRecord != null) {
+            System.debug(LoggingLevel.ERROR, 'Critical errors found, but returning lineup anyway: ' + String.join(errors, '; '));
         }
         
         result.put('lineup', lineupRecord);
         result.put('participations', participations);
+        result.put('errors', errors);
+        result.put('warnings', warnings);
+        result.put('playerCount', lineup.players != null ? lineup.players.size() : 0);
+        result.put('participationCount', participations.size());
+        result.put('missingPlayerCount', participationErrors);
         
-        System.debug('Parsed lineup with ' + participations.size() + ' participations');
+        System.debug('Parsed lineup with ' + participations.size() + ' participations, ' + participationErrors + ' errors, ' + warnings.size() + ' warnings');
         return result;
     }
     
